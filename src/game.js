@@ -754,6 +754,7 @@
 
     if (phase !== 'pause') { smoke.update(dt); sparks.update(dt); }
     skids.flush();
+    updateFavicon(dt);
     world.update(t);
     // ombre qui suit la voiture visible
     const focus = phase === 'play' || phase === 'count' || phase === 'pause' ? player : leader.state;
@@ -816,6 +817,30 @@
       fastT += 2;
       if (fastT >= 8) { fastT = 0; dprScale = Math.min(1, dprScale + 0.1); resize(); }
     } else fastT = 0;
+  }
+
+  // ---------- favicon vivant : le multiplicateur du combo s'affiche dans l'onglet (bureau) ----------
+  const favLink = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
+  const favBase = favLink ? favLink.href : null;
+  const favImg = new Image();
+  if (favBase) favImg.src = favBase;
+  const favCv = document.createElement('canvas'); favCv.width = favCv.height = 64;
+  let favShown = '', favT = 0;
+  function updateFavicon(dt) {
+    if (isTouch || !favBase) return;
+    favT += dt; if (favT < 0.25) return; favT = 0;
+    const key = phase === 'play' && score.combo > 0 && score.mult >= 2 ? 'x' + Math.floor(score.mult) : '';
+    if (key === favShown) return;
+    favShown = key;
+    if (!key) { favLink.href = favBase; return; }
+    const g = favCv.getContext('2d');
+    g.clearRect(0, 0, 64, 64);
+    if (favImg.complete) g.drawImage(favImg, 0, 0, 64, 64);
+    g.beginPath(); g.moveTo(26, 30); g.arcTo(64, 30, 64, 64, 9); g.arcTo(64, 64, 18, 64, 9); g.arcTo(18, 64, 18, 30, 9); g.arcTo(18, 30, 64, 30, 9); g.closePath();
+    g.fillStyle = '#ff3d3d'; g.fill(); g.lineWidth = 4; g.strokeStyle = '#0e0d14'; g.stroke();
+    g.fillStyle = '#fff'; g.font = '900 28px "Arial Black", Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(key, 41, 48);
+    favLink.href = favCv.toDataURL('image/png');
   }
 
   // ---------- HUD ----------
