@@ -1,7 +1,7 @@
 # Handoff — Sideways Drift Club
 
 Date : 2026-10-14 · Branche : `claude/optimistic-fermi-xni0xz` (dépôt `shanlihenriderussy-rgb/Sideways-Drift-Club`)
-Version publiée : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL (v2, privée — pas encore mise à jour) · Vercel depuis `main`
+En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `main`, commit `d02ae0d`) · Artifact privé : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL (v3, même build)
 
 ## État
 Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome, avec Three.js r128 chargé depuis cdnjs.
@@ -58,8 +58,8 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 ## Prochaine tranche
 1. Test sur téléphone : fps (`window.__sdc.fps`), lisibilité de l'atelier, temps de chargement d'une piste.
 2. Ajuster prix et gains après 10 parties réelles (`CAR_PRICES`, `SHOP`, `PERF`, `computePayout`).
-3. Mettre à jour l'artifact publié depuis `index.html` (passer son URL en `url`).
-4. Pistes d'évolution : fantôme du meilleur tour, 4e piste, vente de pièces.
+3. Pistes d'évolution : fantôme du meilleur tour, 4e piste, vente de pièces.
+4. À chaque mise en production : republier l'artifact depuis `index.html` (passer son URL en `url`, avec `icons/`, `assets/favicon.svg` et le manifeste en fichiers joints).
 
 ## Reprise rapide
 ```
