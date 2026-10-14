@@ -121,5 +121,6 @@ const Sound = (() => {
     lost() { tone(330, 0.3, 0.16, 'sawtooth', 0, 140); },
     count(go) { tone(go ? 1046 : 523, go ? 0.45 : 0.18, 0.2, 'square'); },
     ui() { tone(660, 0.05, 0.08, 'triangle'); },
+    cash() { tone(1318, 0.09, 0.12, 'square'); tone(1760, 0.16, 0.12, 'square', 0.07); tone(2637, 0.22, 0.07, 'triangle', 0.13); },
   };
 })();

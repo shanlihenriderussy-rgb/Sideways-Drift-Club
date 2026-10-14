@@ -11,10 +11,13 @@
     set(k, v) { try { localStorage.setItem('sdc:' + k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } },
   };
   const settings = Object.assign({ assist: 1, autoGas: false, sound: true, reduce: reduceDefault, vibe: true, quality: 'auto' }, store.get('settings', {}));
-  const garage = Object.assign({ car: 'kouki', paint: 'panda', rim: 'bronze', number: 15 }, store.get('garage', {}));
+  // profil de jeu : portefeuille, voitures possédées et leurs pièces (voir economy.js). L'ancienne clé « garage » est migrée.
+  const profile = Economy.loadProfile(store.get('profile', null), store.get('garage', null));
   const bests = store.get('bests', {});
   const saveSettings = () => store.set('settings', settings);
-  const saveGarage = () => store.set('garage', garage);
+  const saveProfile = () => store.set('profile', profile);
+  saveProfile();
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
   // ---------- rendu ----------
   const canvas = $('gl');
@@ -53,6 +56,7 @@
   let camMode = store.get('cam', 0);
   let shake = 0, timeScale = 1;
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+  const _camT = new THREE.Vector3(), _camL = new THREE.Vector3(); // tampons : aucune allocation par image
   const showroom = { x: 0, z: 0, heading: 0, wheelRot: 0, steerAngle: 0, rollAngle: 0, pitchAngle: 0 };
 
   // ---------- environnement de reflets (ciel) ----------
@@ -99,7 +103,7 @@
     if (skids) { scene.remove(skids.mesh); skids.dispose(); }
     const puff = sharedPuff || (sharedPuff = puffTexture());
     const night = track.def.theme === 'night';
-    smoke = createParticles(quality.smoke, { map: puff, color: night ? 0x8d8a9e : 0xeeeae2, drag: 1.6, gravity: 0.35 });
+    smoke = createParticles(quality.smoke, { map: puff, color: 0xffffff, drag: 1.6, gravity: 0.35, colored: true });
     sparks = createParticles(160, { map: puff, color: 0xffb040, drag: 0.6, gravity: -14, additive: true, floor: true });
     skids = createSkids(isTouch ? 1800 : 3000);
     scene.add(skids.mesh); scene.add(smoke.points); scene.add(sparks.points);
@@ -108,18 +112,43 @@
     resize();
   }
 
-  function paintHex() { return PAINTS.find((p) => p.id === garage.paint).hex; }
+  // aperçu de l'atelier : voiture et config affichées à la place de la config possédée (null = possédée)
+  let showKind = null, showCfg = null;
+  const hexOf = (list, id, d) => { const it = list.find((x) => x.id === id); return it ? it.hex : d; };
+  function lookOf(cfg, night) {
+    const paint = hexOf(Economy.PAINTS, cfg.paint, 0xf1efe9);
+    const accent = cfg.accent === 'auto' ? (isDark(paint) ? 0xffd23f : 0x16161a) : hexOf(Economy.PAINTS, cfg.accent, 0xffd23f);
+    return {
+      paint, accent, finish: cfg.finish, livery: cfg.livery, number: cfg.number, rimStyle: cfg.rimStyle, rim: hexOf(Economy.RIMS, cfg.rim, 0xb07a3a),
+      front: cfg.front, wide: cfg.wide, wing: cfg.wing, hood: cfg.hood, exhaust: cfg.exhaust, cage: cfg.cage,
+      neon: cfg.neon === 'none' ? null : hexOf(Economy.NEONS, cfg.neon, null), tune: cfg.tune, night, lod: qLevel === 'low' ? 0 : 1,
+    };
+  }
+  const smokeCol = { P: new THREE.Color(), L: new THREE.Color() };
+  function setSmoke(id, cfg) {
+    const night = track.def.theme === 'night';
+    if (cfg.smoke === 'blanc') smokeCol[id].setHex(night ? 0x8d8a9e : 0xeeeae2); else smokeCol[id].setHex(hexOf(Economy.SMOKES, cfg.smoke, 0xeeeae2));
+  }
+  // le leader du tandem : livrée fixe, contrastée avec la tienne
+  function leaderCfg(kind) {
+    const c = Economy.defaultCar(kind);
+    const mine = profile.cars[profile.current];
+    Object.assign(c, { paint: mine.paint === 'tofu' ? 'panda' : 'tofu', accent: 'jaune', livery: 'stripes', number: 1, rimStyle: 'mesh', rim: 'or', front: 'lip', wing: 'gt', smoke: 'blanc' });
+    return c;
+  }
   function buildCars() {
     if (playerModel) playerModel.dispose();
     if (leaderModel) leaderModel.dispose();
     const night = world.theme.headlights;
-    const ph = paintHex();
-    playerModel = buildCar(garage.car, { paint: ph, rim: RIMS.find((r) => r.id === garage.rim).hex, number: garage.number, darkPaint: isDark(ph), night });
+    const kind = showKind || profile.current;
+    const cfg = showCfg || profile.cars[kind];
+    playerModel = buildCar(kind, lookOf(cfg, night));
     scene.add(playerModel.root);
-    // le leader porte une livrée contrastée
-    const lp = garage.paint === 'tofu' ? 0xf1efe9 : 0x17171b;
-    const lk = garage.car === 'raijin' ? 'kouki' : 'raijin';
-    leaderModel = buildCar(lk, { paint: lp, rim: 0xd9b23a, number: 1, darkPaint: isDark(lp), night });
+    setSmoke('P', cfg);
+    const lk = profile.current === 'raijin' ? 'kouki' : 'raijin';
+    const lc = leaderCfg(lk);
+    leaderModel = buildCar(lk, lookOf(lc, night));
+    setSmoke('L', lc);
     scene.add(leaderModel.root);
     for (const m of [playerModel, leaderModel]) m.root.traverse((o) => { if (o.material && o.material.isMeshStandardMaterial) { o.material.envMap = envMap; o.material.needsUpdate = true; } });
     if (night) {
@@ -140,7 +169,7 @@
 
   function startIndex() { return track.count - Math.round(40 / track.step); }
   function resetPlayer(idx, speed) {
-    const st = createCarState(CAR_SPECS[garage.car], track.px[idx], track.pz[idx], track.heading[idx]);
+    const st = createCarState(Economy.tunedSpec(CAR_SPECS[profile.current], profile.cars[profile.current].perf), track.px[idx], track.pz[idx], track.heading[idx]);
     st.vx = Math.cos(st.heading) * speed; st.vz = Math.sin(st.heading) * speed; st.speed = speed; st.fwd = speed;
     st.gear = speed > 15 ? 3 : speed > 8 ? 2 : 1;
     if (player) { st.idx = idx; }
@@ -164,7 +193,8 @@
       if (phase === 'play' || phase === 'count') pauseGame();
       else if (phase === 'pause' && screenId === 'pause') resumeGame();
       else if (k === 'escape' && screenId === 'layout') closeLayoutEditor();
-      else if (k === 'escape' && ['select', 'garage', 'settings', 'help'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
+      else if (k === 'escape' && screenId === 'garage') closeShop();
+      else if (k === 'escape' && ['select', 'settings', 'help', 'career'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
     }
     if (k === 'c' && (phase === 'play' || phase === 'count')) cycleCam();
     if (k === 'r' && phase === 'play') respawn();
@@ -579,16 +609,21 @@
   function updateCamera(dt, st, attract) {
     const portrait = camera.aspect < 1;
     if (attract === 'garage') {
+      // vue par rayon de l'atelier (angle relatif au cap de la voiture), + rotation au doigt
       const t = performance.now() / 1000;
-      const a = t * 0.25;
-      const r = portrait ? 8.5 : 7;
-      if (snapCam) { camPos.set(st.x + Math.cos(a) * r, 1.7, st.z + Math.sin(a) * r); camLook.set(st.x, 0.5, st.z); snapCam = false; }
-      camPos.lerp(new THREE.Vector3(st.x + Math.cos(a) * r, 1.7, st.z + Math.sin(a) * r), 1 - Math.exp(-dt * 3));
+      const V = shopView;
+      const a = (V.a == null ? t * 0.25 : V.a + (settings.reduce ? 0 : Math.sin(t * 0.4) * 0.07)) + garageYaw;
+      const r = V.r * (portrait ? 1.3 : 1);
+      const hx = Math.cos(st.heading), hz = Math.sin(st.heading);
+      const cx = st.x + hx * (V.fwd || 0), cz = st.z + hz * (V.fwd || 0);
+      _camT.set(cx + Math.cos(st.heading + a) * r, V.h * (portrait ? 1.15 : 1), cz + Math.sin(st.heading + a) * r);
+      if (snapCam) { camPos.copy(_camT); camLook.set(cx, 0.5, cz); snapCam = false; }
+      camPos.lerp(_camT, 1 - Math.exp(-dt * 3.2));
       // la voiture se cadre à gauche (le panneau occupe la droite) ou en haut en portrait
-      const right = new THREE.Vector3().subVectors(camPos, new THREE.Vector3(st.x, 0, st.z)).normalize();
-      const side = new THREE.Vector3(right.z, 0, -right.x);
-      const look = new THREE.Vector3(st.x, portrait ? -0.4 : 0.6, st.z).addScaledVector(side, portrait ? 0 : 2.3);
-      camLook.lerp(look, 1 - Math.exp(-dt * 6));
+      let rx = camPos.x - cx, rz = camPos.z - cz; const rl = Math.hypot(rx, rz) || 1; rx /= rl; rz /= rl;
+      const off = portrait || V.noOff ? 0 : 2.3 * V.r / 7;
+      _camL.set(cx + rz * off, portrait ? 0.45 - 0.3 * r : (V.look || 0.6), cz - rx * off); // portrait : voiture dans le tiers haut, au-dessus du panneau
+      camLook.lerp(_camL, 1 - Math.exp(-dt * 6));
       camera.fov += ((portrait ? 64 : 46) - camera.fov) * 0.1;
     } else if (attract) {
       const t = performance.now() / 1000;
@@ -623,7 +658,8 @@
   }
 
   // ---------- effets par voiture ----------
-  function carFx(st, model, dt, id) {
+  function carFx(st, model, dt, id, colId) {
+    const col = smokeCol[colId || id];
     const slip = st.rearSlip;
     const k = clamp((slip - 0.12) * 2.2, 0, 1) * clamp(st.speed / 8, 0, 1);
     const spin = clamp((st.wheelSpin || 0) - 0.6, 0, 1) * clamp(st.throttle, 0, 1);
@@ -635,7 +671,7 @@
       let emit = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
       while (emit-- > 0) {
         const j = () => (Math.random() - 0.5);
-        smoke.emit(x + j() * 0.4, 0.35, z + j() * 0.4, st.vx * 0.25 + j() * 2.4, 0.4 + Math.random() * 0.9, st.vz * 0.25 + j() * 2.4, 1.6 + Math.random() * 1.4, 1.0, 4.6 + intensity * 2.6, 0.26 * (0.45 + intensity * 0.6));
+        smoke.emit(x + j() * 0.4, 0.35, z + j() * 0.4, st.vx * 0.25 + j() * 2.4, 0.4 + Math.random() * 0.9, st.vz * 0.25 + j() * 2.4, 1.6 + Math.random() * 1.4, 1.0, 4.6 + intensity * 2.6, 0.26 * (0.45 + intensity * 0.6), col);
       }
     }
   }
@@ -667,7 +703,7 @@
       } else {
         leader.update(dt, 1);
         playerModel.update(leader.state, dt, false);
-        carFx(leader.state, playerModel, dt, 'L');
+        carFx(leader.state, playerModel, dt, 'L', 'P');
         updateCamera(dt, leader.state, true);
       }
       Sound.update(leader.state, 'raijin', false);
@@ -692,7 +728,7 @@
           carFx(leader.state, leaderModel, dt, 'L');
         }
         // gaz coupé → retour de flamme occasionnel
-        if (player.prevThrottle > 0.8 && player.throttle < 0.4 && player.rpm > 5200) { playerModel.flame.visible = true; playerModel.flameT = 0.12; Sound.backfire(); if (garage.car !== 'hachi') Sound.blowoff(); }
+        if (player.prevThrottle > 0.8 && player.throttle < 0.4 && player.rpm > 5200) { playerModel.flame.visible = true; playerModel.flameT = 0.12; Sound.backfire(); if (profile.current !== 'hachi') Sound.blowoff(); }
         player.prevThrottle = player.throttle;
         updateStuck(dt);
       } else {
@@ -700,12 +736,12 @@
         player.rpm += ((1500 + input.throttle * 5000) - player.rpm) * Math.min(1, dt * 6);
         player.throttle = input.throttle;
       }
-      if (playerModel.flameT > 0) { playerModel.flameT -= dt; playerModel.flame.scale.set(1, 0.7 + Math.random() * 0.8, 1); if (playerModel.flameT <= 0) playerModel.flame.visible = false; }
+      if (playerModel.flameT > 0) { playerModel.flameT -= dt; playerModel.flicker(); if (playerModel.flameT <= 0) playerModel.flame.visible = false; }
       playerModel.update(player, dt, input.brake > 0.1 || input.handbrake > 0.5);
       leaderModel.update(leader.state, dt, false);
       carFx(player, playerModel, dt, 'P');
       updateCamera(dt, player, false);
-      Sound.update(player, garage.car, true);
+      Sound.update(player, profile.current, true);
       updateHUD(dt);
     } else if (phase === 'pause') {
       updateCamera(0, player, false);
@@ -912,9 +948,25 @@
     $('resAngle').textContent = Math.round(score.maxAngle) + '°';
     $('resDrift').textContent = Math.round(score.driftT / Math.max(score.runT, 1) * 100) + ' %';
     $('resEyebrow').textContent = `${mode === 'run' ? 'Run noté' : mode === 'tandem' ? 'Tandem' : 'Libre'} · ${track.def.name}`;
+    // gains en yens + défis
+    const res = Economy.applyRun(profile, { trackId: track.def.id, mode, score: total, grade: mode === 'free' ? null : grade, clips: score.clips, zones: track.zones.length, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), record: record && mode !== 'free' });
+    saveProfile(); refreshWallet();
+    $('payLines').innerHTML = res.payout.lines.map((l) => `<div><span>${l.label}</span><b>+${Economy.fmt(l.amount)}</b></div>`).join('') || '<div><span>Aucun gain sur ce run.</span></div>';
+    $('payChal').innerHTML = res.challenges.map((c) => `<div>Défi réussi : ${c.label} · +${Economy.fmt(c.reward)}</div>`).join('');
+    $('payBal').textContent = 'Solde : ' + Economy.fmt(profile.money);
+    countUp($('payTotal'), res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0));
     show('results');
     announce(`Session terminée. ${total} points${mode !== 'free' ? ', note ' + grade : ''}.${record ? ' Nouveau record.' : ''}`);
     releaseWake();
+  }
+  function countUp(el, to) {
+    const t0 = performance.now(), dur = settings.reduce ? 1 : 900;
+    const tick = (now) => {
+      const k = Math.min(1, (now - t0) / dur);
+      el.textContent = Economy.fmt(to * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(tick); else if (to > 0) Sound.cash();
+    };
+    requestAnimationFrame(tick);
   }
   function toMenu() {
     phase = 'menu';
@@ -949,40 +1001,54 @@
   for (const b of document.querySelectorAll('[data-mode]')) {
     b.addEventListener('click', () => { mode = b.dataset.mode; store.set('mode', mode); pressGroup(document.querySelector('#select .modes'), 'data-mode', mode); buildTrackList(); Sound.ui(); });
   }
-  function buildGarage() {
-    const cl = $('carList'); cl.innerHTML = '';
-    for (const [k, s] of Object.entries(CAR_SPECS)) {
-      const b = document.createElement('button');
-      b.className = 'opt'; b.dataset.car = k;
-      b.innerHTML = `<b>${s.name}</b><small>${s.tag}</small>`;
-      b.addEventListener('click', () => { garage.car = k; saveGarage(); pressGroup(cl, 'data-car', k); refreshStats(); buildCars(); Sound.ui(); });
-      cl.appendChild(b);
-    }
-    pressGroup(cl, 'data-car', garage.car);
-    const sw = (container, items, keyName) => {
-      container.innerHTML = '';
-      for (const it of items) {
-        const b = document.createElement('button');
-        b.className = 'sw'; b.dataset.sw = it.id; b.style.background = '#' + it.hex.toString(16).padStart(6, '0');
-        b.setAttribute('aria-label', it.name); b.title = it.name;
-        b.addEventListener('click', () => { garage[keyName] = it.id; saveGarage(); pressGroup(container, 'data-sw', it.id); buildCars(); Sound.ui(); });
-        container.appendChild(b);
-      }
-      pressGroup(container, 'data-sw', garage[keyName]);
-    };
-    sw($('paintList'), PAINTS, 'paint');
-    sw($('rimList'), RIMS, 'rim');
-    $('numOut').textContent = garage.number;
-    refreshStats();
+  // ---------- portefeuille : toasts, solde, bonus du jour, carrière ----------
+  function toast(text, cls) {
+    const box = $('toasts');
+    const el = document.createElement('div');
+    el.className = 'toast ' + (cls || ''); el.textContent = text;
+    box.appendChild(el);
+    while (box.children.length > 3) box.firstChild.remove();
+    setTimeout(() => el.remove(), 3300);
+    announce(text);
   }
-  function refreshStats() {
-    const s = CAR_SPECS[garage.car].stats;
-    const bar = (n) => `<span class="bar" aria-hidden="true">${[1, 2, 3, 4, 5].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
-    $('carStats').innerHTML = `<div class="stat"><span>Puissance</span>${bar(s.power)}</div><div class="stat"><span>Agilité</span>${bar(s.grip)}</div><div class="stat"><span>Angle</span>${bar(s.angle)}</div><span class="sr">Puissance ${s.power} sur 5, agilité ${s.grip} sur 5, angle ${s.angle} sur 5.</span>`;
+  function refreshWallet() { $('menuWallet').textContent = Economy.fmt(profile.money); }
+  function claimDaily() {
+    const d = Economy.claimDaily(profile, today());
+    if (!d) return;
+    saveProfile(); refreshWallet();
+    setTimeout(() => { toast(`Bonus du jour · +${Economy.fmt(d.amount)}${d.streak > 1 ? ` · série de ${d.streak} jours` : ''}`, 'chal'); Sound.cash(); }, 600);
   }
-  const stepNum = (d) => { garage.number = ((garage.number - 1 + d + 99) % 99) + 1; $('numOut').textContent = garage.number; saveGarage(); buildCars(); Sound.ui(); };
-  $('numUp').addEventListener('click', () => stepNum(1));
-  $('numDown').addEventListener('click', () => stepNum(-1));
+  function openCareer() {
+    const st = profile.stats;
+    const cell = (l, v) => `<div>${l}<b>${v}</b></div>`;
+    $('careerStats').innerHTML = cell('Solde', Economy.fmt(profile.money)) + cell('Runs terminés', st.runs) + cell('Total gagné', Economy.fmt(st.earned)) + cell('Meilleur gain', Economy.fmt(st.bestPayout));
+    $('chalList').innerHTML = Economy.CHALLENGES.map((c) => `<li class="${profile.done[c.id] ? 'done' : ''}"><span class="ck" aria-hidden="true">${profile.done[c.id] ? '✓' : ''}</span><span>${c.label}<span class="sr">${profile.done[c.id] ? ', réussi' : ''}</span></span><b>${Economy.fmt(c.reward)}</b></li>`).join('');
+    const fmtD = (t) => new Date(t).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    $('logList').innerHTML = profile.log.slice(0, 15).map((l) => `<li><span>${fmtD(l.t)} · ${l.label.replace(/[<>&]/g, '')}</span><b class="${l.amount < 0 ? 'neg' : ''}">${l.amount < 0 ? '−' : '+'}${Economy.fmt(Math.abs(l.amount))}</b></li>`).join('') || '<li><span>Aucun mouvement pour l’instant.</span></li>';
+    show('career');
+  }
+
+  // ---------- atelier ----------
+  const SHOP_VIEWS = { car: { a: null, r: 7, h: 1.7 }, body: { a: 0.75, r: 6.4, h: 1.5 }, paint: { a: 1.57, r: 6.6, h: 1.35 }, wheels: { a: 0.62, r: 3.3, h: 0.55, look: 0.35, fwd: 1.2 }, perf: { a: 2.5, r: 5.6, h: 1.25 }, tune: { a: 1.2, r: 5.4, h: 0.45, look: 0.4 } };
+  let shopView = SHOP_VIEWS.car, garageYaw = 0;
+  const shop = createShop({
+    profile,
+    save() { saveProfile(); refreshWallet(); },
+    preview(kind, cfg) { showKind = kind; showCfg = cfg; buildCars(); },
+    setView(tab) { shopView = SHOP_VIEWS[tab] || SHOP_VIEWS.car; garageYaw = 0; },
+    close() { closeShop(); },
+    carChanged() { /* la fiche physique est relue au départ du run (resetPlayer) */ },
+    sound: Sound,
+    toast,
+  });
+  function openShop() { ensureAudio(); show('garage'); shop.open(); }
+  function closeShop() { shop.leave(); showKind = null; showCfg = null; buildCars(); Sound.ui(); show(shopReturn); shopReturn = 'menu'; }
+  let shopReturn = 'menu';
+  // glisser sur la scène pour tourner autour de la voiture
+  let yawDrag = null;
+  canvas.addEventListener('pointerdown', (e) => { if (screenId === 'garage') yawDrag = { x: e.clientX, y0: garageYaw, id: e.pointerId }; });
+  addEventListener('pointermove', (e) => { if (yawDrag && yawDrag.id === e.pointerId) garageYaw = yawDrag.y0 - (e.clientX - yawDrag.x) * 0.008; });
+  addEventListener('pointerup', () => { yawDrag = null; });
 
   function syncSettingsUI() {
     pressGroup($('assistSeg'), 'data-v', settings.assist);
@@ -1008,7 +1074,9 @@
     openSelect();
   });
   function openSelect() { buildTrackList(); pressGroup(document.querySelector('#select .modes'), 'data-mode', mode); show('select'); }
-  $('garageBtn').addEventListener('click', () => { ensureAudio(); buildGarage(); show('garage'); });
+  $('garageBtn').addEventListener('click', () => { shopReturn = 'menu'; openShop(); });
+  $('resShopBtn').addEventListener('click', () => { shopReturn = 'results'; openShop(); });
+  $('careerBtn').addEventListener('click', () => { Sound.ui(); openCareer(); });
   $('settingsBtn').addEventListener('click', () => { returnTo = 'menu'; syncSettingsUI(); show('settings'); });
   $('pSettingsBtn').addEventListener('click', () => { returnTo = 'pause'; syncSettingsUI(); show('settings'); });
   $('layoutBtn').addEventListener('click', openLayoutEditor);
@@ -1041,12 +1109,14 @@
     camPos.set(leader.state.x + 8, 3, leader.state.z + 8);
     camLook.set(leader.state.x, 1, leader.state.z);
     // quelques secondes de simulation pour que la fumée soit déjà là
-    for (let i = 0; i < 90; i++) { leader.update(1 / 60, 1); carFx(leader.state, playerModel, 1 / 60, 'L'); smoke.update(1 / 60); }
+    for (let i = 0; i < 90; i++) { leader.update(1 / 60, 1); carFx(leader.state, playerModel, 1 / 60, 'L', 'P'); smoke.update(1 / 60); }
     $('loading').remove();
     show('menu');
+    refreshWallet();
+    claimDaily();
     requestAnimationFrame((n) => { last = n; frame(n); });
     // accès de test (non utilisé par le jeu)
-    window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); } };
+    window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); }, profile, preview: (k, c) => { showKind = k; showCfg = c; buildCars(); }, view: (v) => { shopView = v; snapCam = true; }, yaw: (y) => { garageYaw = y; } };
     window.__sdc = { get phase() { return phase; }, get player() { return player; }, get score() { return score; }, get track() { return track; }, get line() { return line; }, lossLog, startRun, input, touch, layouts, tState: () => tState, openLayoutEditor, setMode: (m) => { mode = m; }, setTrack: (i) => { trackIdx = i; loadTrack(i); }, finishRun, get fps() { return 1000 / frameAvg; } };
   }
   if (document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]).then(boot);

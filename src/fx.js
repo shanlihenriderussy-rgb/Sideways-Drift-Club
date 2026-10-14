@@ -11,17 +11,35 @@ function puffTexture() {
 function createParticles(max, opts) {
   const pos = new Float32Array(max * 3), size = new Float32Array(max), alpha = new Float32Array(max);
   const vel = new Float32Array(max * 3), age = new Float32Array(max).fill(1e9), life = new Float32Array(max).fill(1), s0 = new Float32Array(max), s1 = new Float32Array(max), a0 = new Float32Array(max);
+  const colors = opts.colored ? new Float32Array(max * 3).fill(1) : null; // couleur par particule (fumée de pneus colorée)
   const geo = new THREE.BufferGeometry();
+  if (colors) geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3).setUsage(THREE.DynamicDrawUsage));
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
   geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1).setUsage(THREE.DynamicDrawUsage));
   geo.setAttribute('aAlpha', new THREE.BufferAttribute(alpha, 1).setUsage(THREE.DynamicDrawUsage));
   const mat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: opts.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
     uniforms: { map: { value: opts.map }, col: { value: new THREE.Color(opts.color) }, scale: { value: 400 }, fogCol: { value: new THREE.Color(0) }, fogNear: { value: 50 }, fogFar: { value: 500 } },
+    defines: colors ? { COLORED: 1 } : {},
     vertexShader: `attribute float aSize; attribute float aAlpha; uniform float scale; varying float vA; varying float vFog;
-      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * scale / max(-mv.z, 0.1); vA = aAlpha; vFog = -mv.z; gl_Position = projectionMatrix * mv; }`,
+      #ifdef COLORED
+      attribute vec3 aColor; varying vec3 vC;
+      #endif
+      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * scale / max(-mv.z, 0.1); vA = aAlpha; vFog = -mv.z; gl_Position = projectionMatrix * mv;
+      #ifdef COLORED
+      vC = aColor;
+      #endif
+      }`,
     fragmentShader: `uniform sampler2D map; uniform vec3 col, fogCol; uniform float fogNear, fogFar; varying float vA; varying float vFog;
-      void main(){ vec4 t = texture2D(map, gl_PointCoord); float f = smoothstep(fogNear, fogFar, vFog); vec3 c = mix(col, fogCol, f);
+      #ifdef COLORED
+      varying vec3 vC;
+      #endif
+      void main(){ vec4 t = texture2D(map, gl_PointCoord); float f = smoothstep(fogNear, fogFar, vFog);
+      #ifdef COLORED
+      vec3 c = mix(col * vC, fogCol, f);
+      #else
+      vec3 c = mix(col, fogCol, f);
+      #endif
       float near = smoothstep(1.2, 5.0, vFog); gl_FragColor = vec4(c, t.a * vA * near * (1.0 - f * 0.6)); }`,
   });
   const points = new THREE.Points(geo, mat);
@@ -29,8 +47,9 @@ function createParticles(max, opts) {
   let head = 0;
   return {
     points, mat,
-    emit(x, y, z, vx, vy, vz, l, sa, sb, al) {
+    emit(x, y, z, vx, vy, vz, l, sa, sb, al, c) {
       const i = head; head = (head + 1) % max;
+      if (colors && c) { colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b; }
       pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
       vel[i * 3] = vx; vel[i * 3 + 1] = vy; vel[i * 3 + 2] = vz;
       age[i] = 0; life[i] = l; s0[i] = sa; s1[i] = sb; a0[i] = al;
@@ -50,6 +69,7 @@ function createParticles(max, opts) {
         alpha[i] = a0[i] * fadeIn * Math.pow(1 - k, 1.6);
       }
       geo.attributes.position.needsUpdate = true; geo.attributes.aSize.needsUpdate = true; geo.attributes.aAlpha.needsUpdate = true;
+      if (colors) geo.attributes.aColor.needsUpdate = true;
     },
     clear() { age.fill(1e9); },
     dispose() { geo.dispose(); mat.dispose(); },

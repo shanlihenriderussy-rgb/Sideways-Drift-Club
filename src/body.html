@@ -31,14 +31,18 @@
   <div class="tbtn gas" id="tGas" data-k="gas"><span class="tt">GAZ</span></div>
 </div>
 
+<div id="toasts" aria-live="polite"></div>
+
 <!-- menu titre -->
 <section class="screen" id="menu" hidden aria-labelledby="logoTitle">
+  <div class="wallet wallet-fixed" id="menuWallet" aria-label="Solde">¥0</div>
   <div class="logo-jp" aria-hidden="true">横<b>滑</b>り倶楽部</div>
   <div class="title-block">
     <h1 class="logo" id="logoTitle">SIDEWAYS<span>DRIFT CLUB</span></h1>
     <div class="menu-btns">
       <button class="btn primary" id="playBtn"><span>Rouler</span></button>
-      <button class="btn" id="garageBtn"><span>Garage</span></button>
+      <button class="btn" id="garageBtn"><span>Atelier</span></button>
+      <button class="btn" id="careerBtn"><span>Carrière</span></button>
       <button class="btn" id="settingsBtn"><span>Réglages</span></button>
       <button class="btn ghost" id="helpBtn"><span>Comment jouer</span></button>
     </div>
@@ -71,16 +75,29 @@
   </div>
 </section>
 
-<!-- garage -->
+<!-- atelier (garage) : voir shop.js -->
 <section class="screen" id="garage" hidden aria-labelledby="garTitle">
+  <div class="card shop">
+    <div class="shop-head"><div><div class="eyebrow">Atelier</div><h2 id="garTitle">Ta machine</h2></div><div class="wallet" id="garWallet" aria-label="Solde">¥0</div></div>
+    <div class="tabs" role="tablist" aria-label="Rayons de l'atelier" id="shopTabs">
+      <button role="tab" data-tab="car">Voiture</button><button role="tab" data-tab="body">Carrosserie</button><button role="tab" data-tab="paint">Peinture</button><button role="tab" data-tab="wheels">Roues</button><button role="tab" data-tab="perf">Perfs</button><button role="tab" data-tab="tune">Réglages</button>
+    </div>
+    <div class="shop-body" id="shopBody" role="tabpanel"></div>
+    <div class="shop-foot"><span class="shop-msg" id="shopMsg" aria-live="polite"></span><button class="btn ghost" id="shopCancel" hidden><span>Annuler</span></button><button class="btn primary" id="shopBuy" hidden><span>Acheter</span></button><button class="btn" id="shopDone"><span>Valider</span></button></div>
+  </div>
+</section>
+
+<!-- carrière : défis, statistiques, mouvements du portefeuille -->
+<section class="screen dim" id="career" hidden aria-labelledby="careerTitle">
   <div class="card">
-    <div><div class="eyebrow">Garage</div><h2 id="garTitle">Ta machine</h2></div>
-    <div class="seg" role="group" aria-label="Voiture" id="carList"></div>
-    <div id="carStats"></div>
-    <div><div class="label">Peinture</div><div class="swatches" id="paintList" role="group" aria-label="Peinture"></div></div>
-    <div><div class="label">Jantes</div><div class="swatches" id="rimList" role="group" aria-label="Jantes"></div></div>
-    <div class="row-end"><div><div class="label">Numéro</div><div class="stepper"><button id="numDown" aria-label="Numéro précédent">−</button><output id="numOut">15</output><button id="numUp" aria-label="Numéro suivant">+</button></div></div>
-    <button class="btn primary" data-back><span>Valider</span></button></div>
+    <div class="eyebrow">Carrière</div>
+    <h2 id="careerTitle">Ton palmarès</h2>
+    <div class="res-grid" id="careerStats"></div>
+    <div class="label">Défis</div>
+    <ul class="chal-list" id="chalList"></ul>
+    <div class="label">Derniers mouvements</div>
+    <ul class="log-list" id="logList"></ul>
+    <div class="row-end"><span class="hint">Monnaie fictive, sans achat réel. Tout reste sur ton appareil.</span><button class="btn primary" data-back><span>OK</span></button></div>
   </div>
 </section>
 
@@ -150,7 +167,8 @@
 
 <!-- résultats -->
 <section class="screen dim" id="results" hidden aria-labelledby="resTitle">
-  <div class="card">
+  <div class="card res-card">
+    <div class="res-main">
     <div class="eyebrow" id="resEyebrow">Run noté · Docks de Minato</div>
     <div class="res-head"><div class="grade" id="resGrade">A</div><div><h2 id="resTitle">Note des juges</h2><div class="res-total" id="resTotal">0</div><div id="resRecord"></div></div></div>
     <div class="res-grid">
@@ -159,9 +177,19 @@
       <div>Angle max<b id="resAngle">0°</b></div>
       <div>Temps en glisse<b id="resDrift">0 %</b></div>
     </div>
+    </div>
+    <div class="res-side">
+    <div class="pay" id="resPay">
+      <div class="pay-lines" id="payLines"></div>
+      <div class="pay-total"><span>Gains</span><b id="payTotal">¥0</b></div>
+      <div id="payChal"></div>
+      <div class="hint" id="payBal"></div>
+    </div>
     <div class="row-end">
       <button class="btn ghost" id="menuBtn"><span>Menu</span></button>
+      <button class="btn" id="resShopBtn"><span>Atelier</span></button>
       <button class="btn primary" id="againBtn"><span>Rejouer</span></button>
+    </div>
     </div>
   </div>
 </section>

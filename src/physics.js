@@ -45,7 +45,8 @@ function stepCar(c, input, dt, assist) {
 
   // --- entrées lissées
   const tSteer = input.steer;
-  const rate = Math.abs(tSteer) > Math.abs(c.steer) && Math.sign(tSteer) === Math.sign(c.steer || tSteer) ? 4.2 : 7.5;
+  const sk = s.steerRate ? s.steerRate / 4.2 : 1; // suspension : direction plus vive
+  const rate = (Math.abs(tSteer) > Math.abs(c.steer) && Math.sign(tSteer) === Math.sign(c.steer || tSteer) ? 4.2 : 7.5) * sk;
   c.steer += Math.max(-rate * dt, Math.min(rate * dt, tSteer - c.steer));
   c.throttle += (input.throttle - c.throttle) * Math.min(1, dt * 10);
   c.brake += (input.brake - c.brake) * Math.min(1, dt * 12);
@@ -61,7 +62,7 @@ function stepCar(c, input, dt, assist) {
   const slide = Math.min(Math.max((Math.abs(beta) - 0.06) / 0.18, 0), 1);
   const speedK = Math.min(speed / 28, 1);
   const gripSteer = s.lock * (0.62 - 0.38 * speedK);
-  const driftSteer = 0.42;
+  const driftSteer = s.driftSteer || 0.42; // kit d'angle
   const frontVel = Math.atan2(vy + c.omega * s.a, vxa);
   let target = c.steer * (gripSteer * (1 - slide) + driftSteer * slide);
   if (vx > 0.5) target += assist * slide * frontVel * 0.92;
@@ -133,7 +134,8 @@ function stepCar(c, input, dt, assist) {
   if (vx > 4 && c.drift > 0 && assist > 0) {
     const dir = beta < 0 ? -1 : 1;
     const into = -c.steer * dir;
-    const bt = Math.max(0.05, Math.min(1.05, 0.3 + 0.26 * c.throttle + 0.42 * into));
+    const boost = s.angleBoost || 0;
+    const bt = Math.max(0.05, Math.min(1.05 + boost, 0.3 + boost + 0.26 * c.throttle + 0.42 * into));
     const target = dir * bt;
     const bdot = (beta - (c.prevBeta ?? beta)) / dt;
     const k = c.drift * Math.min(assist, 1.25);
@@ -173,7 +175,7 @@ function stepCar(c, input, dt, assist) {
   c.rearSlip = Math.abs(alphaR);
   c.frontSlip = Math.abs(alphaF);
   c.wheelRot += (vx / WHEEL_R) * dt * (1 + Math.min(c.wheelSpin, 1.5) * 0.6);
-  c.rollAngle += ((-ay * 0.012) - c.rollAngle) * Math.min(1, dt * 7);
+  c.rollAngle += ((-ay * 0.012 * (s.rollK || 1)) - c.rollAngle) * Math.min(1, dt * 7);
   c.pitchAngle += ((ax * 0.008) - c.pitchAngle) * Math.min(1, dt * 7);
 
   // --- boîte auto (pour le son et la coupure de couple)
