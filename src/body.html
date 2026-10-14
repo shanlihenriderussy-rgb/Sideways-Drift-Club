@@ -22,19 +22,13 @@
 </div>
 <div id="count" hidden></div>
 
-<!-- commandes tactiles -->
+<!-- commandes tactiles : cinq boutons indépendants, placés par le code (voir game.js, « disposition ») -->
 <div id="touch" aria-hidden="true">
-  <div class="pad steer" id="steerZone">
-    <div class="tbtn" id="tLeft"><svg viewBox="0 0 24 24"><path d="M15.5 4 7 12l8.5 8 1.5-1.6L10.2 12 17 5.6z"/></svg></div>
-    <div class="tbtn" id="tRight"><svg viewBox="0 0 24 24"><path d="M8.5 4 7 5.6 13.8 12 7 18.4 8.5 20l8.5-8z"/></svg></div>
-  </div>
-  <div class="pad pedals">
-    <div class="pcol">
-      <div class="tbtn hb" id="tHb"><span class="tt">FREIN<br>À MAIN</span></div>
-      <div class="tbtn brake" id="tBrake"><span class="tt">FREIN</span></div>
-    </div>
-    <div class="tbtn gas" id="tGas"><span class="tt">GAZ</span></div>
-  </div>
+  <div class="tbtn" id="tLeft" data-k="left"><svg viewBox="0 0 24 24"><path d="M15.5 4 7 12l8.5 8 1.5-1.6L10.2 12 17 5.6z"/></svg></div>
+  <div class="tbtn" id="tRight" data-k="right"><svg viewBox="0 0 24 24"><path d="M8.5 4 7 5.6 13.8 12 7 18.4 8.5 20l8.5-8z"/></svg></div>
+  <div class="tbtn hb" id="tHb" data-k="hb"><span class="tt">FREIN<br>À MAIN</span></div>
+  <div class="tbtn brake" id="tBrake" data-k="brake"><span class="tt">FREIN</span></div>
+  <div class="tbtn gas" id="tGas" data-k="gas"><span class="tt">GAZ</span></div>
 </div>
 
 <!-- menu titre -->
@@ -98,15 +92,27 @@
     <div class="setting"><div><label>Assistance de contre-braquage</label><p>« Simulation » coupe toute aide : réservé aux mains sûres.</p></div>
       <div class="mini-seg" role="group" aria-label="Assistance" id="assistSeg"><button data-v="0">Simu</button><button data-v="1">Normale</button><button data-v="1.3">Forte</button></div></div>
     <div class="setting"><div><label for="optAutoGas">Accélérateur automatique</label><p>Les gaz restent ouverts. Tu ne gères que la direction et les freins.</p></div><input type="checkbox" class="toggle" id="optAutoGas"></div>
-    <div class="setting"><div><label for="optLefty">Commandes inversées</label><p>Direction à droite, pédales à gauche.</p></div><input type="checkbox" class="toggle" id="optLefty"></div>
-    <div class="setting"><div><label>Taille des boutons</label><p>Agrandit les zones tactiles.</p></div>
-      <div class="mini-seg" role="group" aria-label="Taille des boutons" id="sizeSeg"><button data-v="s">S</button><button data-v="m">M</button><button data-v="l">L</button></div></div>
+    <div class="setting"><div><label>Commandes tactiles</label><p>Déplace chaque bouton, change sa taille et sa transparence.</p></div><button class="btn" id="layoutBtn"><span>Personnaliser</span></button></div>
     <div class="setting"><div><label for="optSound">Son</label><p>Moteur, pneus et effets synthétisés en direct.</p></div><input type="checkbox" class="toggle" id="optSound"></div>
     <div class="setting"><div><label for="optMotion">Réduire les mouvements</label><p>Supprime les secousses et l'effet de vitesse de la caméra.</p></div><input type="checkbox" class="toggle" id="optMotion"></div>
     <div class="setting"><div><label for="optVibe">Vibrations</label><p>Retour haptique sur les clips et les chocs (Android).</p></div><input type="checkbox" class="toggle" id="optVibe"></div>
     <div class="setting"><div><label>Qualité graphique</label><p>« Auto » baisse la qualité si l'appareil rame.</p></div>
       <div class="mini-seg" role="group" aria-label="Qualité" id="qualSeg"><button data-v="auto">Auto</button><button data-v="low">Basse</button><button data-v="high">Haute</button></div></div>
     <div class="row-end" style="margin-top:14px"><span class="hint" id="fpsOut"></span><button class="btn primary" data-back><span>OK</span></button></div>
+  </div>
+</section>
+
+<!-- éditeur de disposition -->
+<section class="screen passthru" id="layout" hidden aria-labelledby="layTitle">
+  <div class="card">
+    <div class="lay-head"><div><div class="eyebrow">Commandes</div><h2 id="layTitle">Ta disposition</h2></div><button class="btn primary" id="layDone"><span>Terminé</span></button></div>
+    <p class="sub" id="layHint">Glisse un bouton pour le déplacer. Touche-le pour régler sa taille.</p>
+    <div class="lay-grid">
+      <label class="rng" for="layAll"><span>Taille générale <output id="layAllOut">100 %</output></span><input type="range" id="layAll" min="60" max="170" step="5" value="100"></label>
+      <label class="rng" for="laySel"><span id="laySelLbl">Taille du bouton <output id="laySelOut">—</output></span><input type="range" id="laySel" min="60" max="170" step="5" value="100" disabled></label>
+      <label class="rng" for="layOp"><span>Transparence <output id="layOpOut">100 %</output></span><input type="range" id="layOp" min="20" max="100" step="5" value="100"></label>
+    </div>
+    <div class="row-end"><button class="btn ghost" id="layMirror"><span>Inverser gauche / droite</span></button><button class="btn ghost" id="layReset"><span>Réinitialiser</span></button></div>
   </div>
 </section>
 

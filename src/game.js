@@ -10,7 +10,7 @@
     get(k, d) { try { const v = localStorage.getItem('sdc:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem('sdc:' + k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } },
   };
-  const settings = Object.assign({ assist: 1, autoGas: false, lefty: false, size: 'm', sound: true, reduce: reduceDefault, vibe: true, quality: 'auto' }, store.get('settings', {}));
+  const settings = Object.assign({ assist: 1, autoGas: false, sound: true, reduce: reduceDefault, vibe: true, quality: 'auto' }, store.get('settings', {}));
   const garage = Object.assign({ car: 'kouki', paint: 'panda', rim: 'bronze', number: 15 }, store.get('garage', {}));
   const bests = store.get('bests', {});
   const saveSettings = () => store.set('settings', settings);
@@ -163,6 +163,7 @@
     if (k === 'escape' || k === 'p') {
       if (phase === 'play' || phase === 'count') pauseGame();
       else if (phase === 'pause' && screenId === 'pause') resumeGame();
+      else if (k === 'escape' && screenId === 'layout') closeLayoutEditor();
       else if (k === 'escape' && ['select', 'garage', 'settings', 'help'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
     }
     if (k === 'c' && (phase === 'play' || phase === 'count')) cycleCam();
@@ -170,38 +171,216 @@
     ensureAudio();
   });
   addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
-  addEventListener('blur', () => { keys.clear(); for (const k in touch) touch[k] = false; refreshTouchUI(); });
+  addEventListener('blur', () => { keys.clear(); clearTouch(); });
 
-  function bindHold(el, key) {
-    const on = (e) => { e.preventDefault(); el.setPointerCapture && el.setPointerCapture(e.pointerId); touch[key] = true; refreshTouchUI(); ensureAudio(); };
-    const off = (e) => { touch[key] = false; refreshTouchUI(); };
-    el.addEventListener('pointerdown', on);
-    el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
+  // ========== commandes tactiles : disposition + contrôleur à doigts glissants ==========
+  const TKEYS = ['left', 'right', 'gas', 'brake', 'hb'];
+  const TEL = { left: $('tLeft'), right: $('tRight'), gas: $('tGas'), brake: $('tBrake'), hb: $('tHb') };
+  // proportions de chaque bouton par rapport à la taille de base s (largeur, hauteur, rayon relatif)
+  const TDIM = { left: [1, 1], right: [1, 1], gas: [1.05, 1.5], brake: [0.95, 1.05], hb: [0.95, 0.95] };
+  const GAP = 12, MARGIN = 14;
+  const layouts = store.get('touchLayout', {}); // { l: {pos, sc, size, op}, p: {...} }  l = paysage, p = portrait
+  let tState = { rects: {}, W: 0, H: 0, s: 76, ori: 'l' };
+  let editing = false, selKey = null;
+
+  function safeInsets() {
+    const pr = document.createElement('div');
+    pr.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
+    document.body.appendChild(pr);
+    const c = getComputedStyle(pr);
+    const r = { t: parseFloat(c.paddingTop) || 0, r: parseFloat(c.paddingRight) || 0, b: parseFloat(c.paddingBottom) || 0, l: parseFloat(c.paddingLeft) || 0 };
+    pr.remove();
+    return r;
   }
-  // direction : une zone unique, glisser d'un bouton à l'autre change de côté
-  (function bindSteer() {
-    const zone = $('steerZone');
-    const active = new Map();
-    const evalSide = () => {
-      let l = false, r = false;
-      const rect = zone.getBoundingClientRect(); const mid = rect.left + rect.width / 2;
-      for (const x of active.values()) { if (x < mid) l = true; else r = true; }
-      touch.left = l && !r ? true : l && r ? false : false;
-      touch.right = r && !l ? true : false;
-      if (l && r) { const last = [...active.values()].pop(); touch.left = last < mid; touch.right = last >= mid; }
-      refreshTouchUI();
-    };
-    zone.addEventListener('pointerdown', (e) => { e.preventDefault(); zone.setPointerCapture(e.pointerId); active.set(e.pointerId, e.clientX); evalSide(); ensureAudio(); });
-    zone.addEventListener('pointermove', (e) => { if (active.has(e.pointerId)) { active.set(e.pointerId, e.clientX); evalSide(); } });
-    const up = (e) => { active.delete(e.pointerId); evalSide(); };
-    zone.addEventListener('pointerup', up); zone.addEventListener('pointercancel', up); zone.addEventListener('lostpointercapture', up);
-  })();
-  bindHold($('tGas'), 'gas'); bindHold($('tBrake'), 'brake'); bindHold($('tHb'), 'hb');
+  const curOri = () => (innerWidth >= innerHeight ? 'l' : 'p');
+  const getLay = () => layouts[curOri()] || null;
+  function ensureLay() { const o = curOri(); if (!layouts[o]) layouts[o] = { pos: {}, sc: {}, size: 1, op: 1 }; return layouts[o]; }
+  const saveLayouts = () => store.set('touchLayout', layouts);
+
+  // positions par défaut : pédales à droite, direction à gauche (centres, en px)
+  function defaultCenters(W, H, s, ins) {
+    const c = {};
+    const w = (k) => TDIM[k][0] * s, h = (k) => TDIM[k][1] * s;
+    const bottom = H - ins.b - MARGIN;
+    c.left = [ins.l + MARGIN + w('left') / 2, bottom - h('left') / 2];
+    c.right = [c.left[0] + w('left') / 2 + GAP + w('right') / 2, c.left[1]];
+    c.gas = [W - ins.r - MARGIN - w('gas') / 2, bottom - h('gas') / 2];
+    c.brake = [c.gas[0] - w('gas') / 2 - GAP - w('brake') / 2, bottom - h('brake') / 2];
+    c.hb = [c.brake[0], c.brake[1] - h('brake') / 2 - GAP - h('hb') / 2];
+    return c;
+  }
+
+  function applyLayout() {
+    const W = innerWidth, H = innerHeight, ori = curOri(), lay = getLay();
+    const base = W < 560 || H < 420 ? 66 : 76;
+    const gsize = lay ? lay.size : 1, op = lay ? lay.op : 1;
+    const sGlobal = base * gsize;
+    const ins = safeInsets();
+    const defs = defaultCenters(W, H, sGlobal, ins);
+    const rects = {};
+    for (const k of TKEYS) {
+      const sc = (lay && lay.sc[k]) || 1;
+      const w = TDIM[k][0] * sGlobal * sc, h = TDIM[k][1] * sGlobal * sc;
+      let cx, cy;
+      if (lay && lay.pos[k]) { cx = lay.pos[k][0] * W; cy = lay.pos[k][1] * H; } else { cx = defs[k][0]; cy = defs[k][1]; }
+      // reste entièrement visible, hors encoche
+      cx = clamp(cx, ins.l + 4 + w / 2, W - ins.r - 4 - w / 2);
+      cy = clamp(cy, ins.t + 4 + h / 2, H - ins.b - 4 - h / 2);
+      rects[k] = { x0: cx - w / 2, y0: cy - h / 2, x1: cx + w / 2, y1: cy + h / 2, cx, cy, w, h };
+      const el = TEL[k];
+      el.style.width = w + 'px'; el.style.height = h + 'px';
+      el.style.transform = `translate(${(cx - w / 2).toFixed(1)}px, ${(cy - h / 2).toFixed(1)}px)`;
+      el.style.borderRadius = k === 'left' || k === 'right' ? '50%' : Math.min(w, h) * 0.22 + 'px';
+      const tt = el.querySelector('.tt');
+      if (tt) tt.style.fontSize = (k === 'gas' ? Math.min(w, h) * 0.26 : Math.min(w, h) * 0.17) + 'px';
+    }
+    tState = { rects, W, H, s: sGlobal, ori, ins };
+    $('touch').style.setProperty('--op', op);
+    document.documentElement.style.setProperty('--btn', sGlobal + 'px');
+  }
+  // le transform sert au placement : l'état « enfoncé » passe par une ombre interne pour ne pas l'écraser
+  const style = document.createElement('style');
+  style.textContent = '.tbtn.on { transform-origin: center; filter: brightness(1.15); } #touch.editing .tbtn.drag { filter: brightness(1.2); }';
+  document.head.appendChild(style);
+
+  // ---------- contrôleur : un doigt = un bouton, mais il peut glisser sans lâcher ----------
+  const ptrs = new Map(); // pointerId -> { k, t }
+  let ptrClock = 0;
+  const inside = (r, x, y, m) => x >= r.x0 - m && x <= r.x1 + m && y >= r.y0 - m && y <= r.y1 + m;
+  // 1) bouton réellement sous le doigt (le plus proche du centre si deux se touchent) ; 2) sinon on garde le bouton
+  // courant tant que le doigt reste à moins de 28 px (pas de coupure dans les interstices) ; 3) sinon le plus proche à 28 px.
+  function hitTest(x, y, cur) {
+    const R = tState.rects;
+    let best = null, bd = Infinity;
+    for (const k of TKEYS) {
+      if (!inside(R[k], x, y, 0)) continue;
+      const d = Math.hypot((x - R[k].cx) / R[k].w, (y - R[k].cy) / R[k].h);
+      if (d < bd) { bd = d; best = k; }
+    }
+    if (best) return best;
+    if (cur && inside(R[cur], x, y, 28)) return cur;
+    for (const k of TKEYS) {
+      if (!inside(R[k], x, y, 28)) continue;
+      const d = Math.hypot((x - R[k].cx) / R[k].w, (y - R[k].cy) / R[k].h);
+      if (d < bd) { bd = d; best = k; }
+    }
+    return best;
+  }
+  function recomputeTouch() {
+    const on = { left: 0, right: 0, gas: 0, brake: 0, hb: 0 };
+    for (const p of ptrs.values()) if (p.k && p.t > on[p.k]) on[p.k] = p.t;
+    touch.gas = !!on.gas; touch.brake = !!on.brake; touch.hb = !!on.hb;
+    // deux doigts sur les deux flèches : le dernier arrivé gagne
+    touch.left = !!on.left && on.left > on.right;
+    touch.right = !!on.right && on.right > on.left;
+    refreshTouchUI();
+  }
+  let drag = null; // { id, k, dx, dy } en mode éditeur
+  const layer = $('touch');
+  layer.addEventListener('pointerdown', (e) => {
+    const btn = e.target.closest('.tbtn');
+    if (!btn) return;
+    e.preventDefault();
+    try { btn.setPointerCapture(e.pointerId); } catch (err) { /* pas critique */ }
+    if (editing) {
+      selectKey(btn.dataset.k);
+      const r = tState.rects[btn.dataset.k];
+      drag = { id: e.pointerId, k: btn.dataset.k, dx: e.clientX - r.cx, dy: e.clientY - r.cy };
+      btn.classList.add('drag');
+      return;
+    }
+    ensureAudio();
+    ptrs.set(e.pointerId, { k: hitTest(e.clientX, e.clientY, btn.dataset.k) || btn.dataset.k, t: ++ptrClock });
+    recomputeTouch();
+  });
+  layer.addEventListener('pointermove', (e) => {
+    if (editing) {
+      if (!drag || drag.id !== e.pointerId) return;
+      const lay = ensureLay(), R = tState.rects;
+      if (!lay.pos[drag.k]) for (const k of TKEYS) lay.pos[k] = [R[k].cx / tState.W, R[k].cy / tState.H]; // fige tout au premier geste
+      lay.pos[drag.k] = [(e.clientX - drag.dx) / tState.W, (e.clientY - drag.dy) / tState.H];
+      applyLayout();
+      return;
+    }
+    const p = ptrs.get(e.pointerId);
+    if (!p) return;
+    const k = hitTest(e.clientX, e.clientY, p.k);
+    if (k !== p.k) { p.k = k; p.t = ++ptrClock; recomputeTouch(); }
+  });
+  const release = (e) => {
+    if (editing) {
+      if (drag && drag.id === e.pointerId) { TEL[drag.k].classList.remove('drag'); drag = null; saveLayouts(); }
+      return;
+    }
+    if (ptrs.delete(e.pointerId)) recomputeTouch();
+  };
+  layer.addEventListener('pointerup', release);
+  layer.addEventListener('pointercancel', release);
+  layer.addEventListener('lostpointercapture', release);
+  function clearTouch() { ptrs.clear(); for (const k in touch) touch[k] = false; refreshTouchUI(); }
   function refreshTouchUI() {
-    $('tLeft').classList.toggle('on', touch.left); $('tRight').classList.toggle('on', touch.right);
-    $('tGas').classList.toggle('on', touch.gas || (settings.autoGas && !touch.brake && !touch.hb));
-    $('tBrake').classList.toggle('on', touch.brake); $('tHb').classList.toggle('on', touch.hb);
+    TEL.left.classList.toggle('on', touch.left); TEL.right.classList.toggle('on', touch.right);
+    TEL.gas.classList.toggle('on', touch.gas || (settings.autoGas && !touch.brake && !touch.hb));
+    TEL.brake.classList.toggle('on', touch.brake); TEL.hb.classList.toggle('on', touch.hb);
   }
+  function setTouchVisible() {
+    layer.classList.toggle('on', editing || (isTouch && (phase === 'play' || phase === 'count' || phase === 'pause')));
+    layer.classList.toggle('editing', editing);
+  }
+
+  // ---------- éditeur ----------
+  const pct = (v) => Math.round(v * 100) + ' %';
+  function selectKey(k) {
+    selKey = k;
+    for (const q of TKEYS) TEL[q].classList.toggle('sel', q === k);
+    syncLayoutUI();
+  }
+  function syncLayoutUI() {
+    const lay = getLay();
+    $('layAll').value = Math.round((lay ? lay.size : 1) * 100); $('layAllOut').textContent = pct(lay ? lay.size : 1);
+    $('layOp').value = Math.round((lay ? lay.op : 1) * 100); $('layOpOut').textContent = pct(lay ? lay.op : 1);
+    const sel = $('laySel'); sel.disabled = !selKey;
+    const names = { left: 'gauche', right: 'droite', gas: 'gaz', brake: 'frein', hb: 'frein à main' };
+    $('laySelLbl').firstChild.textContent = selKey ? `Bouton ${names[selKey]} ` : 'Taille du bouton ';
+    const v = selKey && lay && lay.sc[selKey] ? lay.sc[selKey] : 1;
+    sel.value = Math.round(v * 100); $('laySelOut').textContent = selKey ? pct(v) : '—';
+  }
+  $('layAll').addEventListener('input', (e) => { ensureLay().size = e.target.value / 100; applyLayout(); syncLayoutUI(); });
+  $('laySel').addEventListener('input', (e) => { if (!selKey) return; ensureLay().sc[selKey] = e.target.value / 100; applyLayout(); syncLayoutUI(); });
+  $('layOp').addEventListener('input', (e) => { ensureLay().op = e.target.value / 100; applyLayout(); syncLayoutUI(); });
+  for (const id of ['layAll', 'laySel', 'layOp']) $(id).addEventListener('change', saveLayouts);
+  $('layReset').addEventListener('click', () => { delete layouts[curOri()]; saveLayouts(); selKey = null; for (const q of TKEYS) TEL[q].classList.remove('sel'); applyLayout(); syncLayoutUI(); });
+  $('layMirror').addEventListener('click', () => {
+    const lay = ensureLay(), R = tState.rects;
+    for (const k of TKEYS) lay.pos[k] = [1 - (lay.pos[k] ? lay.pos[k][0] : R[k].cx / tState.W), lay.pos[k] ? lay.pos[k][1] : R[k].cy / tState.H];
+    saveLayouts(); applyLayout();
+  });
+  function openLayoutEditor() {
+    editing = true; selKey = null;
+    for (const q of TKEYS) TEL[q].classList.remove('sel');
+    clearTouch(); applyLayout(); syncLayoutUI(); setTouchVisible();
+    show('layout');
+  }
+  function closeLayoutEditor() {
+    editing = false; drag = null; saveLayouts();
+    setTouchVisible(); show(returnTo);
+  }
+  $('layDone').addEventListener('click', closeLayoutEditor);
+  addEventListener('resize', () => { applyLayout(); if (editing) syncLayoutUI(); });
+  addEventListener('orientationchange', () => setTimeout(() => { applyLayout(); if (editing) syncLayoutUI(); }, 250));
+
+  // ---------- iPhone : plus de zoom sur double-tap ni pincement ----------
+  // (user-scalable=no est ignoré par iOS ; ces gardes le sont moins.)
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = Date.now();
+    const gameSurface = e.target === canvas || e.target.closest('#touch, #hud') ;
+    if (gameSurface && !e.target.closest('.icon-btn') && now - lastTouchEnd < 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+  // ne bloque le glisser que hors des cartes défilantes et des curseurs
+  document.addEventListener('touchmove', (e) => { if (!e.target.closest('.card, input[type=range]')) e.preventDefault(); }, { passive: false });
   document.addEventListener('contextmenu', (e) => { if (e.target.closest('#touch') || e.target === canvas) e.preventDefault(); });
 
   let padPrev = {};
@@ -667,7 +846,7 @@
     phase = 'count';
     show(null);
     $('hud').hidden = false;
-    $('touch').classList.toggle('on', isTouch);
+    setTouchVisible();
     $('hudMode').textContent = mode === 'run' ? 'RUN NOTÉ' : mode === 'tandem' ? 'TANDEM' : 'LIBRE';
     const b = bests[track.def.id + ':' + mode];
     $('hudBest').textContent = b ? 'RECORD ' + b.toLocaleString('fr-FR') : 'RECORD —';
@@ -696,6 +875,7 @@
     clearTimeout(countTimer); $('count').hidden = true;
     phase = 'pause';
     Sound.suspend();
+    clearTouch();
     show('pause');
   }
   function resumeGame() {
@@ -714,7 +894,7 @@
     phase = 'results';
     Sound.suspend();
     $('hud').hidden = true;
-    $('touch').classList.remove('on');
+    setTouchVisible();
     $('banner').style.display = 'none';
     const key = track.def.id + ':' + mode;
     const total = Math.round(score.total);
@@ -739,7 +919,7 @@
   function toMenu() {
     phase = 'menu';
     Sound.suspend();
-    $('hud').hidden = true; $('touch').classList.remove('on'); $('count').hidden = true;
+    $('hud').hidden = true; clearTouch(); setTouchVisible(); $('count').hidden = true;
     show('menu');
     releaseWake();
   }
@@ -806,21 +986,19 @@
 
   function syncSettingsUI() {
     pressGroup($('assistSeg'), 'data-v', settings.assist);
-    pressGroup($('sizeSeg'), 'data-v', settings.size);
     pressGroup($('qualSeg'), 'data-v', settings.quality);
-    $('optAutoGas').checked = settings.autoGas; $('optLefty').checked = settings.lefty; $('optSound').checked = settings.sound;
+    $('optAutoGas').checked = settings.autoGas; $('optSound').checked = settings.sound;
     $('optMotion').checked = settings.reduce; $('optVibe').checked = settings.vibe;
-    $('touch').classList.toggle('lefty', settings.lefty);
-    document.documentElement.style.setProperty('--btn', { s: '64px', m: '76px', l: '92px' }[settings.size]);
+    refreshTouchUI();
   }
   const segBind = (id, key, conv) => $(id).addEventListener('click', (e) => {
     const b = e.target.closest('[data-v]'); if (!b) return;
     settings[key] = conv ? conv(b.dataset.v) : b.dataset.v; saveSettings(); syncSettingsUI(); Sound.ui();
     if (key === 'quality') { qLevel = settings.quality === 'auto' ? (isTouch ? 'med' : 'high') : settings.quality; quality = QUALITY[qLevel]; loadTrack(trackIdx); }
   });
-  segBind('assistSeg', 'assist', Number); segBind('sizeSeg', 'size'); segBind('qualSeg', 'quality');
+  segBind('assistSeg', 'assist', Number); segBind('qualSeg', 'quality');
   const tog = (id, key, after) => $(id).addEventListener('change', (e) => { settings[key] = e.target.checked; saveSettings(); syncSettingsUI(); after && after(); });
-  tog('optAutoGas', 'autoGas'); tog('optLefty', 'lefty'); tog('optMotion', 'reduce'); tog('optVibe', 'vibe');
+  tog('optAutoGas', 'autoGas'); tog('optMotion', 'reduce'); tog('optVibe', 'vibe');
   tog('optSound', 'sound', () => { if (settings.sound) Sound.init(); Sound.setEnabled(settings.sound); });
 
   const go = (id) => () => { Sound.ui(); show(id); };
@@ -833,6 +1011,7 @@
   $('garageBtn').addEventListener('click', () => { ensureAudio(); buildGarage(); show('garage'); });
   $('settingsBtn').addEventListener('click', () => { returnTo = 'menu'; syncSettingsUI(); show('settings'); });
   $('pSettingsBtn').addEventListener('click', () => { returnTo = 'pause'; syncSettingsUI(); show('settings'); });
+  $('layoutBtn').addEventListener('click', openLayoutEditor);
   $('helpBtn').addEventListener('click', go('help'));
   for (const b of document.querySelectorAll('[data-back]')) b.addEventListener('click', () => {
     Sound.ui();
@@ -854,6 +1033,7 @@
   // ---------- démarrage ----------
   function boot() {
     syncSettingsUI();
+    applyLayout();
     Sound.setEnabled(settings.sound);
     loadTrack(trackIdx);
     resize();
@@ -867,7 +1047,7 @@
     requestAnimationFrame((n) => { last = n; frame(n); });
     // accès de test (non utilisé par le jeu)
     window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); } };
-    window.__sdc = { get phase() { return phase; }, get player() { return player; }, get score() { return score; }, get track() { return track; }, get line() { return line; }, lossLog, startRun, input, touch, setMode: (m) => { mode = m; }, setTrack: (i) => { trackIdx = i; loadTrack(i); }, finishRun, get fps() { return 1000 / frameAvg; } };
+    window.__sdc = { get phase() { return phase; }, get player() { return player; }, get score() { return score; }, get track() { return track; }, get line() { return line; }, lossLog, startRun, input, touch, layouts, tState: () => tState, openLayoutEditor, setMode: (m) => { mode = m; }, setTrack: (i) => { trackIdx = i; loadTrack(i); }, finishRun, get fps() { return 1000 / frameAvg; } };
   }
   if (document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]).then(boot);
   else boot();

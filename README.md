@@ -33,3 +33,6 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 ## Données
 Aucune donnée personnelle. Réglages et records en `localStorage` sur l'appareil du joueur.
 Jeu conçu et codé avec l'assistance d'une IA (mention dans l'écran d'aide).
+
+## Commandes tactiles
+Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + taille par bouton, transparence, miroir, réinitialisation. Disposition enregistrée par orientation (`localStorage`, clé `sdc:touchLayout`). Un doigt peut glisser d'un bouton à l'autre sans lâcher (hit-test + hystérésis de 28 px). iPhone : zoom double-tap et pincement bloqués (`touch-action`, garde `touchend`, `gesture*`, viewport `user-scalable=no`).

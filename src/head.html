@@ -1,5 +1,6 @@
 <title>Sideways Drift Club</title>
 <meta name="theme-color" content="#0e0d14">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +26,8 @@
   --btn: 76px;
 }
 [hidden] { display: none !important; }
-html, body { height: 100%; }
+html, body { height: 100%; touch-action: none; -webkit-touch-callout: none; overscroll-behavior: none; }
+button, input, .opt { touch-action: manipulation; }
 body { margin: 0; background: var(--ink); color: var(--paper); font-family: var(--font-ui); overflow: hidden; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
 canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 button { font: inherit; color: inherit; }
@@ -160,22 +162,33 @@ button { font: inherit; color: inherit; }
 /* ---------- commandes tactiles ---------- */
 #touch { position: fixed; inset: 0; z-index: 12; pointer-events: none; display: none; }
 #touch.on { display: block; }
-.pad { position: absolute; bottom: max(14px, env(safe-area-inset-bottom)); pointer-events: auto; touch-action: none; }
-.steer { left: max(14px, env(safe-area-inset-left)); display: flex; gap: 12px; }
-.pedals { right: max(14px, env(safe-area-inset-right)); display: flex; gap: 12px; align-items: flex-end; }
-#touch.lefty .steer { left: auto; right: max(14px, env(safe-area-inset-right)); }
-#touch.lefty .pedals { right: auto; left: max(14px, env(safe-area-inset-left)); flex-direction: row-reverse; }
-.tbtn { width: var(--btn); height: var(--btn); border-radius: 50%; border: 2px solid rgba(255,255,255,.28); background: rgba(14,13,20,.42); display: grid; place-items: center; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); transition: transform .06s, background .06s; }
-.tt { font-weight: 700; font-size: 13px; letter-spacing: .12em; text-align: center; line-height: 1.15; color: var(--paper); }
-.tbtn.gas .tt { font-family: var(--font-display); font-weight: 400; font-size: 18px; }
-.tbtn svg { width: 46%; height: 46%; fill: var(--paper); }
+#touch { --op: 1; }
+/* bouton : position/taille posées en px par game.js. ::after élargit la zone sensible de 8 px pour ne jamais perdre le doigt entre deux boutons. */
+.tbtn { position: absolute; left: 0; top: 0; box-sizing: border-box; border-radius: 50%; border: 2px solid rgba(255,255,255,.28); background: rgba(14,13,20,.42); display: grid; place-items: center; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); transition: background .06s, filter .06s; pointer-events: auto; touch-action: none; opacity: var(--op); -webkit-touch-callout: none; }
+.tbtn::after { content: ""; position: absolute; inset: -8px; border-radius: inherit; }
+.tbtn.hb { border-color: rgba(255,61,61,.6); }
+#touch.editing { z-index: 25; }
+#touch.editing .tbtn { cursor: grab; outline: 2px dashed rgba(255,210,63,.7); outline-offset: 3px; }
+#touch.editing .tbtn.sel { outline: 3px solid var(--tape); background: rgba(255,210,63,.3); }
+#touch.editing .tbtn.drag { cursor: grabbing; transform: scale(1.04); }
+.screen.passthru { pointer-events: none; background: none; align-items: flex-start; justify-content: center; }
+.screen.passthru .card { pointer-events: auto; width: min(640px, 100%); padding: 12px 16px; background: rgba(16,15,24,.9); }
+.screen.passthru .sub { margin: 0 0 8px; font-size: 14px; }
+.lay-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; }
+.lay-head h2 { font-size: 20px; margin: 0; }
+.lay-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 10px; }
+.rng { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.rng span { display: flex; justify-content: space-between; gap: 6px; }
+.rng output { color: var(--paper); font-variant-numeric: tabular-nums; }
+.rng input[type=range] { width: 100%; height: 32px; accent-color: var(--tape); margin: 0; touch-action: pan-x; }
+.rng input:disabled { opacity: .35; }
+@media (max-width: 4000px) { .screen.passthru .card .row-end .btn, .lay-head .btn { min-height: 44px; padding: 0 14px; font-size: 14px; } .lay-head .btn.primary { font-size: 16px; } }
+@media (max-width: 620px) { .lay-grid { grid-template-columns: 1fr; gap: 4px; } .lay-head .btn { min-height: 44px; } .screen.passthru .card .row-end .btn { min-height: 44px; padding: 0 14px; font-size: 14px; } }
+.tt { pointer-events: none; font-weight: 700; font-size: 13px; letter-spacing: .12em; text-align: center; line-height: 1.15; color: var(--paper); }
+.tbtn.gas .tt { font-family: var(--font-display); font-weight: 400; }
+.tbtn svg { width: 46%; height: 46%; fill: var(--paper); pointer-events: none; }
 .tbtn.on { background: rgba(255,210,63,.45); transform: scale(.94); border-color: var(--tape); }
-.tbtn.gas { width: calc(var(--btn) * 1.05); height: calc(var(--btn) * 1.5); border-radius: 18px; }
-.tbtn.brake { width: calc(var(--btn) * 0.95); height: calc(var(--btn) * 1.05); border-radius: 16px; }
-.tbtn.hb { width: calc(var(--btn) * 0.95); height: calc(var(--btn) * 0.95); border-radius: 16px; border-color: rgba(255,61,61,.6); }
 .tbtn.hb.on { background: rgba(255,61,61,.55); border-color: var(--tail); }
-.tlabel { position: absolute; bottom: -2px; font-size: 10px; letter-spacing: .14em; color: rgba(255,255,255,.7); width: 100%; text-align: center; transform: translateY(100%); }
-.pcol { display: flex; flex-direction: column; gap: 12px; align-items: center; }
 
 @media (max-height: 420px) { :root { --btn: 64px; } .combo { top: calc(max(10px, env(safe-area-inset-top)) + 84px); } .combo .pts { font-size: 40px; } }
 
