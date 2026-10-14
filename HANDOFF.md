@@ -1,60 +1,71 @@
 # Handoff — Sideways Drift Club
 
-Date : 2026-10-09 · Source : commit `f9cb2f9` (branche orpheline `game/sideways-drift-club`, dépôt `pharmaciedufourachaux`)
-Version publiée : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL (v2, privée)
+Date : 2026-10-14 · Branche : `claude/optimistic-fermi-xni0xz` (dépôt `shanlihenriderussy-rgb/sideways-drift-club`)
+Version publiée : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL (v2, privée — pas encore mise à jour) · Vercel depuis `main`
 
 ## État
 Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome, avec Three.js r128 chargé depuis cdnjs.
-- **Contenu** : 3 pistes (Docks de Minato la nuit, Col d'Akane au coucher du soleil, Piton Volcan de jour) et 3 voitures (HACHI, KOUKI, RAIJIN), avec peinture, jantes et numéro.
-- **Modes** : Run noté (1 tour, note S→D), Tandem (leader IA), Libre.
-- **Score** : angle × vitesse, multiplicateur jusqu'à x8, zones de clipping extérieures (orange) et cordes (bleu). Le combo est perdu sur un choc, un tête-à-queue ou une sortie de piste.
-- **Commandes** : tactile (direction, gaz, frein, frein à main), clavier AZERTY et QWERTY, manette.
-- **Accessibilité** : accélérateur automatique, 3 niveaux d'assistance, gaucher, taille des boutons, mouvements réduits, aria-live.
-- **Son** : 100 % synthétisé avec Web Audio (moteur, turbo, crissement, impacts).
-- **Données** : aucune donnée personnelle. Réglages et records en `localStorage` sur l'appareil. La mention « conçu avec une IA » figure dans l'écran d'aide.
+- **Contenu** : 3 pistes (Docks de Minato la nuit, Col d'Akane au coucher du soleil, Piton Volcan de jour) et 3 voitures (HACHI, KOUKI, RAIJIN).
+- **Voitures** : caisse lissée (loft) avec passages de roue et ailes galbées, habitacle vitré avec intérieur (baquets, volant à droite), livrée peinte sur la caisse, phares et feux propres à chaque modèle, 5 dessins de jantes, freins visibles.
+- **Décors** : ciel peint (nuages, étoiles, halo de ville), deux crêtes de montagnes, route et murs par lieu, décor détaillé par thème, tribune, piles de pneus, chevrons de virage, eau animée.
+- **Économie** (`src/economy.js`) : portefeuille en ¥ (monnaie fictive), gains de fin de run détaillés, bonus quotidien en série, 14 défis, historique, migration de l'ancienne clé `sdc:garage`.
+- **Atelier** (`src/shop.js`) : voitures, carrosserie, peinture, roues, performances (impact physique), réglages visuels ; aperçu avant achat ; caméra par rayon ; rotation au doigt.
+- **Fluidité** : affichage interpolé entre pas physiques, envois GPU partiels, HUD en transform, shaders précompilés, résolution dynamique.
+- **Favicon** : SVG intégré, icônes d'application, manifeste ; en combo, l'onglet affiche le multiplicateur.
+- **Modes, commandes, accessibilité, son** : inchangés (voir README).
+- **Données** : aucune donnée personnelle. Réglages, records et profil en `localStorage`. Mention « conçu avec une IA » dans l'aide ; « monnaie fictive, sans achat réel » dans Carrière.
 
 ## Mesures de référence
 | Mesure | Valeur |
 |---|---|
-| Appels de dessin / image | 68–79 (cible < 100) |
-| JS / image | 0,5–0,8 ms ; 2,8–3,4 ms avec CPU ralenti ×6 |
-| Chargement d'une piste | ≤ 350 ms avec CPU ralenti ×6 |
-| Audio | fondamentale = tr/min ÷ 60 × 2 ; crissement +12 dB en glisse ; crête 0,81, pas de saturation |
-| Barème (`par` dans `src/track.js`) | 32 k / 33 k / 46 k (×1,25 en tandem). Tour propre du bot expert ≈ A |
+| Appels de dessin / image (tandem) | 65–68 (cible < 100) |
+| JS / image | 0,4–0,5 ms ; 1,9–2,8 ms avec CPU ralenti ×6 |
+| Saccade d'affichage 60/90/120/144 Hz | 0,1 % (avant : 0,4 % à 60 Hz, 14–60 % au-delà) |
+| Chargement d'une piste, CPU ×6 | 0,38–0,52 s (avant : ≤ 0,35 s, décor bien plus pauvre) |
+| Tests économie | 16/16 (`node --test tests/*.test.js`) |
+| Banc physique sans amélioration | identique à l'origine (`tools/tune.js`, `tools/tune2.js hold`) |
+| Bot expert, Col d'Akane, KOUKI | 21,3 k en moyenne contre 22,0 k pour la version d'origine (bruit d'un run à l'autre : 17 à 27 k) |
 
 ## Décisions actives
-- **Fichier unique** : `build.mjs` concatène `src/*` → `index.html` (document complet). Pas de bundler, pas de dépendance npm.
-- **Physique** : modèle bicyclette avec pneus saturés, plus un régulateur d'angle d'arcade (`c.drift`, cible β pilotée par le gaz et la direction). L'assistance 0 désactive le régulateur (mode « Simu »).
-- **Reflets** : cubemap peinte sur canvas. **Pas de PMREM**, qui rendait les voitures noires sous swiftshader et présente un risque sur les GPU mobiles.
-- **Performances** : pièces des voitures, grues et repères de zones fusionnées par matériau (`mergeByMaterial` dans `car.js`, utilisé aussi par `world.js`).
-- **Profondeur** : sol à y = −0,12 avec `polygonOffset`, caméra `near` = 0,5, pour éviter le z-fighting route/sol sur les tampons 16 bits.
-- **Leader tandem** : cinématique (trajectoire précalculée dans `ai.js`), pas physique. Élastique de vitesse selon l'écart.
-- **Qualité auto** : `med` sur tactile, `high` sur bureau. Descend d'un cran si la moyenne dépasse 24 ms/image.
+- **Fichier unique** : `build.mjs` concatène `src/*` → `index.html`. Ordre : physics, economy, track, world, car, fx, audio, ai, shop, game. Le favicon SVG est intégré en data URI ; icônes PNG et manifeste ne sont liés qu'en production (pas dans `test.html`).
+- **Économie pure** : `economy.js` ne touche ni au DOM ni à Three.js ; tout passe par le profil et renvoie `{ ok, reason, … }`. Les pièces à 0 ¥ sont toujours possédées. Une pièce équipée mais non payée revient à l'origine au chargement.
+- **Fiche tunée** : `tunedSpec` copie la fiche de base. Sans amélioration, la physique est strictement identique (vérifié au banc).
+- **Livrée** : une texture 1024×512 enveloppe la caisse. Flanc droit v∈[0,7;1], dessus v∈[0,3;0,7], flanc gauche v∈[0;0,3]. Les zones y < 0,2 m servent d'atlas (plaque, bandeau de pare-brise, peinture unie des faces avant/arrière).
+- **Roues** : `InstancedMesh` (pneu, jante, fût, disque, étrier), 4 instances. Roues gauches tournées de π (pas de miroir : un déterminant négatif inverserait les faces).
+- **Atelier** : l'aperçu ne reconstruit que ta voiture (`buildCars(true)`). Quitter l'atelier abandonne l'aperçu non payé.
+- **Interpolation** : `player.x0/z0/h0` mémorisés avant chaque pas de 1/120 s ; affichage, caméra et fumée lisent l'état interpolé, score et collisions l'état physique.
+- **Qualité auto** : la résolution baisse d'abord (en 1–2 pas, coût ∝ dpr²), puis un cran de qualité ; elle remonte après 8 s d'aisance. Appliquée après le rendu.
+- **Reflets** : cubemap peinte sur canvas. Pas de PMREM.
+- **Profondeur** : sol à y = −0,12 avec `polygonOffset`, caméra `near` = 0,5.
 
 ## Pièges
-- **Sens des triangles** : les bandes de route et de murs doivent avoir leur normale vers le haut ou vers la piste. Une inversion rend la route invisible, sans erreur.
-- **UV des murs** : `-v * side`, sinon le texte est en miroir d'un côté.
-- **`[hidden]`** : la règle `display:none !important` est indispensable, car `.screen` en flex l'écrase.
-- **`touch-action`** : `none` sur `body`, mais `pan-y` sur `.card`, sinon les menus ne défilent pas sur mobile.
-- **`tools/*.js`** : chemins écrits pour le conteneur d'origine (`require('/opt/node-tools/node_modules/playwright')`, `__dirname + '/test.html'` alors que `test.html` est à la racine). À adapter avant de les relancer ailleurs.
-- **`window.__sdc` / `__sdcDbg` / `lossLog` / `Sound._debug`** : points d'accès de test laissés dans le build. Sans effet sur le jeu.
-- **Artifact** : publié depuis un fichier local. Pour le mettre à jour depuis une autre session, passer l'URL de l'artifact en `url`.
+- **Sens des triangles** : bandes de route et murs, normale vers le haut ou vers la piste. Le loft de caisse : quad (i,j)→(i,j+1)→(i+1,j) pour une normale sortante.
+- **Texte de livrée** : chaque bande a son propre sens (flanc droit retourné verticalement, flanc gauche en miroir, dessus tourné). Passer par `text()` dans `paintLivery`, jamais `fillText` direct.
+- **Canvas** : `getImageData` sur un canvas accéléré force une relecture GPU très lente, et `createImageData`/`putImageData` n'est pas plus rapide que `fillRect` ici. Réduire le nombre de mouchetures plutôt.
+- **Passages de roue** : demi-cylindre `thetaStart = π/2` (sinon il pend sous la caisse).
+- **`[hidden]`** : la règle `display:none !important` est indispensable.
+- **`touch-action`** : `none` sur `body`, `pan-y` sur `.card`, `pan-x` sur les onglets de l'atelier.
+- **`tools/*.js`** : chemins écrits pour le conteneur d'origine (`__dirname + '/test.html'`). Remplacer par le chemin absolu de `test.html` avant de lancer.
+- **three.js local** : cdnjs peut être bloqué par le proxy ; `npm pack three@0.128.0` puis copier `package/build/three.min.js` dans `vendor/`.
+- **Points d'accès de test** : `window.__sdc`, `__sdcDbg` (dont `preview`, `view`, `trace`, `profile`), `lossLog`, `Sound._debug`. Sans effet sur le jeu.
 
 ## Non vérifié (hors de portée de l'environnement)
-- Nombre réel d'images par seconde sur un téléphone Android.
-- Écoute du son.
-- Barème sur de vraies parties humaines.
+- Images par seconde réelles sur un Android milieu de gamme (rendu logiciel ici).
+- Équilibre de l'économie sur de vraies parties (prix, gains, rythme de progression).
+- Ergonomie de l'atelier sur petit écran tactile réel (vérifiée en émulation 844×390 et 390×844).
+- Écoute du son (nouveau jingle d'encaissement).
 
 ## Prochaine tranche
-1. Créer un dépôt dédié et y pousser ce zip, puis supprimer la branche `game/sideways-drift-club` du dépôt de la pharmacie (`git push origin --delete game/sideways-drift-club`).
-2. Faire un test sur Android milieu de gamme : fps en jeu (`window.__sdc.fps`), ressenti de la glisse, niveau sonore. Ajuster `par` après 5 à 10 parties réelles.
-3. Pistes d'évolution : enregistrement du meilleur tour en fantôme, 4e piste, réglages de la voiture (angle de braquage, carrossage).
+1. Test sur téléphone : fps (`window.__sdc.fps`), lisibilité de l'atelier, temps de chargement d'une piste.
+2. Ajuster prix et gains après 10 parties réelles (`CAR_PRICES`, `SHOP`, `PERF`, `computePayout`).
+3. Mettre à jour l'artifact publié depuis `index.html` (passer son URL en `url`).
+4. Pistes d'évolution : fantôme du meilleur tour, 4e piste, vente de pièces.
 
 ## Reprise rapide
 ```
-unzip sideways-drift-club.zip && cd sideways-drift-club
-mkdir -p vendor && curl -o vendor/three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
-node build.mjs --local   # test.html à ouvrir dans un navigateur
-node build.mjs           # index.html à déployer (Vercel / GitHub Pages)
-node tools/tune2.js pid  # banc physique (Node seul)
+mkdir -p vendor && npm pack three@0.128.0 && tar xzf three-0.128.0.tgz package/build/three.min.js && cp package/build/three.min.js vendor/
+node build.mjs --local        # test.html à ouvrir dans un navigateur
+node build.mjs                # index.html à déployer (Vercel / GitHub Pages)
+node --test tests/*.test.js   # économie
+node tools/tune2.js hold      # banc physique (Node seul)
 ```

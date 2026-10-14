@@ -94,7 +94,11 @@ function createShop(api) {
     const info = pendingInfo();
     const buy = $('shopBuy'), cancel = $('shopCancel'), msg = $('shopMsg');
     buy.hidden = cancel.hidden = !info;
-    $('shopDone').hidden = !!info;
+    // toujours une sortie : bouton compact pendant un achat en attente (l'aperçu non payé est abandonné)
+    const done = $('shopDone');
+    done.classList.toggle('compact', !!info);
+    done.firstElementChild.textContent = info ? '✕' : 'Valider';
+    done.setAttribute('aria-label', info ? 'Fermer l’atelier sans acheter' : 'Valider et fermer l’atelier');
     if (info) {
       const can = P().money >= info.price;
       buy.disabled = !can;

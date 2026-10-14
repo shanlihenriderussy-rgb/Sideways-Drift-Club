@@ -139,21 +139,24 @@
     Object.assign(c, { paint: mine.paint === 'tofu' ? 'panda' : 'tofu', accent: 'jaune', livery: 'stripes', number: 1, rimStyle: 'mesh', rim: 'or', front: 'lip', wing: 'gt', smoke: 'blanc' });
     return c;
   }
-  function buildCars() {
+  // playerOnly : aperçu de l'atelier, on ne reconstruit que ta voiture (ni le leader, ni l'état physique)
+  function buildCars(playerOnly) {
     if (playerModel) playerModel.dispose();
-    if (leaderModel) leaderModel.dispose();
+    if (leaderModel && !playerOnly) leaderModel.dispose();
     const night = world.theme.headlights;
     const kind = showKind || profile.current;
     const cfg = showCfg || profile.cars[kind];
     playerModel = buildCar(kind, lookOf(cfg, night));
     scene.add(playerModel.root);
     setSmoke('P', cfg);
-    const lk = profile.current === 'raijin' ? 'kouki' : 'raijin';
-    const lc = leaderCfg(lk);
-    leaderModel = buildCar(lk, lookOf(lc, night));
-    setSmoke('L', lc);
-    scene.add(leaderModel.root);
-    for (const m of [playerModel, leaderModel]) m.root.traverse((o) => { if (o.material && o.material.isMeshStandardMaterial) { o.material.envMap = envMap; o.material.needsUpdate = true; } });
+    if (!playerOnly) {
+      const lk = profile.current === 'raijin' ? 'kouki' : 'raijin';
+      const lc = leaderCfg(lk);
+      leaderModel = buildCar(lk, lookOf(lc, night));
+      setSmoke('L', lc);
+      scene.add(leaderModel.root);
+    }
+    for (const m of playerOnly ? [playerModel] : [playerModel, leaderModel]) m.root.traverse((o) => { if (o.material && o.material.isMeshStandardMaterial) { o.material.envMap = envMap; o.material.needsUpdate = true; } });
     if (night) {
       if (!playerModel.lamp) {
         const sl = new THREE.SpotLight(0xfff0d0, 2.4, 70, 0.55, 0.5, 1.4);
@@ -162,6 +165,7 @@
         playerModel.lamp = sl;
       }
     }
+    if (playerOnly) return;
     resetPlayer(startIndex(), 0);
     const keepS = leader && leader.track === track ? leader.state.s : null;
     leader = createLeader(track, line, 10);
@@ -1005,7 +1009,7 @@
     $('resDrift').textContent = Math.round(score.driftT / Math.max(score.runT, 1) * 100) + ' %';
     $('resEyebrow').textContent = `${mode === 'run' ? 'Run noté' : mode === 'tandem' ? 'Tandem' : 'Libre'} · ${track.def.name}`;
     // gains en yens + défis
-    const res = Economy.applyRun(profile, { trackId: track.def.id, mode, score: total, grade: mode === 'free' ? null : grade, clips: score.clips, zones: track.zones.length, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), record: record && mode !== 'free' });
+    const res = Economy.applyRun(profile, { trackId: track.def.id, trackName: track.def.name, mode, score: total, grade: mode === 'free' ? null : grade, clips: score.clips, zones: track.zones.length, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), record: record && mode !== 'free' });
     saveProfile(); refreshWallet();
     $('payLines').innerHTML = res.payout.lines.map((l) => `<div><span>${l.label}</span><b>+${Economy.fmt(l.amount)}</b></div>`).join('') || '<div><span>Aucun gain sur ce run.</span></div>';
     $('payChal').innerHTML = res.challenges.map((c) => `<div>Défi réussi : ${c.label} · +${Economy.fmt(c.reward)}</div>`).join('');
@@ -1026,6 +1030,7 @@
   }
   function toMenu() {
     phase = 'menu';
+    claimDaily(); refreshWallet();
     Sound.suspend();
     $('hud').hidden = true; clearTouch(); setTouchVisible(); $('count').hidden = true;
     show('menu');
@@ -1090,7 +1095,7 @@
   const shop = createShop({
     profile,
     save() { saveProfile(); refreshWallet(); },
-    preview(kind, cfg) { showKind = kind; showCfg = cfg; buildCars(); },
+    preview(kind, cfg) { showKind = kind; showCfg = cfg; buildCars(true); },
     setView(tab) { shopView = SHOP_VIEWS[tab] || SHOP_VIEWS.car; garageYaw = 0; },
     close() { closeShop(); },
     carChanged() { /* la fiche physique est relue au départ du run (resetPlayer) */ },
@@ -1116,7 +1121,7 @@
   const segBind = (id, key, conv) => $(id).addEventListener('click', (e) => {
     const b = e.target.closest('[data-v]'); if (!b) return;
     settings[key] = conv ? conv(b.dataset.v) : b.dataset.v; saveSettings(); syncSettingsUI(); Sound.ui();
-    if (key === 'quality') { qLevel = settings.quality === 'auto' ? (isTouch ? 'med' : 'high') : settings.quality; quality = QUALITY[qLevel]; loadTrack(trackIdx); }
+    if (key === 'quality') { qLevel = settings.quality === 'auto' ? (isTouch ? 'med' : 'high') : settings.quality; quality = QUALITY[qLevel]; dprScale = 1; loadTrack(trackIdx); }
   });
   segBind('assistSeg', 'assist', Number); segBind('qualSeg', 'quality');
   const tog = (id, key, after) => $(id).addEventListener('change', (e) => { settings[key] = e.target.checked; saveSettings(); syncSettingsUI(); after && after(); });

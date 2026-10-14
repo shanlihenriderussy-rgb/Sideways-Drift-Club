@@ -61,6 +61,7 @@ function blotches(g, w, h, colors, n, rmin, rmax, alpha, seed) {
     const x = r() * w, y = r() * h, rad = rmin + r() * (rmax - rmin);
     const col = colors[Math.floor(r() * colors.length)];
     for (const [ox, oy] of [[0, 0], [w, 0], [-w, 0], [0, h], [0, -h]]) {
+      if ((ox > 0 && x + rad < w) || (ox < 0 && x - rad > 0) || (oy > 0 && y + rad < h) || (oy < 0 && y - rad > 0)) continue;
       const gr = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, rad);
       gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)');
       g.globalAlpha = alpha; g.fillStyle = gr; g.fillRect(x + ox - rad, y + oy - rad, rad * 2, rad * 2);
@@ -191,7 +192,7 @@ function buildWorld(scene, track, quality) {
 
   // --- sol (béton de quai, herbe de col, lave et herbe)
   const groundTex = keep(canvasTex(512, 512, (g, w, h) => {
-    noiseFill(g, w, h, T.ground, T.groundSpeck, 6000, 3, 3);
+    noiseFill(g, w, h, T.ground, T.groundSpeck, 3500, 3, 3);
     if (theme === 'night') {
       blotches(g, w, h, ['#3a3b44', '#22232a', '#454650'], 30, 40, 120, 0.35, 21);
       g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 2;
@@ -207,7 +208,7 @@ function buildWorld(scene, track, quality) {
 
   // --- route : bitume à granulats, usure, fissures, rapiéçages, marquage selon le lieu
   const roadTex = keep(canvasTex(512, 1024, (g, w, h) => {
-    noiseFill(g, w, h, T.road, '#6a6a72', 26000, 2, 5);
+    noiseFill(g, w, h, T.road, '#6a6a72', 14000, 2.4, 5);
     blotches(g, w, h, ['rgba(0,0,0,1)', 'rgba(255,255,255,1)'], 26, 30, 110, 0.05, 31);
     const r = rng(41);
     // rapiéçages
@@ -248,7 +249,7 @@ function buildWorld(scene, track, quality) {
   const road = new THREE.Mesh(strip(-half, half, 0.01, 20), keep(new THREE.MeshStandardMaterial({ map: roadTex, roughness: theme === 'night' ? 0.62 : 0.9, metalness: theme === 'night' ? 0.08 : 0 })));
   road.receiveShadow = !!quality.shadows;
   group.add(road);
-  const shTex = keep(canvasTex(128, 128, (g, w, h) => { noiseFill(g, w, h, T.shoulder, '#8a8478', 2400, 2, 9); blotches(g, w, h, ['rgba(0,0,0,1)'], 8, 10, 30, 0.12, 9); }, true));
+  const shTex = keep(canvasTex(128, 128, (g, w, h) => { noiseFill(g, w, h, T.shoulder, '#8a8478', 1400, 2, 9); blotches(g, w, h, ['rgba(0,0,0,1)'], 8, 10, 30, 0.12, 9); }, true));
   const shMat = keep(new THREE.MeshLambertMaterial({ map: shTex }));
   group.add(new THREE.Mesh(strip(-wall, -half, 0.005, 6), shMat));
   group.add(new THREE.Mesh(strip(half, wall, 0.005, 6), shMat));
@@ -294,7 +295,7 @@ function buildWorld(scene, track, quality) {
       for (let x = 0; x < w; x += 128) { g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x, 0, 3, h); g.fillStyle = '#ff9a1e'; g.fillRect(x + 60, h * 0.44, 10, 10); }
       for (let i = 0; i < 8; i++) if (i % 3 === 1) { g.fillStyle = T.wallB; g.fillRect(i * seg + 20, 6, seg - 40, h * 0.34); g.fillStyle = '#fff'; g.fillText(words[i % words.length], i * seg + seg / 2, h * 0.2 + 3); }
     } else {
-      noiseFill(g, w, h, theme === 'night' ? '#8d8b86' : '#cfd3d6', '#ffffff', 9000, 2, 13);
+      noiseFill(g, w, h, theme === 'night' ? '#8d8b86' : '#cfd3d6', '#ffffff', 4000, 2.5, 13);
       for (let i = 0; i < 8; i++) {
         g.fillStyle = i % 2 ? T.wallA : T.wallB; g.globalAlpha = 0.92; g.fillRect(i * seg, h * 0.12, seg, h * 0.62); g.globalAlpha = 1;
         if (theme === 'night') { // bande de danger en chevrons
@@ -434,11 +435,13 @@ function buildWorld(scene, track, quality) {
     for (let i = 0; i < N; i += 2) { const dx = x - px[i], dz = z - pz[i]; if (dx * dx + dz * dz < d2) return false; }
     return true;
   }
+  const reserved = []; // [x, z, rayon] : tribune, torii… rien n'y pousse
   function scatter(count, minD, pad, accept) {
     const out = [];
     let guard = 0;
     while (out.length < count && guard++ < count * 30) {
       const x = minX - pad + R() * (maxX - minX + pad * 2), z = minZ - pad + R() * (maxZ - minZ + pad * 2);
+      if (reserved.some(([rx, rz, rr]) => (x - rx) ** 2 + (z - rz) ** 2 < rr * rr)) continue;
       if ((!accept || accept(x, z)) && clearOf(x, z, minD)) out.push([x, z]);
     }
     return out;
@@ -460,6 +463,10 @@ function buildWorld(scene, track, quality) {
   // placement le long de la piste, au-delà du mur
   const along = (i, side, d) => { const nx = -tz[i] * side, nz = tx[i] * side; return [px[i] + nx * (wall + d), pz[i] + nz * (wall + d), Math.atan2(nx, nz)]; };
   const dens = quality.scenery;
+  const standAt = [Math.round(28 / track.step) % N, theme === 'night' ? 1 : -1];
+  const toriiAt = Math.round(60 / track.step) % N;
+  { const [x, z] = along(standAt[0], standAt[1], 10); reserved.push([x, z, 24]); }
+  if (theme === 'sunset') { const [x, z] = along(toriiAt, 1, 6); reserved.push([x, z, 13]); const [vx, vz] = along((toriiAt + 8) % N, 1, 3); reserved.push([vx, vz, 5]); }
 
   // piles de pneus peints (toutes pistes)
   if (tireSpots.length) {
@@ -473,7 +480,7 @@ function buildWorld(scene, track, quality) {
 
   // tribune de spectateurs le long de la ligne droite de départ
   {
-    const i = Math.round(28 / track.step) % N, side = theme === 'night' ? 1 : -1;
+    const [i, side] = standAt;
     const [sx, sz, rot] = along(i, side, 7);
     const stand = new THREE.Group();
     const stepsMat = keep(new THREE.MeshLambertMaterial({ color: 0x5b5d66 }));
@@ -514,7 +521,7 @@ function buildWorld(scene, track, quality) {
     const signs = [];
     for (const z of track.zones) if (z.type === 'outer') for (let k = 0; k < 3; k++) {
       const q = (z.from + Math.round((k / 2) * ((z.to - z.from + N) % N))) % N;
-      const [x, zz] = along(q, z.side, 0.5);
+      const [x, zz] = along(q, z.side, 2.2); // derrière les piles de pneus
       // le panneau regarde le pilote qui arrive ; la flèche indique le sens du virage
       signs.push({ x, z: zz, h: Math.atan2(tx[q], tz[q]) + Math.PI, flip: z.side > 0 });
     }
@@ -701,7 +708,7 @@ function buildWorld(scene, track, quality) {
     instanced(new THREE.DodecahedronGeometry(2.2, 0), new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 2 }), rocks, (d) => { const s = 0.6 + R() * 1.8; d.scale.set(s * 1.3, s, s); d.position.y = s * 0.5; }, [0x6b6460, 0x7d7268, 0x5a5452]);
     // torii et lanternes près du départ
     {
-      const i = Math.round(60 / track.step) % N;
+      const i = toriiAt;
       const [x, z, rot] = along(i, 1, 6);
       const tg = new THREE.Group();
       const red = keep(new THREE.MeshLambertMaterial({ color: 0xd2321e })), blk = keep(new THREE.MeshLambertMaterial({ color: 0x1a1a1a })), stone = keep(new THREE.MeshLambertMaterial({ color: 0x9a948a }));

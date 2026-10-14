@@ -288,7 +288,7 @@ function computePayout(r) {
 
 function applyRun(p, r) {
   const payout = computePayout(r);
-  if (payout.total > 0) credit(p, r.mode === 'free' ? 'Session libre' : 'Run · ' + r.trackId, payout.total);
+  if (payout.total > 0) credit(p, r.mode === 'free' ? 'Session libre' : 'Run · ' + (r.trackName || r.trackId), payout.total);
   p.stats.runs++;
   p.stats.bestPayout = Math.max(p.stats.bestPayout, payout.total);
   if (r.mode !== 'free' && !p.stats.tracks.includes(r.trackId)) p.stats.tracks.push(r.trackId);
