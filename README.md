@@ -1,13 +1,13 @@
 # Sideways Drift Club
 
 Jeu de drift mobile en 3D, jouable dans le navigateur. Inspiration FR Legends.
-Version publiée : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL
+Jeu en ligne : https://sideways-drift-club.vercel.app/ (Vercel, depuis `main`). Artifact privé : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL
 
 > Branche orpheline, indépendante du site de la pharmacie : ne jamais la fusionner dans `main`.
 
 ## Construire
 ```
-node build.mjs            # sideways-drift-club.html (Three.js r128 via cdnjs)
+node build.mjs            # index.html (Three.js r128 via cdnjs), à déployer tel quel
 node build.mjs --local    # test.html avec vendor/three.min.js pour les tests hors ligne
 ```
 `vendor/three.min.js` : `curl -o vendor/three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`

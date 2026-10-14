@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sideways Drift Club</title>
 <meta name="theme-color" content="#0e0d14">
 <meta name="mobile-web-app-capable" content="yes">
@@ -209,6 +214,8 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) { .pop, #count span { animation-duration: .01s; animation-iteration-count: 1; } .pop { animation: none; } }
 </style>
 
+</head>
+<body>
 <canvas id="gl" aria-label="Scène de course en 3D" role="img"></canvas>
 <div id="loading" role="status"><div>SIDEWAYS<p>Chauffe des pneus…</p></div></div>
 <div id="live" class="sr" aria-live="polite"></div>
@@ -2659,3 +2666,5 @@ function createLeader(track, line, startIdx) {
 })();
 
 </script>
+</body>
+</html>

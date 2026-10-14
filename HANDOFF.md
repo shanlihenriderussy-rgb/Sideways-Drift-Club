@@ -23,7 +23,7 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 | Barème (`par` dans `src/track.js`) | 32 k / 33 k / 46 k (×1,25 en tandem). Tour propre du bot expert ≈ A |
 
 ## Décisions actives
-- **Fichier unique** : `build.mjs` concatène `src/*` → `sideways-drift-club.html`. Pas de bundler, pas de dépendance npm.
+- **Fichier unique** : `build.mjs` concatène `src/*` → `index.html` (document complet). Pas de bundler, pas de dépendance npm.
 - **Physique** : modèle bicyclette avec pneus saturés, plus un régulateur d'angle d'arcade (`c.drift`, cible β pilotée par le gaz et la direction). L'assistance 0 désactive le régulateur (mode « Simu »).
 - **Reflets** : cubemap peinte sur canvas. **Pas de PMREM**, qui rendait les voitures noires sous swiftshader et présente un risque sur les GPU mobiles.
 - **Performances** : pièces des voitures, grues et repères de zones fusionnées par matériau (`mergeByMaterial` dans `car.js`, utilisé aussi par `world.js`).
@@ -55,6 +55,6 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 unzip sideways-drift-club.zip && cd sideways-drift-club
 mkdir -p vendor && curl -o vendor/three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
 node build.mjs --local   # test.html à ouvrir dans un navigateur
-node build.mjs           # sideways-drift-club.html à publier
+node build.mjs           # index.html à déployer (Vercel / GitHub Pages)
 node tools/tune2.js pid  # banc physique (Node seul)
 ```
