@@ -1,0 +1,161 @@
+<canvas id="gl" aria-label="Scène de course en 3D" role="img"></canvas>
+<div id="loading" role="status"><div>SIDEWAYS<p>Chauffe des pneus…</p></div></div>
+<div id="live" class="sr" aria-live="polite"></div>
+
+<!-- HUD -->
+<div id="hud" hidden>
+  <div class="hud-top">
+    <div class="mm-wrap">
+      <canvas id="minimap" width="208" height="208" aria-hidden="true"></canvas>
+      <div class="lapinfo"><span id="hudMode">RUN NOTÉ</span><b id="hudTime">0:00.0</b><span id="hudLap">Tour 1</span><div class="tandem-meter" id="tandemMeter">TANDEM <span class="tm"><i id="tandemFill"></i></span></div></div>
+    </div>
+    <div class="total"><div class="lbl">SCORE</div><div class="num" id="hudTotal">0</div><div class="lbl" id="hudBest">RECORD —</div></div>
+    <div class="top-right">
+      <button class="icon-btn" id="camBtn" aria-label="Changer de caméra (C)"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg></button>
+      <button class="icon-btn" id="pauseBtn" aria-label="Pause (Échap)"><svg viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z"/></svg></button>
+    </div>
+  </div>
+    <div class="combo idle" id="combo"><div class="tag" id="comboTag">DRIFT</div><div class="pts" id="comboPts">0</div><div class="mult" id="comboMult">x1.0</div><div class="anglebar"><i id="angleFill"></i></div></div>
+  <div id="popups"></div>
+  <div class="banner" id="banner">SENS INTERDIT</div>
+  <div class="speedo"><div class="kmh" id="hudSpeed">0</div><div class="unit">KM/H</div><div class="rpm" id="rpmBar"><i id="rpmFill"></i></div><div class="gear" id="hudGear">1</div></div>
+</div>
+<div id="count" hidden></div>
+
+<!-- commandes tactiles -->
+<div id="touch" aria-hidden="true">
+  <div class="pad steer" id="steerZone">
+    <div class="tbtn" id="tLeft"><svg viewBox="0 0 24 24"><path d="M15.5 4 7 12l8.5 8 1.5-1.6L10.2 12 17 5.6z"/></svg></div>
+    <div class="tbtn" id="tRight"><svg viewBox="0 0 24 24"><path d="M8.5 4 7 5.6 13.8 12 7 18.4 8.5 20l8.5-8z"/></svg></div>
+  </div>
+  <div class="pad pedals">
+    <div class="pcol">
+      <div class="tbtn hb" id="tHb"><span class="tt">FREIN<br>À MAIN</span></div>
+      <div class="tbtn brake" id="tBrake"><span class="tt">FREIN</span></div>
+    </div>
+    <div class="tbtn gas" id="tGas"><span class="tt">GAZ</span></div>
+  </div>
+</div>
+
+<!-- menu titre -->
+<section class="screen" id="menu" hidden aria-labelledby="logoTitle">
+  <div class="logo-jp" aria-hidden="true">横<b>滑</b>り倶楽部</div>
+  <div class="title-block">
+    <h1 class="logo" id="logoTitle">SIDEWAYS<span>DRIFT CLUB</span></h1>
+    <div class="menu-btns">
+      <button class="btn primary" id="playBtn"><span>Rouler</span></button>
+      <button class="btn" id="garageBtn"><span>Garage</span></button>
+      <button class="btn" id="settingsBtn"><span>Réglages</span></button>
+      <button class="btn ghost" id="helpBtn"><span>Comment jouer</span></button>
+    </div>
+    <div class="hint portrait-tip">Tourne ton téléphone à l'horizontale pour mieux voir la piste.</div>
+    <div class="hint" id="kbHint"><span class="kbd">←</span><span class="kbd">→</span> diriger · <span class="kbd">↑</span> gaz · <span class="kbd">↓</span> frein · <span class="kbd">Espace</span> frein à main</div>
+  </div>
+</section>
+
+<!-- sélection mode + piste -->
+<section class="screen dim" id="select" hidden aria-labelledby="selTitle">
+  <div class="card select-grid">
+    <div>
+      <div class="eyebrow">Session</div>
+      <h2 id="selTitle">Choisis ta session</h2>
+      <p class="sub">Le run noté compte un tour lancé. En tandem, tu chasses un leader : reste collé à lui pendant qu'il glisse.</p>
+      <div class="seg modes" role="group" aria-label="Mode de jeu">
+        <button class="opt" data-mode="run" aria-pressed="true"><b>Run noté</b><small>1 tour, note de S à D</small></button>
+        <button class="opt" data-mode="tandem" aria-pressed="false"><b>Tandem</b><small>Chasse le leader</small></button>
+        <button class="opt" data-mode="free" aria-pressed="false"><b>Libre</b><small>Sans chrono, pour t'entraîner</small></button>
+      </div>
+    </div>
+    <div>
+      <div class="label">Piste</div>
+      <div class="track-list" id="trackList" role="group" aria-label="Piste"></div>
+      <div class="row-end">
+        <button class="btn ghost" data-back><span>Retour</span></button>
+        <button class="btn primary" id="goBtn"><span>Départ</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- garage -->
+<section class="screen" id="garage" hidden aria-labelledby="garTitle">
+  <div class="card">
+    <div><div class="eyebrow">Garage</div><h2 id="garTitle">Ta machine</h2></div>
+    <div class="seg" role="group" aria-label="Voiture" id="carList"></div>
+    <div id="carStats"></div>
+    <div><div class="label">Peinture</div><div class="swatches" id="paintList" role="group" aria-label="Peinture"></div></div>
+    <div><div class="label">Jantes</div><div class="swatches" id="rimList" role="group" aria-label="Jantes"></div></div>
+    <div class="row-end"><div><div class="label">Numéro</div><div class="stepper"><button id="numDown" aria-label="Numéro précédent">−</button><output id="numOut">15</output><button id="numUp" aria-label="Numéro suivant">+</button></div></div>
+    <button class="btn primary" data-back><span>Valider</span></button></div>
+  </div>
+</section>
+
+<!-- réglages -->
+<section class="screen dim" id="settings" hidden aria-labelledby="setTitle">
+  <div class="card">
+    <div class="eyebrow">Réglages</div>
+    <h2 id="setTitle">Pilotage et confort</h2>
+    <div class="setting"><div><label>Assistance de contre-braquage</label><p>« Simulation » coupe toute aide : réservé aux mains sûres.</p></div>
+      <div class="mini-seg" role="group" aria-label="Assistance" id="assistSeg"><button data-v="0">Simu</button><button data-v="1">Normale</button><button data-v="1.3">Forte</button></div></div>
+    <div class="setting"><div><label for="optAutoGas">Accélérateur automatique</label><p>Les gaz restent ouverts. Tu ne gères que la direction et les freins.</p></div><input type="checkbox" class="toggle" id="optAutoGas"></div>
+    <div class="setting"><div><label for="optLefty">Commandes inversées</label><p>Direction à droite, pédales à gauche.</p></div><input type="checkbox" class="toggle" id="optLefty"></div>
+    <div class="setting"><div><label>Taille des boutons</label><p>Agrandit les zones tactiles.</p></div>
+      <div class="mini-seg" role="group" aria-label="Taille des boutons" id="sizeSeg"><button data-v="s">S</button><button data-v="m">M</button><button data-v="l">L</button></div></div>
+    <div class="setting"><div><label for="optSound">Son</label><p>Moteur, pneus et effets synthétisés en direct.</p></div><input type="checkbox" class="toggle" id="optSound"></div>
+    <div class="setting"><div><label for="optMotion">Réduire les mouvements</label><p>Supprime les secousses et l'effet de vitesse de la caméra.</p></div><input type="checkbox" class="toggle" id="optMotion"></div>
+    <div class="setting"><div><label for="optVibe">Vibrations</label><p>Retour haptique sur les clips et les chocs (Android).</p></div><input type="checkbox" class="toggle" id="optVibe"></div>
+    <div class="setting"><div><label>Qualité graphique</label><p>« Auto » baisse la qualité si l'appareil rame.</p></div>
+      <div class="mini-seg" role="group" aria-label="Qualité" id="qualSeg"><button data-v="auto">Auto</button><button data-v="low">Basse</button><button data-v="high">Haute</button></div></div>
+    <div class="row-end" style="margin-top:14px"><span class="hint" id="fpsOut"></span><button class="btn primary" data-back><span>OK</span></button></div>
+  </div>
+</section>
+
+<!-- aide -->
+<section class="screen dim" id="help" hidden aria-labelledby="helpTitle">
+  <div class="card">
+    <div class="eyebrow">Comment jouer</div>
+    <h2 id="helpTitle">Lancer, tenir, clipper</h2>
+    <p class="sub">Les points tombent tant que la voiture glisse. Plus d'angle et plus de vitesse donnent plus de points.</p>
+    <div class="help-grid">
+      <div><b>1 · Lancer</b>Prends de la vitesse, braque et tire le frein à main un court instant. L'arrière décroche.</div>
+      <div><b>2 · Tenir</b>Garde les gaz. Braquer vers l'intérieur ouvre l'angle, vers l'extérieur le referme. Lâche les gaz pour reprendre l'adhérence.</div>
+      <div><b>3 · Clipper</b>Passe l'arrière dans les <span style="color:var(--clip)">zones orange</span> au bord extérieur, et l'avant près des <span style="color:var(--apex)">cordes bleues</span>. Chaque clip augmente le multiplicateur.</div>
+      <div><b>4 · Encaisser</b>Ton combo est encaissé quand tu cesses de glisser. Un choc, un tête-à-queue ou une sortie de piste le fait perdre.</div>
+    </div>
+    <p class="sub">Clavier : flèches ou ZQSD/WASD, Espace pour le frein à main, C pour la caméra, R pour te replacer. Manette compatible.</p>
+    <div class="row-end"><span class="hint">Jeu conçu et codé avec l'assistance d'une IA (Claude).</span><button class="btn primary" data-back><span>Compris</span></button></div>
+  </div>
+</section>
+
+<!-- pause -->
+<section class="screen dim" id="pause" hidden aria-labelledby="pauseTitle">
+  <div class="card" style="width:min(380px,100%)">
+    <div class="eyebrow">Pause</div>
+    <h2 id="pauseTitle">On souffle</h2>
+    <div style="display:grid;gap:10px;margin-top:14px">
+      <button class="btn primary" id="resumeBtn"><span>Reprendre</span></button>
+      <button class="btn" id="resetBtn"><span>Se replacer sur la piste</span></button>
+      <button class="btn" id="restartBtn"><span>Recommencer</span></button>
+      <button class="btn" id="pSettingsBtn"><span>Réglages</span></button>
+      <button class="btn ghost" id="quitBtn"><span>Terminer la session</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- résultats -->
+<section class="screen dim" id="results" hidden aria-labelledby="resTitle">
+  <div class="card">
+    <div class="eyebrow" id="resEyebrow">Run noté · Docks de Minato</div>
+    <div class="res-head"><div class="grade" id="resGrade">A</div><div><h2 id="resTitle">Note des juges</h2><div class="res-total" id="resTotal">0</div><div id="resRecord"></div></div></div>
+    <div class="res-grid">
+      <div>Meilleur combo<b id="resCombo">0</b></div>
+      <div>Clips réussis<b id="resClips">0</b></div>
+      <div>Angle max<b id="resAngle">0°</b></div>
+      <div>Temps en glisse<b id="resDrift">0 %</b></div>
+    </div>
+    <div class="row-end">
+      <button class="btn ghost" id="menuBtn"><span>Menu</span></button>
+      <button class="btn primary" id="againBtn"><span>Rejouer</span></button>
+    </div>
+  </div>
+</section>
