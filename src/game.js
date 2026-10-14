@@ -34,11 +34,12 @@
     high: { pr: 1.75, shadows: true, smoke: 1400, scenery: 1 },
   };
   let qLevel = settings.quality === 'auto' ? (isTouch ? 'med' : 'high') : settings.quality;
+  let dprScale = 1, fastT = 0; // résolution dynamique (qualité auto)
   let quality = QUALITY[qLevel];
 
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pr));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, quality.pr) * dprScale);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -94,6 +95,8 @@
     buildFx();
     buildCars();
     drawMinimapBase();
+    // compile tous les shaders maintenant (fumée, étincelles, leader, flammes…) : pas d'à-coup au premier affichage
+    try { renderer.compile(scene, camera); } catch (e) { /* facultatif */ }
   }
 
   let sharedPuff = null;
@@ -174,6 +177,7 @@
     st.gear = speed > 15 ? 3 : speed > 8 ? 2 : 1;
     if (player) { st.idx = idx; }
     player = st;
+    player.x0 = st.x; player.z0 = st.z; player.h0 = st.heading;
     player.idx = idx;
     player.prevIdx = idx;
     if (skids) { skids.mark('P-1', st.x, st.z, 0, 0.3); skids.mark('P1', st.x, st.z, 0, 0.3); }
@@ -630,8 +634,8 @@
       const a = t * 0.18;
       const r = portrait ? 11 : 8.5;
       const tx = st.x + Math.cos(a) * r, tz = st.z + Math.sin(a) * r;
-      camPos.lerp(new THREE.Vector3(tx, 2.2, tz), 1 - Math.exp(-dt * 2));
-      camLook.lerp(new THREE.Vector3(st.x, 0.8, st.z), 1 - Math.exp(-dt * 6));
+      camPos.lerp(_camT.set(tx, 2.2, tz), 1 - Math.exp(-dt * 2));
+      camLook.lerp(_camL.set(st.x, 0.8, st.z), 1 - Math.exp(-dt * 6));
       camera.fov += ((portrait ? 70 : 50) - camera.fov) * 0.1;
     } else {
       const C = CAMS[camMode];
@@ -640,10 +644,8 @@
       let dx = hx, dz = hz;
       if (sp > 4) { const w = 0.6; dx = hx * (1 - w) + (st.vx / sp) * w; dz = hz * (1 - w) + (st.vz / sp) * w; const l = Math.hypot(dx, dz); dx /= l; dz /= l; }
       const dist = (C.dist + Math.min(sp, 30) * 0.03) * (portrait ? 1.25 : 1);
-      const target = new THREE.Vector3(st.x - dx * dist, C.h * (portrait ? 1.25 : 1), st.z - dz * dist);
-      camPos.lerp(target, 1 - Math.exp(-dt * (camMode === 2 ? 9 : 5.5)));
-      const look = new THREE.Vector3(st.x + hx * 2.2, C.look + (portrait ? 0.3 : 0), st.z + hz * 2.2);
-      camLook.lerp(look, 1 - Math.exp(-dt * 10));
+      camPos.lerp(_camT.set(st.x - dx * dist, C.h * (portrait ? 1.25 : 1), st.z - dz * dist), 1 - Math.exp(-dt * (camMode === 2 ? 9 : 5.5)));
+      camLook.lerp(_camL.set(st.x + hx * 2.2, C.look + (portrait ? 0.3 : 0), st.z + hz * 2.2), 1 - Math.exp(-dt * 10));
       const fov = (portrait ? 70 : 54) + (settings.reduce ? 0 : Math.min(sp, 40) * 0.26);
       camera.fov += (fov - camera.fov) * Math.min(1, dt * 3);
     }
@@ -678,6 +680,7 @@
 
   // ---------- boucle ----------
   let last = performance.now(), acc = 0, frameAvg = 16, frameN = 0, qCheckT = 0;
+  let dbgTrace = null; // banc de mesure de saccade (tools)
   const STEP = 1 / 120;
   const perf = { js: 0, render: 0 };
   function frame(now) {
@@ -686,7 +689,6 @@
     let dt = Math.min((now - last) / 1000, 0.1);
     last = now;
     frameAvg += (dt * 1000 - frameAvg) * 0.05;
-    autoQuality(dt);
     const t = now / 1000;
 
     if (phase === 'menu' || phase === 'results' || (phase === 'pause' && !player)) {
@@ -714,6 +716,7 @@
       if (phase === 'play') {
         acc += dt;
         while (acc >= STEP) {
+          player.x0 = player.x; player.z0 = player.z; player.h0 = player.heading;
           stepCar(player, input, STEP, settings.assist);
           collide(player, STEP);
           acc -= STEP;
@@ -737,10 +740,12 @@
         player.throttle = input.throttle;
       }
       if (playerModel.flameT > 0) { playerModel.flameT -= dt; playerModel.flicker(); if (playerModel.flameT <= 0) playerModel.flame.visible = false; }
-      playerModel.update(player, dt, input.brake > 0.1 || input.handbrake > 0.5);
+      // affichage interpolé entre les deux derniers pas physiques : mouvement régulier à 60, 90, 120 ou 144 Hz
+      const pv = interp(player, phase === 'play' ? acc / STEP : 1);
+      playerModel.update(pv, dt, input.brake > 0.1 || input.handbrake > 0.5);
       leaderModel.update(leader.state, dt, false);
-      carFx(player, playerModel, dt, 'P');
-      updateCamera(dt, player, false);
+      carFx(pv, playerModel, dt, 'P');
+      updateCamera(dt, pv, false);
       Sound.update(player, profile.current, true);
       updateHUD(dt);
     } else if (phase === 'pause') {
@@ -748,6 +753,7 @@
     }
 
     if (phase !== 'pause') { smoke.update(dt); sparks.update(dt); }
+    skids.flush();
     world.update(t);
     // ombre qui suit la voiture visible
     const focus = phase === 'play' || phase === 'count' || phase === 'pause' ? player : leader.state;
@@ -756,9 +762,20 @@
       const sd = world.theme.sun;
       world.sun.position.set(focus.x + sd[0] * 60, Math.max(sd[1], 0.35) * 60, focus.z + sd[2] * 60);
     }
+    if (dbgTrace && phase === 'play') { const o = playerModel.root.position; dbgTrace.push(now, o.x, o.z, player.speed); }
     const tB = performance.now();
     renderer.render(scene, camera);
     perf.js += (tB - tA - perf.js) * 0.05; perf.render += (performance.now() - tB - perf.render) * 0.05;
+    autoQuality(dt); // après le rendu : un éventuel redimensionnement s'applique à l'image suivante
+  }
+  const view = {};
+  function interp(st, a) {
+    for (const k in st) view[k] = st[k];
+    if (st.x0 === undefined) return view;
+    let dh = st.heading - st.h0;
+    if (dh > Math.PI) dh -= 2 * Math.PI; else if (dh < -Math.PI) dh += 2 * Math.PI;
+    view.x = st.x0 + (st.x - st.x0) * a; view.z = st.z0 + (st.z - st.z0) * a; view.heading = st.h0 + dh * a;
+    return view;
   }
   function lapS() { return (track.count + player.idx) % track.count * track.step + (lap.n * track.length) ; }
 
@@ -776,52 +793,66 @@
     popup('Replacé sur la piste', 'apex');
   }
 
-  // qualité automatique : on descend d'un cran si ça rame durablement
+  // qualité automatique : d'abord la résolution par petits pas (invisible), puis un cran de qualité si ça ne suffit pas.
+  // Remonte doucement quand l'appareil a de la marge.
   function autoQuality(dt) {
     if (settings.quality !== 'auto' || phase !== 'play') return;
     qCheckT += dt;
-    if (qCheckT < 3) return;
+    if (qCheckT < 2) return;
     qCheckT = 0;
-    if (frameAvg > 24 && qLevel !== 'low') {
-      qLevel = qLevel === 'high' ? 'med' : 'low';
-      quality = QUALITY[qLevel];
-      world.sun.castShadow = quality.shadows;
-      resize();
-    }
+    if (frameAvg > 20) {
+      // le coût de rendu suit le nombre de pixels (dpr²) : on vise 60 i/s en un ou deux pas, pas en dix
+      fastT = 0;
+      const want = Math.max(0.6, dprScale * Math.sqrt(16.7 / frameAvg));
+      if (dprScale - want > 0.05) { dprScale = want; resize(); }
+      else if (frameAvg > 24 && qLevel !== 'low') {
+        qLevel = qLevel === 'high' ? 'med' : 'low';
+        quality = QUALITY[qLevel];
+        world.sun.castShadow = quality.shadows;
+        dprScale = Math.min(1, dprScale + 0.2);
+        resize();
+      }
+    } else if (frameAvg < 14 && dprScale < 1) {
+      fastT += 2;
+      if (fastT >= 8) { fastT = 0; dprScale = Math.min(1, dprScale + 0.1); resize(); }
+    } else fastT = 0;
   }
 
   // ---------- HUD ----------
-  const hudCache = {};
-  function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
+  const hudCache = {}, hudEl = {};
+  const el = (id) => hudEl[id] || (hudEl[id] = $(id));
+  function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; el(id).textContent = v; } }
+  function setNum(id, n) { if (hudCache[id] !== n) { hudCache[id] = n; el(id).textContent = n.toLocaleString('fr-FR'); } }
+  function setBar(id, k) { k = Math.round(k * 200) / 200; if (hudCache[id] !== k) { hudCache[id] = k; el(id).style.transform = `scaleX(${k})`; } }
   function fmtTime(s) { const m = Math.floor(s / 60); const r = s - m * 60; return `${m}:${r < 10 ? '0' : ''}${r.toFixed(1)}`; }
   function updateHUD(dt) {
     const st = player;
-    setText('hudSpeed', String(Math.round(st.speed * 3.6)));
+    setNum('hudSpeed', Math.round(st.speed * 3.6));
     setText('hudGear', st.reversing ? 'R' : String(st.gear));
     const r = clamp((st.rpm - 900) / (RPM_MAX - 900), 0, 1);
-    $('rpmFill').style.width = (r * 100).toFixed(1) + '%';
-    $('rpmBar').classList.toggle('red', r > 0.88);
-    setText('hudTotal', Math.round(score.total).toLocaleString('fr-FR'));
+    setBar('rpmFill', r);
+    if (hudCache.red !== r > 0.88) { hudCache.red = r > 0.88; el('rpmBar').classList.toggle('red', r > 0.88); }
+    setNum('hudTotal', Math.round(score.total));
     setText('hudTime', fmtTime(score.runT));
     setText('hudLap', mode === 'free' ? `Tour ${lap.n + 1}` : `${Math.round(clamp(lap.progress / track.length, 0, 1) * 100)} %`);
     let tandemNear = false;
     if (mode === 'tandem') tandemNear = Math.hypot(st.x - leader.state.x, st.z - leader.state.z) < 11;
-    const comboEl = $('combo');
+    const comboEl = el('combo');
     const active = score.combo > 0;
-    comboEl.classList.toggle('idle', !active);
+    if (hudCache.active !== active) { hudCache.active = active; comboEl.classList.toggle('idle', !active); }
     if (active) {
-      setText('comboPts', Math.round(score.combo).toLocaleString('fr-FR'));
+      setNum('comboPts', Math.round(score.combo));
       setText('comboMult', 'x' + score.mult.toFixed(1));
       const ang = Math.abs(st.slip) * 180 / Math.PI;
-      $('angleFill').style.width = clamp(ang / 70 * 100, 0, 100).toFixed(0) + '%';
-      comboEl.classList.toggle('warn', score.idle > 0.3);
+      setBar('angleFill', clamp(ang / 70, 0, 1));
+      if (hudCache.warn !== score.idle > 0.3) { hudCache.warn = score.idle > 0.3; comboEl.classList.toggle('warn', score.idle > 0.3); }
       setText('comboTag', score.idle > 0.3 ? 'ENCAISSEMENT…' : (mode === 'tandem' && tandemNear ? 'TANDEM' : 'DRIFT'));
     }
     if (mode === 'tandem') {
       const d = Math.hypot(st.x - leader.state.x, st.z - leader.state.z);
-      $('tandemMeter').style.display = 'flex';
-      $('tandemFill').style.width = clamp((1 - (d - 3) / 22) * 100, 0, 100).toFixed(0) + '%';
-    } else $('tandemMeter').style.display = 'none';
+      if (hudCache.tmShow !== 'flex') { hudCache.tmShow = 'flex'; el('tandemMeter').style.display = 'flex'; }
+      setBar('tandemFill', clamp(1 - (d - 3) / 22, 0, 1));
+    } else if (hudCache.tmShow !== 'none') { hudCache.tmShow = 'none'; el('tandemMeter').style.display = 'none'; }
     drawMinimap();
   }
 
@@ -1116,7 +1147,7 @@
     claimDaily();
     requestAnimationFrame((n) => { last = n; frame(n); });
     // accès de test (non utilisé par le jeu)
-    window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); }, profile, preview: (k, c) => { showKind = k; showCfg = c; buildCars(); }, view: (v) => { shopView = v; snapCam = true; }, yaw: (y) => { garageYaw = y; } };
+    window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); }, carRoot: () => playerModel.root, trace: (on) => { const t = dbgTrace; dbgTrace = on ? [] : null; return t; }, profile, preview: (k, c) => { showKind = k; showCfg = c; buildCars(); }, view: (v) => { shopView = v; snapCam = true; }, yaw: (y) => { garageYaw = y; } };
     window.__sdc = { get phase() { return phase; }, get player() { return player; }, get score() { return score; }, get track() { return track; }, get line() { return line; }, lossLog, startRun, input, touch, layouts, tState: () => tState, openLayoutEditor, setMode: (m) => { mode = m; }, setTrack: (i) => { trackIdx = i; loadTrack(i); }, finishRun, get fps() { return 1000 / frameAvg; } };
   }
   if (document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]).then(boot);

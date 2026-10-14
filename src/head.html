@@ -188,7 +188,7 @@ small.own { color: var(--ok); } small.price { color: var(--tape); }
 .combo .mult { display: inline-block; font-weight: 700; font-size: 20px; background: var(--tail); color: #fff; padding: 2px 10px; border-radius: 6px; transform: skewX(-10deg); margin-top: 6px; text-shadow: none; }
 .combo .tag { font-size: 12px; letter-spacing: .3em; color: var(--paper); margin-bottom: 4px; }
 .anglebar { width: 160px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); margin: 8px auto 0; overflow: hidden; }
-.anglebar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--tape), var(--tail)); }
+.anglebar i { display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: left center; will-change: transform; background: linear-gradient(90deg, var(--tape), var(--tail)); }
 .combo.idle { opacity: 0; }
 .combo.warn .pts { color: #ffe9a8; }
 
@@ -202,12 +202,12 @@ small.own { color: var(--ok); } small.price { color: var(--tape); }
 .speedo .kmh { font-family: var(--font-display); font-size: clamp(28px, 5vw, 42px); line-height: 1; }
 .speedo .unit { font-size: 11px; letter-spacing: .2em; color: var(--muted); }
 .rpm { width: 150px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.15); margin: 6px auto 0; overflow: hidden; }
-.rpm i { display: block; height: 100%; width: 0; background: var(--paper); }
+.rpm i { display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: left center; will-change: transform; background: var(--paper); }
 .rpm.red i { background: var(--tail); }
 .gear { position: absolute; right: -36px; bottom: 4px; font-family: var(--font-display); font-size: 22px; color: var(--tape); }
 .tandem-meter { display: none; margin-top: 4px; gap: 6px; align-items: center; font-size: 12px; letter-spacing: .2em; color: #ff7ad9; text-shadow: 0 1px 2px #000; }
 .tandem-meter .tm { width: 70px; height: 6px; background: rgba(255,255,255,.15); border-radius: 3px; overflow: hidden; }
-.tandem-meter .tm i { display: block; height: 100%; width: 0; background: #ff7ad9; }
+.tandem-meter .tm i { display: block; height: 100%; width: 100%; transform: scaleX(0); transform-origin: left center; background: #ff7ad9; }
 .banner { position: absolute; left: 50%; top: 32%; transform: translateX(-50%) skewX(-8deg); font-family: var(--font-display); font-size: clamp(28px, 6vw, 54px); background: var(--tail); color: #fff; padding: 6px 22px; border-radius: 8px; display: none; }
 #count { position: fixed; inset: 0; display: grid; place-items: center; z-index: 15; pointer-events: none; font-family: var(--font-display); font-size: clamp(90px, 22vw, 200px); color: var(--tape); text-shadow: 0 8px 0 #000; }
 #count span { animation: cnt .9s ease-out forwards; }
