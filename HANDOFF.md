@@ -1,6 +1,6 @@
 # Handoff — Sideways Drift Club
 
-Date : 2026-10-14 · Branche : `claude/optimistic-fermi-xni0xz` (dépôt `shanlihenriderussy-rgb/sideways-drift-club`)
+Date : 2026-10-14 · Branche : `claude/optimistic-fermi-xni0xz` (dépôt `shanlihenriderussy-rgb/Sideways-Drift-Club`)
 Version publiée : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL (v2, privée — pas encore mise à jour) · Vercel depuis `main`
 
 ## État
