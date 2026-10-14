@@ -3,10 +3,13 @@
 //   node build.mjs --local  -> test.html (Three.js depuis vendor/three.min.js), pour les tests hors ligne
 import fs from 'fs';
 const src = (f) => fs.readFileSync(new URL('./src/' + f, import.meta.url), 'utf8');
-const js = ['physics.js', 'track.js', 'world.js', 'car.js', 'fx.js', 'audio.js', 'ai.js', 'game.js']
+const js = ['physics.js', 'economy.js', 'track.js', 'world.js', 'car.js', 'fx.js', 'audio.js', 'ai.js', 'shop.js', 'game.js']
   .map((f) => `// --- ${f}\n` + src(f).replace(/^if \(typeof module.*$/m, ''))
   .join('\n');
 const local = process.argv.includes('--local');
+// favicon SVG intégré (fonctionne aussi en fichier unique / artifact) ; icônes PNG et manifeste servis à côté en production
+const favicon = `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${encodeURIComponent(fs.readFileSync(new URL('./assets/favicon.svg', import.meta.url), 'utf8').replace(/\s*\n\s*/g, ' ').replace(/<!--.*?-->/g, ''))}">`
+  + (local ? '' : '\n<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">\n<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">\n<link rel="manifest" href="manifest.webmanifest">');
 const three = local
   ? '<script src="vendor/three.min.js"></script>'
   : '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>';
@@ -15,6 +18,7 @@ const doc = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+${favicon}
 ${src('head.html')}
 </head>
 <body>

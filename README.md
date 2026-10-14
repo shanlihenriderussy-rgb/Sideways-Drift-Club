@@ -15,23 +15,33 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 ## Structure
 | Fichier | Rôle |
 |---|---|
-| `src/physics.js` | Modèle bicyclette, pneus saturés, régulateur d'angle de drift (assistance) |
+| `src/physics.js` | Modèle bicyclette, pneus saturés, régulateur d'angle de drift (assistance) ; lit les champs de fiche tunée (`steerRate`, `driftSteer`, `angleBoost`, `rollK`) |
+| `src/economy.js` | Portefeuille en yens, catalogue de l'atelier, gains de fin de run, défis, bonus quotidien, fiche tunée. Logique pure, testée |
 | `src/track.js` | Tracés, échantillonnage, zones de clipping, barème (`par`) |
-| `src/world.js` | Ciel, route, murs, vibreurs, décor instancié par thème |
-| `src/car.js` | Voitures procédurales (profil extrudé), fusion des maillages par matériau |
-| `src/fx.js` | Fumée (points), traces de gomme, étincelles |
+| `src/world.js` | Ciel (nuages, étoiles), crêtes, route et murs par lieu, décor instancié par thème, tribune, eau animée |
+| `src/car.js` | Voitures procédurales : caisse lissée (loft), habitacle, livrée peinte, pièces modulaires, roues instanciées |
+| `src/fx.js` | Fumée colorée (points), traces de gomme (envoi GPU partiel), étincelles |
 | `src/audio.js` | Moteur, turbo, crissement synthétisés (Web Audio) |
 | `src/ai.js` | Leader tandem sur trajectoire précalculée |
-| `src/game.js` | Boucle, caméra, score, collisions, entrées, interface |
+| `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
+| `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |
+| `assets/favicon.svg`, `icons/`, `manifest.webmanifest` | Favicon (intégré au build), icônes d'application, manifeste PWA |
+| `tests/` | `node --test tests/*.test.js` : économie |
 | `tools/` | Bancs d'essai : physique (Node), captures, tour complet, bot expert, perf, CPU ralenti, analyse audio (Playwright) |
 
-## Mesures de référence (2026-10-09)
-- Appels de dessin : 68–79 par image. JS : 0,5–0,8 ms/image ; 2,8–3,4 ms avec CPU ralenti ×6.
+## Économie et atelier
+- Monnaie fictive (¥), sans achat réel. Départ : HACHI offerte + ¥3 000. KOUKI ¥18 000, RAIJIN ¥45 000.
+- Gains : 5 % des points (×1,25 en tandem), bonus de note, clips, combo, record ; mode libre : 2 % plafonné. Bonus quotidien de ¥500 à ¥2 000 selon la série. 14 défis à récompense unique.
+- Atelier : carrosserie (pare-chocs, ailes, aileron, capot, échappement, arceau, néon), peinture (12 couleurs, 5 finitions, 6 livrées, numéro), roues (5 jantes, 8 couleurs, fumée colorée), performances (5 pièces × 3 niveaux), réglages visuels gratuits.
+
+## Mesures de référence (2026-10-14)
+- Appels de dessin : 65–68 par image en tandem. JS : 0,4–0,5 ms/image ; 1,9–2,8 ms avec CPU ralenti ×6.
+- Saccade d'affichage (écart image à image du déplacement) : 0,1 % à 60, 90, 120 et 144 Hz (avant : 14 à 60 % au-delà de 60 Hz).
+- Chargement d'une piste avec CPU ×6 : 0,38–0,52 s (décor bien plus riche ; hors partie).
 - Audio : fondamentale moteur = régime/60×2 ; crissement +12 dB au-dessus du moteur en glisse ; pas de saturation.
-- Barème : tour propre du bot expert ≈ A ; S exige un combo enchaîné.
 
 ## Données
-Aucune donnée personnelle. Réglages et records en `localStorage` sur l'appareil du joueur.
+Aucune donnée personnelle. Réglages, records et profil de jeu (`sdc:profile` : solde, voitures, pièces, défis, 40 derniers mouvements) en `localStorage` sur l'appareil du joueur. Rien n'est envoyé.
 Jeu conçu et codé avec l'assistance d'une IA (mention dans l'écran d'aide).
 
 ## Commandes tactiles

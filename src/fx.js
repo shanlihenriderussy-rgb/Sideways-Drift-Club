@@ -11,33 +11,55 @@ function puffTexture() {
 function createParticles(max, opts) {
   const pos = new Float32Array(max * 3), size = new Float32Array(max), alpha = new Float32Array(max);
   const vel = new Float32Array(max * 3), age = new Float32Array(max).fill(1e9), life = new Float32Array(max).fill(1), s0 = new Float32Array(max), s1 = new Float32Array(max), a0 = new Float32Array(max);
+  const colors = opts.colored ? new Float32Array(max * 3).fill(1) : null; // couleur par particule (fumée de pneus colorée)
   const geo = new THREE.BufferGeometry();
+  if (colors) geo.setAttribute('aColor', new THREE.BufferAttribute(colors, 3).setUsage(THREE.DynamicDrawUsage));
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
   geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1).setUsage(THREE.DynamicDrawUsage));
   geo.setAttribute('aAlpha', new THREE.BufferAttribute(alpha, 1).setUsage(THREE.DynamicDrawUsage));
   const mat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: opts.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
     uniforms: { map: { value: opts.map }, col: { value: new THREE.Color(opts.color) }, scale: { value: 400 }, fogCol: { value: new THREE.Color(0) }, fogNear: { value: 50 }, fogFar: { value: 500 } },
+    defines: colors ? { COLORED: 1 } : {},
     vertexShader: `attribute float aSize; attribute float aAlpha; uniform float scale; varying float vA; varying float vFog;
-      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * scale / max(-mv.z, 0.1); vA = aAlpha; vFog = -mv.z; gl_Position = projectionMatrix * mv; }`,
+      #ifdef COLORED
+      attribute vec3 aColor; varying vec3 vC;
+      #endif
+      void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * scale / max(-mv.z, 0.1); vA = aAlpha; vFog = -mv.z; gl_Position = projectionMatrix * mv;
+      #ifdef COLORED
+      vC = aColor;
+      #endif
+      }`,
     fragmentShader: `uniform sampler2D map; uniform vec3 col, fogCol; uniform float fogNear, fogFar; varying float vA; varying float vFog;
-      void main(){ vec4 t = texture2D(map, gl_PointCoord); float f = smoothstep(fogNear, fogFar, vFog); vec3 c = mix(col, fogCol, f);
+      #ifdef COLORED
+      varying vec3 vC;
+      #endif
+      void main(){ vec4 t = texture2D(map, gl_PointCoord); float f = smoothstep(fogNear, fogFar, vFog);
+      #ifdef COLORED
+      vec3 c = mix(col * vC, fogCol, f);
+      #else
+      vec3 c = mix(col, fogCol, f);
+      #endif
       float near = smoothstep(1.2, 5.0, vFog); gl_FragColor = vec4(c, t.a * vA * near * (1.0 - f * 0.6)); }`,
   });
   const points = new THREE.Points(geo, mat);
   points.frustumCulled = false;
-  let head = 0;
+  let head = 0, used = 0;
+  geo.setDrawRange(0, 0);
   return {
     points, mat,
-    emit(x, y, z, vx, vy, vz, l, sa, sb, al) {
+    emit(x, y, z, vx, vy, vz, l, sa, sb, al, c) {
       const i = head; head = (head + 1) % max;
+      if (i + 1 > used) { used = i + 1; geo.setDrawRange(0, used); }
+      if (colors && c) { colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b; }
       pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
       vel[i * 3] = vx; vel[i * 3 + 1] = vy; vel[i * 3 + 2] = vz;
       age[i] = 0; life[i] = l; s0[i] = sa; s1[i] = sb; a0[i] = al;
     },
     update(dt) {
       const drag = Math.exp(-opts.drag * dt);
-      for (let i = 0; i < max; i++) {
+      // seules les particules déjà émises au moins une fois sont parcourues et envoyées au GPU
+      for (let i = 0; i < used; i++) {
         if (age[i] >= life[i]) { alpha[i] = 0; size[i] = 0; continue; }
         age[i] += dt;
         const k = Math.min(age[i] / life[i], 1);
@@ -49,7 +71,11 @@ function createParticles(max, opts) {
         const fadeIn = Math.min(age[i] / 0.08, 1);
         alpha[i] = a0[i] * fadeIn * Math.pow(1 - k, 1.6);
       }
-      geo.attributes.position.needsUpdate = true; geo.attributes.aSize.needsUpdate = true; geo.attributes.aAlpha.needsUpdate = true;
+      if (!used) return;
+      const A = geo.attributes;
+      A.position.updateRange.count = used * 3; A.aSize.updateRange.count = used; A.aAlpha.updateRange.count = used;
+      A.position.needsUpdate = true; A.aSize.needsUpdate = true; A.aAlpha.needsUpdate = true;
+      if (colors) { A.aColor.updateRange.count = used * 3; A.aColor.needsUpdate = true; }
     },
     clear() { age.fill(1e9); },
     dispose() { geo.dispose(); mat.dispose(); },
@@ -72,7 +98,7 @@ function createSkids(maxQuads) {
   const mesh = new THREE.Mesh(geo, mat);
   mesh.frustumCulled = false;
   mesh.renderOrder = 1;
-  let head = 0, dirtyFrom = -1;
+  let head = 0, dMin = Infinity, dMax = -1;
   const trackers = new Map();
   return {
     mesh,
@@ -89,13 +115,23 @@ function createSkids(maxQuads) {
       if (t.on && d < 3) {
         const q = head; head = (head + 1) % maxQuads;
         const o = q * 12;
-        pos.set([t.lx, 0.022, t.lz, t.rx, 0.022, t.rz, x + nx, 0.022, z + nz, x - nx, 0.022, z - nz], o);
-        alpha.set([t.a, t.a, a, a], q * 4);
-        geo.attributes.position.needsUpdate = true; geo.attributes.aA.needsUpdate = true;
+        pos[o] = t.lx; pos[o + 1] = 0.022; pos[o + 2] = t.lz; pos[o + 3] = t.rx; pos[o + 4] = 0.022; pos[o + 5] = t.rz;
+        pos[o + 6] = x + nx; pos[o + 7] = 0.022; pos[o + 8] = z + nz; pos[o + 9] = x - nx; pos[o + 10] = 0.022; pos[o + 11] = z - nz;
+        alpha[q * 4] = alpha[q * 4 + 1] = t.a; alpha[q * 4 + 2] = alpha[q * 4 + 3] = a;
+        dMin = Math.min(dMin, q); dMax = Math.max(dMax, q);
       }
       t.on = true; t.x = x; t.z = z; t.lx = x + nx; t.lz = z + nz; t.rx = x - nx; t.rz = z - nz; t.a = a;
     },
-    clear() { pos.fill(0); alpha.fill(0); trackers.clear(); geo.attributes.position.needsUpdate = true; geo.attributes.aA.needsUpdate = true; },
+    // une seule mise à jour GPU par image, limitée aux quads écrits (au lieu de tout le tampon à chaque trace)
+    flush() {
+      if (dMax < 0) return;
+      const P = geo.attributes.position, A = geo.attributes.aA;
+      P.updateRange.offset = dMin * 12; P.updateRange.count = (dMax - dMin + 1) * 12;
+      A.updateRange.offset = dMin * 4; A.updateRange.count = (dMax - dMin + 1) * 4;
+      P.needsUpdate = true; A.needsUpdate = true;
+      dMin = Infinity; dMax = -1;
+    },
+    clear() { pos.fill(0); alpha.fill(0); trackers.clear(); dMin = 0; dMax = maxQuads - 1; },
     dispose() { geo.dispose(); mat.dispose(); },
   };
 }
