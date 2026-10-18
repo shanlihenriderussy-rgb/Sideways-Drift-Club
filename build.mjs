@@ -13,13 +13,15 @@ const favicon = `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,
 const three = local
   ? '<script src="vendor/three.min.js"></script>'
   : '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>';
+// logo : intégré en data URI (fonctionne aussi en fichier unique / artifact)
+const logo = 'data:image/webp;base64,' + fs.readFileSync(new URL('./assets/logo.webp', import.meta.url)).toString('base64');
 const doc = `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 ${favicon}
-${src('head.html')}
+${src('head.html').replace('%LOGO%', logo)}
 </head>
 <body>
 ${src('body.html')}

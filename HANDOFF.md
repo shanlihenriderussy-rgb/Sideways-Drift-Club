@@ -16,6 +16,14 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **Modes, commandes, accessibilité, son** : inchangés (voir README).
 - **Données** : aucune donnée personnelle. Réglages, records et profil en `localStorage`. Mention « conçu avec une IA » dans l'aide ; « monnaie fictive, sans achat réel » dans Carrière.
 
+## Direction artistique (2026-10-18) : « Presse auto 1995 »
+- Menus = pages de magazine : papier `#ebe8e1` + trame (`--halftone`), bord encre 3 px, ombre portée dure, bandeau de rubrique rouge avec kanji. HUD = plaques noires bordées de papier, chiffres Anton.
+- Palette : encre `#0a0a0a`, papier `#ebe8e1`, rouge `#e8433c` (action, alerte), bleu `#3a7bd5` (info), jaune `#f7d154` (combo, argent, sélection).
+- Polices (Google Fonts) : Anton (titres, chiffres), Special Gothic Expanded One (étiquettes), Inter (texte), Noto Sans JP 900 en sous-ensemble `text=` (kanji affichés seulement ; ajouter tout nouveau kanji à l'URL).
+- Les cartes redéfinissent `--fg`, `--muted`, `--line`, `--fill`, `--ok`, `--apex`, `--clip` : toujours utiliser ces variables plutôt que `--paper` pour le texte d'un composant.
+- Emblème : `assets/logo.webp` (512 px, disque détouré), injecté une seule fois par `build.mjs` dans `--logo` ; `.emblem` l'affiche en fond. Icônes d'application régénérées depuis l'emblème.
+- Plus aucun `backdrop-filter` : cartes opaques, moins coûteux sur Android d'entrée de gamme.
+
 ## Mesures de référence
 | Mesure | Valeur |
 |---|---|
