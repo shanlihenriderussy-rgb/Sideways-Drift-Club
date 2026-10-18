@@ -407,8 +407,9 @@
   addEventListener('resize', () => { applyLayout(); if (editing) syncLayoutUI(); });
   addEventListener('orientationchange', () => setTimeout(() => { applyLayout(); if (editing) syncLayoutUI(); }, 250));
 
-  // ---------- iPhone : plus de zoom sur double-tap ni pincement ----------
-  // (user-scalable=no est ignoré par iOS ; ces gardes le sont moins.)
+  // ---------- pas de zoom pendant le jeu, zoom libre dans les menus (accessibilité WCAG 1.4.4) ----------
+  // Le viewport autorise le zoom ; la surface de jeu le bloque (touch-action: none + ces gardes pour iOS),
+  // les cartes de menu l'acceptent (touch-action: pan-y pinch-zoom).
   let lastTouchEnd = 0;
   document.addEventListener('touchend', (e) => {
     const now = Date.now();
@@ -416,7 +417,7 @@
     if (gameSurface && !e.target.closest('.icon-btn') && now - lastTouchEnd < 350) e.preventDefault();
     lastTouchEnd = now;
   }, { passive: false });
-  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => { if (!(e.target.closest && e.target.closest('.card'))) e.preventDefault(); }, { passive: false });
   // ne bloque le glisser que hors des cartes défilantes et des curseurs
   document.addEventListener('touchmove', (e) => { if (!e.target.closest('.card, input[type=range]')) e.preventDefault(); }, { passive: false });
   document.addEventListener('contextmenu', (e) => { if (e.target.closest('#touch') || e.target === canvas) e.preventDefault(); });
@@ -842,8 +843,8 @@
     g.clearRect(0, 0, 64, 64);
     if (favImg.complete) g.drawImage(favImg, 0, 0, 64, 64);
     g.beginPath(); g.moveTo(26, 30); g.arcTo(64, 30, 64, 64, 9); g.arcTo(64, 64, 18, 64, 9); g.arcTo(18, 64, 18, 30, 9); g.arcTo(18, 30, 64, 30, 9); g.closePath();
-    g.fillStyle = '#ff3d3d'; g.fill(); g.lineWidth = 4; g.strokeStyle = '#0e0d14'; g.stroke();
-    g.fillStyle = '#fff'; g.font = '900 28px "Arial Black", Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#7b8cff'; g.fill(); g.lineWidth = 4; g.strokeStyle = '#07080a'; g.stroke();
+    g.fillStyle = '#07080a'; g.font = '900 28px "Arial Black", Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(key, 41, 48);
     favLink.href = favCv.toDataURL('image/png');
   }
@@ -1009,6 +1010,7 @@
     $('resAngle').textContent = Math.round(score.maxAngle) + '°';
     $('resDrift').textContent = Math.round(score.driftT / Math.max(score.runT, 1) * 100) + ' %';
     $('resEyebrow').textContent = `${mode === 'run' ? 'Run noté' : mode === 'tandem' ? 'Tandem' : 'Libre'} · ${track.def.name}`;
+    $('resHeadline').textContent = mode === 'free' ? '« Séance libre : rien n’est noté, tout est permis. »' : record && grade !== 'D' ? `« Record battu sur ${track.def.name}. »` : HEADLINES[grade].replace('%', track.def.name);
     // gains en yens + défis
     const res = Economy.applyRun(profile, { trackId: track.def.id, trackName: track.def.name, mode, score: total, grade: mode === 'free' ? null : grade, clips: score.clips, zones: track.zones.length, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), record: record && mode !== 'free' });
     saveProfile(); refreshWallet();
@@ -1073,7 +1075,19 @@
     setTimeout(() => el.remove(), 3300);
     announce(text);
   }
-  function refreshWallet() { $('menuWallet').textContent = Economy.fmt(profile.money); }
+  function refreshWallet() { $('menuWallet').textContent = Economy.fmt(profile.money); refreshFrontPage(); }
+  // manchette et bandeau « dernière minute » du menu : date, numéro d'édition (= runs joués), records par piste
+  const HEADLINES = { S: '« % : une démonstration. »', A: '« Du grand art sur %. »', B: '« Belle ligne, angle à creuser. »', C: '« Des bases, encore timides. »', D: '« Rentrée discrète au paddock. »' };
+  function refreshFrontPage() {
+    const d = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    $('mastDate').textContent = d.charAt(0).toUpperCase() + d.slice(1);
+    $('mastNo').textContent = 'N° ' + String(profile.stats.runs + 1).padStart(3, '0');
+    const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const items = TRACKS.map((t) => { const b = bests[t.id + ':run']; return b ? `<b>${esc(t.name)}</b> · record <i>${b.toLocaleString('fr-FR')} pts</i>` : `<b>${esc(t.name)}</b> · <i>aucun record, la piste vous attend</i>`; });
+    items.push(`Votre cagnotte · <i>${Economy.fmt(profile.money)}</i>`, `<b>Col de Yukimi</b> · neige tassée, adhérence réduite`);
+    const row = items.map((h) => `<span>${h}</span>`).join('');
+    $('ticker').innerHTML = row + row; // doublé : défilement sans couture
+  }
   function claimDaily() {
     const d = Economy.claimDaily(profile, today());
     if (!d) return;

@@ -47,4 +47,4 @@ Aucune donnée personnelle. Réglages, records et profil de jeu (`sdc:profile` :
 Jeu conçu et codé avec l'assistance d'une IA (mention dans l'écran d'aide).
 
 ## Commandes tactiles
-Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + taille par bouton, transparence, miroir, réinitialisation. Disposition enregistrée par orientation (`localStorage`, clé `sdc:touchLayout`). Un doigt peut glisser d'un bouton à l'autre sans lâcher (hit-test + hystérésis de 28 px). iPhone : zoom double-tap et pincement bloqués (`touch-action`, garde `touchend`, `gesture*`, viewport `user-scalable=no`).
+Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + taille par bouton, transparence, miroir, réinitialisation. Disposition enregistrée par orientation (`localStorage`, clé `sdc:touchLayout`). Un doigt peut glisser d'un bouton à l'autre sans lâcher (hit-test + hystérésis de 28 px). Zoom : bloqué sur la surface de jeu (`touch-action: none`, garde `touchend`, `gesture*`), autorisé dans les menus (`pan-y pinch-zoom`) ; le viewport ne l’interdit pas (WCAG 1.4.4).

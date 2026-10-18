@@ -1,5 +1,6 @@
+<main id="app" aria-label="Sideways Drift Club">
 <canvas id="gl" aria-label="Scène de course en 3D" role="img"></canvas>
-<div id="loading" role="status"><div>SIDEWAYS<p>Chauffe des pneus…</p></div></div>
+<div id="loading" role="status"><div><div class="emblem" role="img" aria-label="Sideways Drift Club"></div><p>Impression de l'édition…</p></div></div>
 <div id="live" class="sr" aria-live="polite"></div>
 
 <!-- HUD -->
@@ -37,16 +38,20 @@
 <section class="screen" id="menu" hidden aria-labelledby="logoTitle">
   <div class="wallet wallet-fixed" id="menuWallet" aria-label="Solde">¥0</div>
   <div class="logo-jp" aria-hidden="true">横<b>滑</b>り倶楽部</div>
+  <header class="masthead">
+    <div class="mast-rule"><span class="jp">横滑り倶楽部</span><span id="mastDate">Édition du soir</span><span id="mastNo">N° 001</span></div>
+    <div class="brand"><div class="emblem" aria-hidden="true"></div><h1 class="logo" id="logoTitle">SIDEWAYS<span>DRIFT CLUB</span><em>Le journal de la glisse, en direct de la piste.</em></h1></div>
+  </header>
   <div class="title-block">
-    <h1 class="logo" id="logoTitle">SIDEWAYS<span>DRIFT CLUB</span></h1>
-    <div class="menu-btns">
-      <button class="btn primary" id="playBtn"><span>Rouler</span></button>
-      <button class="btn" id="garageBtn"><span>Atelier</span></button>
-      <button class="btn" id="careerBtn"><span>Carrière</span></button>
-      <button class="btn" id="settingsBtn"><span>Réglages</span></button>
-      <button class="btn ghost" id="helpBtn"><span>Comment jouer</span></button>
-    </div>
+    <nav class="menu-btns" aria-label="Menu principal">
+      <button class="btn primary" id="playBtn"><span>Rouler<em class="dek">six pistes, une ligne</em></span></button>
+      <button class="btn" id="garageBtn"><span><i class="no">01</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
+      <button class="btn" id="careerBtn"><span><i class="no">02</i>Carrière<em class="dek">défis et palmarès</em></span></button>
+      <button class="btn" id="settingsBtn"><span><i class="no">03</i>Réglages<em class="dek">pilotage et confort</em></span></button>
+      <button class="btn" id="helpBtn"><span><i class="no">04</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
+    </nav>
     <div class="hint portrait-tip">Tourne ton téléphone à l'horizontale pour mieux voir la piste.</div>
+    <div class="ticker" aria-hidden="true"><div class="tk" id="ticker"></div></div>
     <div class="hint" id="kbHint"><span class="kbd">←</span><span class="kbd">→</span> diriger · <span class="kbd">↑</span> gaz · <span class="kbd">↓</span> frein · <span class="kbd">Espace</span> frein à main</div>
   </div>
 </section>
@@ -55,7 +60,7 @@
 <section class="screen dim" id="select" hidden aria-labelledby="selTitle">
   <div class="card select-grid">
     <div>
-      <div class="eyebrow">Session</div>
+      <div class="eyebrow"><span>Session</span><span class="jp">走行</span></div>
       <h2 id="selTitle">Choisis ta session</h2>
       <p class="sub">Le run noté compte un tour lancé. En tandem, tu chasses un leader : reste collé à lui pendant qu'il glisse.</p>
       <div class="seg modes" role="group" aria-label="Mode de jeu">
@@ -78,7 +83,7 @@
 <!-- atelier (garage) : voir shop.js -->
 <section class="screen" id="garage" hidden aria-labelledby="garTitle">
   <div class="card shop">
-    <div class="shop-head"><div><div class="eyebrow">Atelier</div><h2 id="garTitle">Ta machine</h2></div><div class="wallet" id="garWallet" aria-label="Solde">¥0</div></div>
+    <div class="shop-head"><div><div class="eyebrow"><span>Atelier</span><span class="jp">カスタム</span></div><h2 id="garTitle">Ta machine</h2></div><div class="wallet" id="garWallet" aria-label="Solde">¥0</div></div>
     <div class="tabs" role="tablist" aria-label="Rayons de l'atelier" id="shopTabs">
       <button role="tab" data-tab="car">Voiture</button><button role="tab" data-tab="body">Carrosserie</button><button role="tab" data-tab="paint">Peinture</button><button role="tab" data-tab="wheels">Roues</button><button role="tab" data-tab="perf">Perfs</button><button role="tab" data-tab="tune">Réglages</button>
     </div>
@@ -90,7 +95,7 @@
 <!-- carrière : défis, statistiques, mouvements du portefeuille -->
 <section class="screen dim" id="career" hidden aria-labelledby="careerTitle">
   <div class="card">
-    <div class="eyebrow">Carrière</div>
+    <div class="eyebrow"><span>Carrière</span><span class="jp">記録</span></div>
     <h2 id="careerTitle">Ton palmarès</h2>
     <div class="res-grid" id="careerStats"></div>
     <div class="label">Défis</div>
@@ -104,7 +109,7 @@
 <!-- réglages -->
 <section class="screen dim" id="settings" hidden aria-labelledby="setTitle">
   <div class="card">
-    <div class="eyebrow">Réglages</div>
+    <div class="eyebrow"><span>Réglages</span><span class="jp">設定</span></div>
     <h2 id="setTitle">Pilotage et confort</h2>
     <div class="setting"><div><label>Assistance de contre-braquage</label><p>« Simulation » coupe toute aide : réservé aux mains sûres.</p></div>
       <div class="mini-seg" role="group" aria-label="Assistance" id="assistSeg"><button data-v="0">Simu</button><button data-v="1">Normale</button><button data-v="1.3">Forte</button></div></div>
@@ -122,7 +127,7 @@
 <!-- éditeur de disposition -->
 <section class="screen passthru" id="layout" hidden aria-labelledby="layTitle">
   <div class="card">
-    <div class="lay-head"><div><div class="eyebrow">Commandes</div><h2 id="layTitle">Ta disposition</h2></div><button class="btn primary" id="layDone"><span>Terminé</span></button></div>
+    <div class="lay-head"><div><div class="eyebrow"><span>Commandes</span><span class="jp">操作</span></div><h2 id="layTitle">Ta disposition</h2></div><button class="btn primary" id="layDone"><span>Terminé</span></button></div>
     <p class="sub" id="layHint">Glisse un bouton pour le déplacer. Touche-le pour régler sa taille.</p>
     <div class="lay-grid">
       <label class="rng" for="layAll"><span>Taille générale <output id="layAllOut">100 %</output></span><input type="range" id="layAll" min="60" max="170" step="5" value="100"></label>
@@ -136,24 +141,24 @@
 <!-- aide -->
 <section class="screen dim" id="help" hidden aria-labelledby="helpTitle">
   <div class="card">
-    <div class="eyebrow">Comment jouer</div>
+    <div class="eyebrow"><span>Comment jouer</span><span class="jp">説明</span></div>
     <h2 id="helpTitle">Lancer, tenir, clipper</h2>
     <p class="sub">Les points tombent tant que la voiture glisse. Plus d'angle et plus de vitesse donnent plus de points.</p>
     <div class="help-grid">
       <div><b>1 · Lancer</b>Prends de la vitesse, braque et tire le frein à main un court instant. L'arrière décroche.</div>
       <div><b>2 · Tenir</b>Garde les gaz. Braquer vers l'intérieur ouvre l'angle, vers l'extérieur le referme. Lâche les gaz pour reprendre l'adhérence.</div>
-      <div><b>3 · Clipper</b>Passe l'arrière dans les <span style="color:var(--clip)">zones orange</span> au bord extérieur, et l'avant près des <span style="color:var(--apex)">cordes bleues</span>. Chaque clip augmente le multiplicateur.</div>
+      <div><b>3 · Clipper</b>Passe l'arrière dans les <span class="k-clip">zones orange</span> au bord extérieur, et l'avant près des <span class="k-apex">cordes bleues</span>. Chaque clip augmente le multiplicateur.</div>
       <div><b>4 · Encaisser</b>Ton combo est encaissé quand tu cesses de glisser. Un choc, un tête-à-queue ou une sortie de piste le fait perdre.</div>
     </div>
     <p class="sub">Clavier : flèches ou ZQSD/WASD, Espace pour le frein à main, C pour la caméra, R pour te replacer. Manette compatible.</p>
-    <div class="row-end"><span class="hint">Jeu conçu et codé avec l'assistance d'une IA (Claude).</span><button class="btn primary" data-back><span>Compris</span></button></div>
+    <div class="row-end"><span class="hint">Jeu conçu et codé avec l'assistance d'une IA (Claude). Logo et visuels créés avec des outils d'IA.</span><button class="btn primary" data-back><span>Compris</span></button></div>
   </div>
 </section>
 
 <!-- pause -->
 <section class="screen dim" id="pause" hidden aria-labelledby="pauseTitle">
   <div class="card" style="width:min(380px,100%)">
-    <div class="eyebrow">Pause</div>
+    <div class="eyebrow"><span>Pause</span><span class="jp">休憩</span></div>
     <h2 id="pauseTitle">On souffle</h2>
     <div style="display:grid;gap:10px;margin-top:14px">
       <button class="btn primary" id="resumeBtn"><span>Reprendre</span></button>
@@ -167,10 +172,11 @@
 
 <!-- résultats -->
 <section class="screen dim" id="results" hidden aria-labelledby="resTitle">
-  <div class="card res-card">
+  <div class="card res-card paper">
     <div class="res-main">
     <div class="eyebrow" id="resEyebrow">Run noté · Docks de Minato</div>
-    <div class="res-head"><div class="grade" id="resGrade">A</div><div><h2 id="resTitle">Note des juges</h2><div class="res-total" id="resTotal">0</div><div id="resRecord"></div></div></div>
+    <div class="res-head"><div class="grade" id="resGrade">A</div><div><h2 id="resTitle">Note des juges <span class="jp">結果</span></h2><div class="res-total" id="resTotal">0</div><div id="resRecord"></div></div></div>
+    <p class="headline" id="resHeadline"></p>
     <div class="res-grid">
       <div>Meilleur combo<b id="resCombo">0</b></div>
       <div>Clips réussis<b id="resClips">0</b></div>
@@ -193,3 +199,4 @@
     </div>
   </div>
 </section>
+</main>

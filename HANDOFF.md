@@ -16,6 +16,17 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **Modes, commandes, accessibilité, son** : inchangés (voir README).
 - **Données** : aucune donnée personnelle. Réglages, records et profil en `localStorage`. Mention « conçu avec une IA » dans l'aide ; « monnaie fictive, sans achat réel » dans Carrière.
 
+## Direction artistique (2026-10-18) : « Télémétrie de nuit »
+- Essai « Presse auto 1995 » (papier, trame, ombres dures, 4 polices) rejeté : jugé amateur et daté. Ne pas revenir au néo-brutalisme.
+- Principes : la 3D est le sujet, l'interface s'efface. Surfaces sombres étagées (`--s1`…`--s4`), filets 1 px (`--hair`), rayons 12–20 px, une seule couleur d'accent `#f7d154` (jaune de l'emblème) pour l'action principale, la sélection, le combo et l'argent. Rouge `#ff4d4f` réservé aux alertes. Couleur secondaire complémentaire `--accent-2` `#7b8cff` (bleu pervenche ; `#3349c9` encre sur papier) : rubriques, numéros du sommaire, multiplicateur, rapport, tandem, valeurs des curseurs. Le jaune reste l'action ; le bleu ne porte jamais l'action principale.
+- Favicon `assets/favicon.svg` : compte-tours autour du « S » penché du club (arc bleu puis zone rouge, graduations grandes / moyennes / petites, aiguille et S jaunes) ; badge de combo (game.js) en bleu, texte encre.
+- Une seule famille : Archivo variable (graisse 400–900, chasse 62–125 %). Titres en chasse élargie (`font-stretch` 115–125 %), étiquettes en capitales espacées 10–11 px. Kanji : Noto Sans JP 700 en sous-ensemble `text=` (ajouter tout nouveau kanji à l'URL).
+- Couche éditoriale « journal de la glisse » (demandée : plus original, esprit papier journal) : manchette (date du jour, n° d'édition = runs joués + 1), chapôs en Instrument Serif italique, filets doubles sous les titres, bandeau « Dernière minute » (records par piste), résultats imprimés en une sur papier journal (`.res-card.paper`, variables redéfinies) avec un titre selon la note (`HEADLINES` dans game.js).
+- Écran titre : emblème + logotype en haut à gauche, sommaire typographique en bas à gauche (repère jaune à l'entrée active), dégradés pour la lisibilité.
+- HUD : chiffres larges sans boîte, jauges de 3 px, rapport en pastille, popups en pilules à point de couleur.
+- Emblème : `assets/logo.webp` (512 px, disque détouré), injecté une seule fois par `build.mjs` dans `--logo` ; `.emblem` l'affiche en fond. Icônes d'application régénérées depuis l'emblème.
+- Aucun `backdrop-filter` : cartes opaques, moins coûteuses sur Android d'entrée de gamme.
+
 ## Mesures de référence
 | Mesure | Valeur |
 |---|---|
@@ -49,7 +60,7 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **Canvas** : `getImageData` sur un canvas accéléré force une relecture GPU très lente, et `createImageData`/`putImageData` n'est pas plus rapide que `fillRect` ici. Réduire le nombre de mouchetures plutôt.
 - **Passages de roue** : demi-cylindre `thetaStart = π/2` (sinon il pend sous la caisse).
 - **`[hidden]`** : la règle `display:none !important` est indispensable.
-- **`touch-action`** : `none` sur `body`, `pan-y` sur `.card`, `pan-x` sur les onglets de l'atelier.
+- **`touch-action`** : `none` sur `body` (pas de zoom en jeu), `pan-y pinch-zoom` sur `.card` (zoom autorisé dans les menus), `pan-x` sur les onglets de l'atelier. Le viewport n'interdit plus le zoom (`user-scalable=no` retiré : WCAG 1.4.4, audit axe).
 - **`tools/*.js`** : chemins écrits pour le conteneur d'origine (`__dirname + '/test.html'`). Remplacer par le chemin absolu de `test.html` avant de lancer.
 - **three.js local** : cdnjs peut être bloqué par le proxy ; `npm pack three@0.128.0` puis copier `package/build/three.min.js` dans `vendor/`.
 - **Points d'accès de test** : `window.__sdc`, `__sdcDbg` (dont `preview`, `view`, `trace`, `profile`), `lossLog`, `Sound._debug`. Sans effet sur le jeu.
