@@ -842,8 +842,8 @@
     g.clearRect(0, 0, 64, 64);
     if (favImg.complete) g.drawImage(favImg, 0, 0, 64, 64);
     g.beginPath(); g.moveTo(26, 30); g.arcTo(64, 30, 64, 64, 9); g.arcTo(64, 64, 18, 64, 9); g.arcTo(18, 64, 18, 30, 9); g.arcTo(18, 30, 64, 30, 9); g.closePath();
-    g.fillStyle = '#ff3d3d'; g.fill(); g.lineWidth = 4; g.strokeStyle = '#0e0d14'; g.stroke();
-    g.fillStyle = '#fff'; g.font = '900 28px "Arial Black", Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = '#7b8cff'; g.fill(); g.lineWidth = 4; g.strokeStyle = '#07080a'; g.stroke();
+    g.fillStyle = '#07080a'; g.font = '900 28px "Arial Black", Impact, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(key, 41, 48);
     favLink.href = favCv.toDataURL('image/png');
   }
