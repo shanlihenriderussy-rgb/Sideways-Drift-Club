@@ -86,6 +86,9 @@ button { font: inherit; color: inherit; }
 .sw-minato { background: linear-gradient(180deg, #05071a, #30235a 70%, #f2c230 70% 74%, #25262c 74%); }
 .sw-akane { background: linear-gradient(180deg, #27306e, #ff8a5b 70%, #4c5a2e 70%); }
 .sw-piton { background: linear-gradient(180deg, #2f7fd6, #cfe7f3 64%, #1d6f9e 64% 72%, #2f2b29 72%); }
+.sw-shiohama { background: linear-gradient(180deg, #34457a, #ffb38a 66%, #f2c230 66% 70%, #34353c 70%); }
+.sw-yukimi { background: linear-gradient(180deg, #6f8fb8, #e6eef5 62%, #ffffff 62% 72%, #45474d 72%); }
+.sw-kaigan { background: linear-gradient(180deg, #1e2458, #e07a8a 62%, #3a3050 62% 72%, #2f2b29 72%); }
 .best { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; text-align: right; }
 .best b { display: block; color: var(--paper); font-size: 15px; }
 .row-end { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -128,6 +131,15 @@ small.own { color: var(--ok); } small.price { color: var(--tape); }
 .perf-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .perf-row b { display: block; font-size: 14px; } .perf-row small { display: block; color: var(--muted); font-size: 12px; }
 .pips { display: inline-flex; gap: 4px; margin-top: 4px; } .pips i { width: 18px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); } .pips i.on { background: var(--tape); } .pips i.next { background: var(--ok); }
+.tech { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.04); }
+.tech > div small { display: block; color: var(--muted); font-size: 11.5px; } .tech > div b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.tech .bal { grid-column: 1 / -1; } .tech .bal .ends { display: flex; justify-content: space-between; color: var(--muted); }
+.balbar { position: relative; display: block; height: 8px; margin: 6px 0 2px; border-radius: 4px; background: linear-gradient(90deg, #1d76c2, rgba(255,255,255,.18) 50%, #e8352f); }
+.balbar i { position: absolute; top: -4px; width: 4px; height: 16px; margin-left: -2px; border-radius: 2px; background: var(--paper); transition: left .2s; }
+.tune-h { margin: 14px 0 2px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--tape); }
+.rng.tune .fx { color: var(--muted); font-size: 11.5px; font-style: italic; }
+.chip.reset { margin-top: 12px; justify-self: start; }
+@media (orientation: landscape) and (max-height: 560px) { .tech { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 10px; padding: 8px 10px; } .tech > div b { font-size: 13px; } }
 .maxed { font-family: var(--font-display); color: var(--ok); font-size: 16px; }
 .rng.tune .ends { display: flex; justify-content: space-between; color: var(--muted); }
 .shop-foot { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; flex: none; }
@@ -519,6 +531,7 @@ function createCarState(spec, x, z, heading) {
     steer: 0, // entrée lissée -1..1
     throttle: 0, brake: 0, handbrake: 0,
     surface: 1, // 1 = bitume, <1 = herbe / gravier
+    grip: 1, // adhérence de la piste (neige < 1)
     // sorties utiles au rendu / son / score
     speed: 0, fwd: 0, lat: 0, slip: 0, rearSlip: 0, frontSlip: 0,
     wheelSpin: 0, rpm: 900, gear: 1, shiftTimer: 0, reversing: false,
@@ -572,7 +585,12 @@ function stepCar(c, input, dt, assist) {
   let Nr = mg * s.a / L + s.mass * c.ax * s.h / L;
   Nf = Math.max(Nf, mg * 0.2); Nr = Math.max(Nr, mg * 0.2);
 
-  const mu = s.mu * c.surface;
+  const mu = s.mu * c.surface * (c.grip || 1); // grip : adhérence propre à la piste (neige)
+  // --- réglages d'atelier (tous neutres à 0 / 1 sur la fiche de base)
+  const brakeRear = s.brakeRear || 0, hbK = s.hbK || 0, camber = s.camber || 0;
+  // raideurs : le train le plus ferme encaisse le transfert latéral et perd de l'accroche
+  const latLoad = Math.min(Math.abs(c.ay) / (s.mu * G), 1);
+  const bal = (s.latBal || 0) * latLoad * 0.08;
   const dirX = vx >= 0 ? 1 : -1;
   const alphaF = Math.atan2(vy + c.omega * s.a, vxa) - delta * dirX;
   const alphaR = Math.atan2(vy - c.omega * s.b, vxa);
@@ -590,15 +608,19 @@ function stepCar(c, input, dt, assist) {
   }
   // freinage
   let brakeF = 0, rearBrake = 0;
-  if (!c.reversing && c.brake > 0.01) brakeF = c.brake * mg * 0.95;
-  if (c.handbrake > 0.5) rearBrake = Nr * mu * 0.75;
+  if (!c.reversing && c.brake > 0.01) brakeF = c.brake * mg * 0.95 * (s.brakeK || 1) * (1 - 0.12 * Math.max(camber, 0));
+  if (c.handbrake > 0.5) rearBrake = Nr * mu * 0.75 * (1 + 0.6 * hbK);
+  // répartition : un freinage porté sur l'arrière sature ses pneus (la voiture pivote), sur l'avant elle s'inscrit moins
+  const brakeLoad = brakeF > 0 ? c.brake : 0;
+  const gripR = (1 + bal) * (1 - brakeLoad * Math.max(brakeRear, 0) * 0.9);
+  const gripF = (1 - bal) * (1 + brakeLoad * Math.min(brakeRear, 0) * 0.5);
 
   // --- cercle de friction arrière : l'excès de motricité tue l'adhérence latérale
   // état de glisse entretenu (arcade) : une fois la dérive lancée, le gaz garde l'arrière libre
   const wantDrift = Math.abs(beta) > 0.14 && vx > 6 && c.throttle > 0.3 && !c.reversing;
   const dropDrift = Math.abs(beta) < 0.06 || c.throttle < 0.15 || vx < 4 || (-c.steer * Math.sign(beta) < -0.5 && Math.abs(beta) < 0.22) || (Math.abs(beta) < 0.1 && -c.steer * Math.sign(beta) < 0.15);
   c.drift = Math.max(0, Math.min(1, (c.drift || 0) + (wantDrift ? dt * 3 : dropDrift ? -dt * 2.5 : 0)));
-  const rearCap = Nr * mu * (c.handbrake > 0.5 ? 0.52 : 1) * (1 - 0.36 * c.drift * c.throttle);
+  const rearCap = Nr * mu * gripR * (c.handbrake > 0.5 ? 0.52 - 0.4 * hbK : 1) * (1 - 0.36 * c.drift * c.throttle);
   const lon = Math.abs(drive) + rearBrake;
   const spinRatio = lon / rearCap;
   c.wheelSpin += ((Math.max(0, spinRatio - 0.72) * 2.2 + Math.abs(alphaR) * 1.5) - c.wheelSpin) * Math.min(1, dt * 6);
@@ -606,7 +628,9 @@ function stepCar(c, input, dt, assist) {
   const latCapR = Math.sqrt(Math.max(rearCap * rearCap - lon * lon * 0.8, (rearCap * latFloor) ** 2));
   const driveEff = Math.sign(drive) * Math.min(Math.abs(drive), rearCap * 0.95);
 
-  const Fyf = -Nf * mu * tireCurve(Math.abs(alphaF) / AP) * Math.sign(alphaF);
+  // carrossage : l'avant accroche mieux une fois braqué en glisse
+  const camberF = 1 + 0.12 * camber * Math.min(Math.abs(alphaF) / AP, 1);
+  const Fyf = -Nf * mu * gripF * camberF * tireCurve(Math.abs(alphaF) / AP) * Math.sign(alphaF);
   const Fyr = -latCapR * tireCurve(Math.abs(alphaR) / (AP * 1.1)) * Math.sign(alphaR);
 
   // résistances
@@ -662,16 +686,19 @@ function stepCar(c, input, dt, assist) {
   c.x += c.vx * dt; c.z += c.vz * dt;
 
   // --- sorties
-  c.ax += (ax - c.ax) * Math.min(1, dt * 8);
-  c.ay += (ay - c.ay) * Math.min(1, dt * 8);
+  const damp = s.damp || 1; // amortisseurs : vitesse d'établissement des transferts de charge
+  c.ax += (ax - c.ax) * Math.min(1, dt * 8 * damp);
+  c.ay += (ay - c.ay) * Math.min(1, dt * 8 * damp);
   c.speed = Math.hypot(vx, vy);
   c.fwd = vx; c.lat = vy;
   c.slip = Math.atan2(vy, Math.max(Math.abs(vx), 0.5));
   c.rearSlip = Math.abs(alphaR);
   c.frontSlip = Math.abs(alphaF);
   c.wheelRot += (vx / WHEEL_R) * dt * (1 + Math.min(c.wheelSpin, 1.5) * 0.6);
-  c.rollAngle += ((-ay * 0.012 * (s.rollK || 1)) - c.rollAngle) * Math.min(1, dt * 7);
-  c.pitchAngle += ((ax * 0.008) - c.pitchAngle) * Math.min(1, dt * 7);
+  c.rollAngle += ((-ay * 0.012 * (s.rollK || 1)) - c.rollAngle) * Math.min(1, dt * 7 * damp);
+  c.pitchAngle += ((ax * 0.008) - c.pitchAngle) * Math.min(1, dt * 7 * damp);
+  // température des disques (affichage) : chauffe au freinage, refroidit à l'air
+  c.brakeTemp = Math.max(0, Math.min(1, (c.brakeTemp || 0) + (brakeF / mg) * speed * dt * 0.035 - dt * 0.12 * (0.3 + (c.brakeTemp || 0))));
 
   // --- boîte auto (pour le son et la coupure de couple)
   c.shiftTimer = Math.max(0, c.shiftTimer - dt);
@@ -764,12 +791,22 @@ const PERF = [
   { key: 'angle', label: 'Kit d’angle', desc: 'Plus de braquage, plus d’angle tenu', prices: [3000, 6500, 11000] },
   { key: 'weight', label: 'Allègement', desc: '−4 % de masse par niveau', prices: [3000, 7000, 12000] },
   { key: 'susp', label: 'Suspension', desc: 'Moins de roulis, direction plus vive', prices: [2500, 5000, 9000] },
+  { key: 'brakes', label: 'Kit de freins', desc: '+10 % de freinage par niveau, disques et étriers plus gros', prices: [2000, 4500, 8000] },
 ];
+// Réglages gratuits et réversibles. def = valeur neutre : la physique y est strictement celle de la fiche.
+// fx : effet en jeu, affiché sous le curseur.
 const TUNE = [
-  { key: 'height', label: 'Hauteur de caisse', lo: 'Rasante', hi: 'Haute' },
-  { key: 'camber', label: 'Carrossage', lo: 'Droit', hi: 'Oni' },
-  { key: 'track', label: 'Déport des roues', lo: 'Rentré', hi: 'Affleurant' },
+  { key: 'brakePower', group: 'Freins', label: 'Puissance de freinage', lo: 'Douce', hi: 'Mordante', def: 0.5, fx: 'Distance d’arrêt ±20 %' },
+  { key: 'brakeBias', group: 'Freins', label: 'Répartition avant / arrière', lo: 'Avant', hi: 'Arrière', def: 0.5, fx: 'Vers l’arrière : la voiture pivote au freinage' },
+  { key: 'handbrake', group: 'Freins', label: 'Frein à main', lo: 'Progressif', hi: 'Sec', def: 0.5, fx: 'Sec : l’arrière décroche d’un coup' },
+  { key: 'springF', group: 'Suspension', label: 'Raideur avant', lo: 'Souple', hi: 'Ferme', def: 0.5, fx: 'Ferme : moins d’accroche avant en appui' },
+  { key: 'springR', group: 'Suspension', label: 'Raideur arrière', lo: 'Souple', hi: 'Ferme', def: 0.5, fx: 'Ferme : l’arrière glisse plus facilement' },
+  { key: 'damper', group: 'Suspension', label: 'Amortisseurs', lo: 'Lents', hi: 'Vifs', def: 0.5, fx: 'Vifs : transferts de charge immédiats' },
+  { key: 'height', group: 'Suspension', label: 'Hauteur de caisse', lo: 'Rasante', hi: 'Haute', def: 0.5, fx: 'Basse : moins de transfert, plus stable' },
+  { key: 'camber', group: 'Suspension', label: 'Carrossage', lo: 'Droit', hi: 'Oni', def: 0.35, fx: 'Plus d’accroche avant en glisse, freinage moindre' },
+  { key: 'track', group: 'Style', label: 'Déport des roues', lo: 'Rentré', hi: 'Affleurant', def: 0.5, fx: 'Esthétique' },
 ];
+const defaultTune = () => Object.fromEntries(TUNE.map((t) => [t.key, t.def]));
 
 const CHALLENGES = [
   { id: 'first', label: 'Termine ton premier run noté', reward: 500, test: (r) => r.mode !== 'free' },
@@ -783,7 +820,8 @@ const CHALLENGES = [
   { id: 'clipsAll', label: 'Tous les clips d’une piste en un run', reward: 4000, test: (r) => r.zones > 0 && r.clips >= r.zones },
   { id: 'drift70', label: '70 % d’un run en glisse', reward: 2500, test: (r) => r.mode !== 'free' && r.driftPct >= 70 },
   { id: 'tandemA', label: 'Note A ou S en tandem', reward: 3000, test: (r) => r.mode === 'tandem' && (r.grade === 'A' || r.grade === 'S') },
-  { id: 'tour3', label: 'Un run sur chacune des 3 pistes', reward: 3000, test: (r, p) => p.stats.tracks.length >= 3 },
+  { id: 'tour3', label: 'Un run sur 3 pistes différentes', reward: 3000, test: (r, p) => p.stats.tracks.length >= 3 },
+  { id: 'tourAll', label: 'Un run sur chacune des 6 pistes', reward: 6000, test: (r, p) => p.stats.tracks.length >= 6 }, // = TRACKS.length (vérifié par les tests)
   { id: 'firstPart', label: 'Achète ta première pièce', reward: 500, event: 'buy' },
   { id: 'secondCar', label: 'Achète une deuxième voiture', reward: 2000, event: 'car' },
 ];
@@ -799,8 +837,8 @@ function defaultCar(kind) {
     paint: d.paint, finish: 'gloss', livery: 'club', accent: 'auto', number: d.number,
     rimStyle: 'six', rim: 'bronze', smoke: 'blanc',
     front: 'stock', wide: 'stock', wing: 'stock', hood: 'stock', exhaust: 'stock', cage: 'none', neon: 'none',
-    perf: { engine: 0, tires: 0, angle: 0, weight: 0, susp: 0 },
-    tune: { height: 0.5, camber: 0.35, track: 0.5 },
+    perf: { engine: 0, tires: 0, angle: 0, weight: 0, susp: 0, brakes: 0 },
+    tune: defaultTune(),
     owned: [],
   };
 }
@@ -937,9 +975,18 @@ function setTune(p, kind, key, v) {
 }
 
 // Fiche physique améliorée (copie) : jamais de mutation de la fiche de base.
-function tunedSpec(base, perf) {
-  const e = perf.engine | 0, t = perf.tires | 0, a = perf.angle | 0, w = perf.weight | 0, s = perf.susp | 0;
+// tune : réglages d'atelier ; chaque écart à la valeur neutre est centré sur 0 pour que le neutre soit exact.
+function tunedSpec(base, perf, tune) {
+  const e = perf.engine | 0, t = perf.tires | 0, a = perf.angle | 0, w = perf.weight | 0, s = perf.susp | 0, b = perf.brakes | 0;
+  const d = (k) => { const def = TUNE.find((x) => x.key === k).def; const v = tune && Number.isFinite(tune[k]) ? tune[k] : def; return v - def; };
+  const stiff = (d('springF') + d('springR')) / 2;
   return Object.assign({}, base, {
+    brakeK: (1 + 0.1 * b) * (1 + 0.4 * d('brakePower')),
+    brakeRear: d('brakeBias'), // −0,5 (avant) … +0,5 (arrière)
+    hbK: d('handbrake'),
+    latBal: d('springF') - d('springR'), // > 0 : avant plus ferme → sous-vireur
+    damp: 1 + 0.8 * d('damper'),
+    camber: d('camber'),
     power: base.power * (1 + 0.08 * e),
     fmax: base.fmax * (1 + 0.06 * e),
     top: base.top + 2 * e,
@@ -948,9 +995,9 @@ function tunedSpec(base, perf) {
     driftSteer: 0.42 + 0.05 * a,
     angleBoost: 0.04 * a,
     mass: base.mass * (1 - 0.04 * w),
-    steerRate: 4.2 * (1 + 0.1 * s),
-    rollK: 1 - 0.18 * s,
-    h: base.h - 0.01 * s,
+    steerRate: 4.2 * (1 + 0.1 * s) * (1 + 0.2 * stiff),
+    rollK: (1 - 0.18 * s) * (1 - 0.6 * stiff),
+    h: base.h - 0.01 * s + 0.08 * d('height'),
   });
 }
 // statistiques affichées (0..5, décimales permises) : base + gain des pièces
@@ -1010,7 +1057,7 @@ function claimDaily(p, today) {
 const fmt = (n) => '¥' + Math.round(n).toLocaleString('fr-FR');
 
 const Economy = {
-  START_MONEY, LOG_MAX, CAR_PRICES, PAINTS, RIMS, SMOKES, NEONS, SHOP, PERF, TUNE, CHALLENGES,
+  defaultTune, START_MONEY, LOG_MAX, CAR_PRICES, PAINTS, RIMS, SMOKES, NEONS, SHOP, PERF, TUNE, CHALLENGES,
   defaultCar, loadProfile, itemPrice, owns, equip, buyItem, perfPrice, buyPerf, buyCar, setTune,
   tunedSpec, carStats, computePayout, applyRun, dailyAmount, dailyPreview, claimDaily, credit, fmt,
 };
@@ -1036,6 +1083,25 @@ const TRACKS = [
     width: 15, runoff: 3.4,
     pts: [[0, 0], [150, 18], [232, -36], [306, 8], [290, 110], [196, 140], [134, 218], [34, 236], [-38, 176], [6, 102], [-64, 62], [-134, 94], [-176, 22], [-104, -42]],
     theme: 'day',
+  },
+  {
+    id: 'shiohama', name: 'Quai de Shiohama', jp: '汐浜埠頭', time: 'Aube · port', par: 42000,
+    width: 15, runoff: 3.2,
+    pts: [[0, 0], [182, 0], [260, 52], [247, 143], [156, 156], [117, 221], [195, 286], [169, 377], [52, 390], [-26, 325], [-104, 364], [-195, 299], [-169, 195], [-78, 156], [-143, 78], [-91, 13]],
+    theme: 'dawn',
+  },
+  {
+    id: 'yukimi', name: 'Col de Yukimi', jp: '雪見峠', time: 'Neige · col · grip réduit', par: 34000,
+    width: 14, runoff: 3,
+    grip: 0.88, // neige tassée : moins d'adhérence partout
+    pts: [[0, 0], [143, -26], [234, 39], [195, 130], [260, 208], [221, 312], [104, 325], [52, 247], [-39, 299], [-143, 260], [-117, 156], [-195, 91], [-143, 0], [-65, -39]],
+    theme: 'snow',
+  },
+  {
+    id: 'kaigan', name: 'Corniche de Kaigan', jp: '海岸線', time: 'Crépuscule · océan', par: 46000,
+    width: 15, runoff: 3.4,
+    pts: [[0, 0], [234, -13], [351, 52], [338, 169], [234, 195], [156, 143], [78, 195], [117, 299], [13, 364], [-117, 325], [-182, 221], [-104, 143], [-208, 78], [-156, -13]],
+    theme: 'dusk',
   },
 ];
 
@@ -1196,6 +1262,32 @@ const THEMES = {
     wallA: '#ffffff', wallB: '#1f6fb2', wallText: '#0e2236', lamps: false, headlights: false, exposure: 1.0,
     ridge: [0x8fb3c4, 0x5f8a6a], ridgeTop: [0x7a9fb2, 0x3f6a4c],
   },
+  // variantes : decor = famille de décor (night | sunset | day), sky = calque de ciel
+  dawn: {
+    decor: 'night', sky: 'sunset',
+    skyTop: 0x34457a, skyHorizon: 0xffb38a, skyBottom: 0x2a2a3a, sun: [0.8, 0.08, -0.3], sunColor: 0xffc9a0, sunSize: 0.9988,
+    fog: 0x9c8ca6, fogNear: 90, fogFar: 640, hemiSky: 0xd8c8e0, hemiGround: 0x2a2630, hemi: 0.8, dir: 1.0, dirColor: 0xffc8a0,
+    ground: '#34353c', groundSpeck: '#45464f', shoulder: '#44444a', road: '#34353b', line: '#ece6d4',
+    wallA: '#f2c230', wallB: '#1a1a1e', wallText: '#111', lamps: true, headlights: false, exposure: 1.05,
+    ridge: [0x5a5878, 0x3a3858], ridgeTop: [0x8a7a98, 0x5a5070],
+  },
+  snow: {
+    decor: 'sunset', sky: 'day',
+    skyTop: 0x6f8fb8, skyHorizon: 0xe6eef5, skyBottom: 0x9aa8b8, sun: [-0.5, 0.35, 0.5], sunColor: 0xfff4e6, sunSize: 0.999,
+    fog: 0xdfe8f0, fogNear: 80, fogFar: 600, hemiSky: 0xeef4ff, hemiGround: 0x8a94a8, hemi: 1.0, dir: 1.1, dirColor: 0xfff2e0,
+    ground: '#e4eaf0', groundSpeck: '#c9d3de', shoulder: '#b8c0c8', road: '#45474d', line: '#f4efe2',
+    wallA: '#e9ebee', wallB: '#2a6fc8', wallText: '#1b1b1b', lamps: false, headlights: false, exposure: 0.95,
+    ridge: [0xbcc8d8, 0x8a9ab0], ridgeTop: [0xffffff, 0xe8eef6],
+    blotch: ['#ffffff', '#d4dde6', '#c2ccd8', '#f2f5f8'], pines: [0x6f8a7a, 0x8aa094, 0xa8bab0, 0x5a7466], maples: [0xe8eef4, 0xd8e2ec, 0xc8302c, 0xf4f6f8],
+  },
+  dusk: {
+    decor: 'day', sky: 'sunset',
+    skyTop: 0x1e2458, skyHorizon: 0xe07a8a, skyBottom: 0x3a3050, sun: [0.6, 0.06, -0.5], sunColor: 0xff9a6a, sunSize: 0.9986,
+    fog: 0x8a6a8a, fogNear: 120, fogFar: 820, hemiSky: 0xd0a0c0, hemiGround: 0x3a3040, hemi: 0.8, dir: 0.9, dirColor: 0xff9a7a,
+    ground: '#2f2b29', groundSpeck: '#3f4a2c', shoulder: '#4a4440', road: '#3a3b40', line: '#ffffff',
+    wallA: '#ffffff', wallB: '#d4502a', wallText: '#2a0e0e', lamps: true, headlights: true, exposure: 1.1,
+    ridge: [0x4a3a6a, 0x2a2a4a], ridgeTop: [0x6a4a7a, 0x3a3050],
+  },
 };
 
 function canvasTex(w, h, draw, repeat) {
@@ -1311,7 +1403,7 @@ function ridgeGeo(cx, cz, radius, base, amp, seed, seg, mask) {
 
 function buildWorld(scene, track, quality) {
   const T = THEMES[track.def.theme];
-  const theme = track.def.theme;
+  const theme = T.decor || track.def.theme; // famille de décor
   const group = new THREE.Group();
   scene.add(group);
   const disposables = [];
@@ -1319,7 +1411,7 @@ function buildWorld(scene, track, quality) {
   const animated = []; // matériaux à uniform « time »
 
   // --- ciel
-  const skyTex = keep(skyLayer(theme));
+  const skyTex = keep(skyLayer(T.sky || theme));
   skyTex.minFilter = THREE.LinearFilter; skyTex.generateMipmaps = false; // pas de couture au raccord atan
   const skyMat = keep(new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
@@ -1363,7 +1455,8 @@ function buildWorld(scene, track, quality) {
       blotches(g, w, h, ['#3a3b44', '#22232a', '#454650'], 30, 40, 120, 0.35, 21);
       g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 2;
       for (let i = 0; i <= 4; i++) { g.beginPath(); g.moveTo(i * w / 4, 0); g.lineTo(i * w / 4, h); g.stroke(); g.beginPath(); g.moveTo(0, i * h / 4); g.lineTo(w, i * h / 4); g.stroke(); }
-    } else if (theme === 'sunset') blotches(g, w, h, ['#6b7a38', '#3d4a24', '#7a6a42', '#556b2f'], 46, 30, 110, 0.45, 22);
+    } else if (T.blotch) blotches(g, w, h, T.blotch, 46, 30, 110, 0.45, 22);
+    else if (theme === 'sunset') blotches(g, w, h, ['#6b7a38', '#3d4a24', '#7a6a42', '#556b2f'], 46, 30, 110, 0.45, 22);
     else blotches(g, w, h, ['#3f5a2c', '#4f6b32', '#1f1c1b', '#3a3230'], 46, 30, 120, 0.5, 23);
   }, true));
   groundTex.repeat.set(110, 110);
@@ -1867,8 +1960,8 @@ function buildWorld(scene, track, quality) {
     const sc = (d) => { const s = 0.7 + R() * 0.9; d.scale.set(s, s * (0.9 + R() * 0.3), s); };
     const trunk = new THREE.CylinderGeometry(0.25, 0.38, 3.4, 5); trunk.translate(0, 1.7, 0);
     instanced(trunk, new THREE.MeshLambertMaterial({ color: 0x4a3326 }), spots, sc);
-    instanced(pine, new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 }), pines, sc, [0x2f5a3a, 0x3c6e45, 0x28503a, 0x456f3e]);
-    instanced(maple, new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 }), maples, sc, [0xc8352a, 0xe0612b, 0xd9902e, 0xb02a3a, 0xe8b13a]);
+    instanced(pine, new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 }), pines, sc, T.pines || [0x2f5a3a, 0x3c6e45, 0x28503a, 0x456f3e]);
+    instanced(maple, new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 }), maples, sc, T.maples || [0xc8352a, 0xe0612b, 0xd9902e, 0xb02a3a, 0xe8b13a]);
     // rochers de falaise
     const rocks = scatter(Math.round(60 * dens), track.wall + 5, 60);
     instanced(new THREE.DodecahedronGeometry(2.2, 0), new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 2 }), rocks, (d) => { const s = 0.6 + R() * 1.8; d.scale.set(s * 1.3, s, s); d.position.y = s * 0.5; }, [0x6b6460, 0x7d7268, 0x5a5452]);
@@ -2293,7 +2386,8 @@ function glowTexture() {
 let _carbonTex = null, _glowTex = null;
 
 // ---------- roues (géométrie face extérieure vers +z) ----------
-function wheelGeos(style, R, rr, tw, lod) {
+// kit : niveau du kit de freins (0..3) → disque et étrier plus grands
+function wheelGeos(style, R, rr, tw, lod, kit) {
   const seg = lod ? 26 : 16;
   const fz = tw / 2 - 0.018;
   const rim = [], dark = [];
@@ -2330,9 +2424,11 @@ function wheelGeos(style, R, rr, tw, lod) {
     rim.push(new THREE.RingGeometry(rr - 0.08, rr - 0.002, seg).translate(0, 0, fz - 0.07));
   }
   if (style === 'mesh') rim.push(new THREE.TorusGeometry(0.06, 0.012, 5, 12).translate(0, 0, fz - 0.03));
-  const disc = new THREE.CylinderGeometry(rr - 0.035, rr - 0.035, 0.022, seg).rotateX(Math.PI / 2).translate(0, 0, fz - 0.095);
+  const dr = rr - 0.07 + 0.012 * (kit | 0);
+  const disc = new THREE.CylinderGeometry(dr, dr, 0.022, seg).rotateX(Math.PI / 2).translate(0, 0, fz - 0.095);
   const ca = 2.25; // étrier en haut, vers l'arrière
-  const caliper = new THREE.BoxGeometry(0.075, 0.15, 0.06).rotateZ(ca - Math.PI / 2).translate(Math.cos(ca) * (rr - 0.065), Math.sin(ca) * (rr - 0.065), fz - 0.075);
+  const ck = 1 + 0.14 * (kit | 0);
+  const caliper = new THREE.BoxGeometry(0.075 * ck, 0.15 * ck, 0.06).rotateZ(ca - Math.PI / 2).translate(Math.cos(ca) * (dr - 0.03), Math.sin(ca) * (dr - 0.03), fz - 0.075);
   return { tire: mergeGeos([tire]), rim: mergeGeos(rim), dark: mergeGeos(dark), disc: mergeGeos([disc]), caliper: mergeGeos([caliper]), caliperAngle: ca };
 }
 
@@ -2658,13 +2754,15 @@ function buildCar(kind, look) {
   }
 
   // ---------- roues : InstancedMesh (pneu, jante, fût, disque, étrier) ----------
-  const wg = wheelGeos(look.rimStyle || 'six', R, d.rr, d.tw, lod);
+  const kit = look.brakes | 0;
+  const wg = wheelGeos(look.rimStyle || 'six', R, d.rr, d.tw, lod, kit);
   const wMats = {
     tire: keep(new THREE.MeshStandardMaterial({ color: 0x19191b, roughness: 0.92, metalness: 0 })),
     rim: keep(new THREE.MeshStandardMaterial({ color: look.rim, metalness: 0.8, roughness: 0.26 })),
     dark: mats.trim,
-    disc: keep(new THREE.MeshStandardMaterial({ color: 0x77787d, metalness: 0.8, roughness: 0.45 })),
-    caliper: keep(new THREE.MeshStandardMaterial({ color: isDarkHex(look.accent) ? 0xd8262d : look.accent, metalness: 0.3, roughness: 0.4 })),
+    // disques : rougeoient quand ils chauffent (state.brakeTemp)
+    disc: keep(new THREE.MeshStandardMaterial({ color: kit ? 0x8a8b90 : 0x77787d, metalness: 0.8, roughness: kit ? 0.35 : 0.45, emissive: 0xff4a10, emissiveIntensity: 0 })),
+    caliper: keep(new THREE.MeshStandardMaterial({ color: kit ? 0xf2b51d : isDarkHex(look.accent) ? 0xd8262d : look.accent, metalness: 0.3, roughness: 0.4 })),
   };
   const inst = {};
   for (const k of ['tire', 'rim', 'dark', 'disc', 'caliper']) {
@@ -2726,6 +2824,8 @@ function buildCar(kind, look) {
         if (w.front) w.pivot.rotation.y = -state.steerAngle;
       }
       writeWheels();
+      const heat = state.brakeTemp || 0;
+      wMats.disc.emissiveIntensity = heat > 0.25 ? (heat - 0.25) * (heat - 0.25) * 4 : 0;
       mats.tail.emissiveIntensity = braking ? 3.2 : 0.7;
     },
     flicker() { for (const f of flame.children) f.scale.set(1, 0.7 + Math.random() * 0.8, 1); },
@@ -3133,6 +3233,30 @@ function createShop(api) {
     return `<button class="chip${sw || key === 'neon' || key === 'accent' ? ' swatch' : ''}" data-key="${key}" data-id="${id}" aria-pressed="${on}" title="${esc(name)}" aria-label="${esc(name)}${has ? '' : ', ' + fmt(price)}">${dot}<b>${esc(name)}</b>${tag}</button>`;
   }
 
+  // ---------- fiche technique : lue sur la fiche physique réellement utilisée en course ----------
+  const pct = (v) => Math.round(v * 100) + ' %';
+  const tuneVal = (t, v) => t.key === 'brakeBias' ? `${Math.round(80 - 30 * v)} / ${Math.round(20 + 30 * v)}` : pct(v);
+  function techSheet(cfg) {
+    const s = E.tunedSpec(CAR_SPECS[kind], cfg.perf, cfg.tune);
+    const dec = 0.95 * s.brakeK * (1 - 0.12 * Math.max(s.camber, 0)); // en g, voir stepCar
+    const stop = (100 / 3.6) ** 2 / (2 * dec * 9.81);
+    // équilibre en appui : −1 sous-vireur … +1 survireur (raideurs, puis carrossage avant)
+    const bal = Math.max(-1, Math.min(1, -s.latBal * 0.8 + s.camber * 0.5));
+    const balTxt = bal < -0.15 ? 'Sous-vireuse' : bal > 0.15 ? 'Survireuse' : 'Neutre';
+    const brk = s.brakeRear > 0.15 ? 'pivote au freinage' : s.brakeRear < -0.15 ? 'stable au freinage' : 'équilibrée';
+    const disc = 280 + 20 * (cfg.perf.brakes | 0);
+    const row = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
+    return `<div class="tech" id="techSheet" aria-live="polite">`
+      + row('Freinage max', dec.toFixed(2).replace('.', ',') + ' g')
+      + row('100 → 0 km/h', '≈ ' + Math.round(stop) + ' m')
+      + row('Répartition', tuneVal({ key: 'brakeBias' }, cfg.tune.brakeBias) + ' · ' + brk)
+      + row('Disques', `Ø ${disc} mm${cfg.perf.brakes ? ' · kit niv. ' + cfg.perf.brakes : ' · origine'}`)
+      + row('Centre de gravité', Math.round(s.h * 100) + ' cm')
+      + row('Transferts', s.damp > 1.15 ? 'Vifs' : s.damp < 0.85 ? 'Lents' : 'Normaux')
+      + `<div class="bal"><small>Équilibre en appui · <b>${balTxt}</b></small><span class="balbar"><i style="left:${(50 + bal * 46).toFixed(0)}%"></i></span><span class="ends"><small>Sous-vireuse</small><small>Survireuse</small></span></div>`
+      + '</div>';
+  }
+
   function render() {
     const cfg = owned();
     $('garTitle').textContent = CAR_SPECS[kind].name;
@@ -3160,11 +3284,15 @@ function createShop(api) {
           + (price == null ? '<span class="maxed">MAX</span>' : `<button class="chip" data-perf="${pf.key}" aria-pressed="${!!(pending && pending.perf === pf.key)}"><b>Niveau ${lvl + 1}</b><small class="price">${fmt(price)}</small></button>`) + '</div>';
       }
     } else if (tab === 'tune') {
+      h += techSheet(cfg);
+      let group = '';
       for (const t of E.TUNE) {
+        if (t.group !== group) { group = t.group; h += `<h3 class="tune-h">${group}</h3>`; }
         const v = Math.round(cfg.tune[t.key] * 100);
-        h += `<label class="rng tune" for="tn-${t.key}"><span>${t.label} <output>${v} %</output></span><input type="range" id="tn-${t.key}" data-tune="${t.key}" min="0" max="100" step="1" value="${v}"><span class="ends"><small>${t.lo}</small><small>${t.hi}</small></span></label>`;
+        h += `<label class="rng tune" for="tn-${t.key}"><span>${t.label} <output>${tuneVal(t, cfg.tune[t.key])}</output></span><input type="range" id="tn-${t.key}" data-tune="${t.key}" min="0" max="100" step="1" value="${v}"><span class="ends"><small>${t.lo}</small><small>${t.hi}</small></span><small class="fx">${t.fx}</small></label>`;
       }
-      h += '<p class="sub">Réglages gratuits et réversibles : ils changent l’allure de la voiture, pas sa tenue de route.</p>';
+      h += '<button class="chip reset" data-reset><b>Valeurs d’origine</b></button>';
+      h += '<p class="sub">Réglages gratuits et réversibles. Ils agissent sur la tenue de route dès le prochain départ.</p>';
     } else {
       for (const e of E.SHOP.filter((x) => x.tab === tab)) {
         h += `<div class="shop-row"><div class="label">${e.label}</div><div class="chips">${e.items.map(([id, name, price]) => chip(e.key, id, name, price, cfg)).join('')}</div></div>`;
@@ -3243,6 +3371,10 @@ function createShop(api) {
       else setPending({ car: kind });
       return;
     }
+    if (e.target.closest('[data-reset]') && owned()) {
+      for (const t of E.TUNE) E.setTune(P(), kind, t.key, t.def);
+      api.save(); refresh(); api.sound.ui(); return;
+    }
     const num = e.target.closest('[data-num]');
     if (num && owned()) { const c = owned(); c.number = ((c.number - 1 + Number(num.dataset.num) + 99) % 99) + 1; api.save(); refresh(); api.sound.ui(); return; }
     const pf = e.target.closest('[data-perf]');
@@ -3257,7 +3389,8 @@ function createShop(api) {
     const t = e.target.dataset && e.target.dataset.tune;
     if (!t || !owned()) return;
     E.setTune(P(), kind, t, e.target.value / 100);
-    e.target.parentElement.querySelector('output').textContent = e.target.value + ' %';
+    e.target.parentElement.querySelector('output').textContent = tuneVal(E.TUNE.find((x) => x.key === t), e.target.value / 100);
+    $('techSheet').outerHTML = techSheet(owned());
     if (!tuneRaf) tuneRaf = requestAnimationFrame(() => { tuneRaf = 0; draft = clone(base()); api.preview(kind, draft); });
   });
   $('shopBody').addEventListener('change', (e) => { if (e.target.dataset && e.target.dataset.tune) api.save(); });
@@ -3400,7 +3533,7 @@ function createShop(api) {
     return {
       paint, accent, finish: cfg.finish, livery: cfg.livery, number: cfg.number, rimStyle: cfg.rimStyle, rim: hexOf(Economy.RIMS, cfg.rim, 0xb07a3a),
       front: cfg.front, wide: cfg.wide, wing: cfg.wing, hood: cfg.hood, exhaust: cfg.exhaust, cage: cfg.cage,
-      neon: cfg.neon === 'none' ? null : hexOf(Economy.NEONS, cfg.neon, null), tune: cfg.tune, night, lod: qLevel === 'low' ? 0 : 1,
+      neon: cfg.neon === 'none' ? null : hexOf(Economy.NEONS, cfg.neon, null), tune: cfg.tune, brakes: cfg.perf.brakes, night, lod: qLevel === 'low' ? 0 : 1,
     };
   }
   const smokeCol = { P: new THREE.Color(), L: new THREE.Color() };
@@ -3452,7 +3585,7 @@ function createShop(api) {
 
   function startIndex() { return track.count - Math.round(40 / track.step); }
   function resetPlayer(idx, speed) {
-    const st = createCarState(Economy.tunedSpec(CAR_SPECS[profile.current], profile.cars[profile.current].perf), track.px[idx], track.pz[idx], track.heading[idx]);
+    const st = createCarState(Economy.tunedSpec(CAR_SPECS[profile.current], profile.cars[profile.current].perf, profile.cars[profile.current].tune), track.px[idx], track.pz[idx], track.heading[idx]);
     st.vx = Math.cos(st.heading) * speed; st.vz = Math.sin(st.heading) * speed; st.speed = speed; st.fwd = speed;
     st.gear = speed > 15 ? 3 : speed > 8 ? 2 : 1;
     if (player) { st.idx = idx; }
@@ -3827,6 +3960,7 @@ function createShop(api) {
     const near = nearest(track, st.x, st.z, st.idx, 24);
     st.idx = near.i; st.lat0 = near.lat;
     st.surface = Math.abs(near.lat) > track.half + 0.4 ? 0.62 : 1;
+    st.grip = track.def.grip || 1;
     const corners = [[playerModel.frontX + 0.9, playerModel.halfW], [playerModel.frontX + 0.9, -playerModel.halfW], [playerModel.rearX - 0.85, playerModel.halfW], [playerModel.rearX - 0.85, -playerModel.halfW]];
     let worst = 0, side = 0, cornerX = 0;
     for (const [lx, lz] of corners) {

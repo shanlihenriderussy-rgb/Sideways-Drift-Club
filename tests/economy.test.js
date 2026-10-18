@@ -27,7 +27,7 @@ test('profil abîmé ou partiel : complété sans perte', () => {
   assert.equal(p.money, 777);
   assert.equal(p.cars.kouki.paint, 'vert');
   assert.equal(p.cars.kouki.finish, 'gloss');
-  assert.deepEqual(p.cars.kouki.perf, { engine: 0, tires: 0, angle: 0, weight: 0, susp: 0 });
+  assert.deepEqual(p.cars.kouki.perf, { engine: 0, tires: 0, angle: 0, weight: 0, susp: 0, brakes: 0 });
   const bad = E.loadProfile({ v: 1, money: -50, current: 'nope', cars: {} }, null);
   assert.equal(bad.money, 0);
   assert.equal(bad.current, 'hachi');

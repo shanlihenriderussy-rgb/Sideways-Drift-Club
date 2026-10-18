@@ -70,12 +70,22 @@ const PERF = [
   { key: 'angle', label: 'Kit d’angle', desc: 'Plus de braquage, plus d’angle tenu', prices: [3000, 6500, 11000] },
   { key: 'weight', label: 'Allègement', desc: '−4 % de masse par niveau', prices: [3000, 7000, 12000] },
   { key: 'susp', label: 'Suspension', desc: 'Moins de roulis, direction plus vive', prices: [2500, 5000, 9000] },
+  { key: 'brakes', label: 'Kit de freins', desc: '+10 % de freinage par niveau, disques et étriers plus gros', prices: [2000, 4500, 8000] },
 ];
+// Réglages gratuits et réversibles. def = valeur neutre : la physique y est strictement celle de la fiche.
+// fx : effet en jeu, affiché sous le curseur.
 const TUNE = [
-  { key: 'height', label: 'Hauteur de caisse', lo: 'Rasante', hi: 'Haute' },
-  { key: 'camber', label: 'Carrossage', lo: 'Droit', hi: 'Oni' },
-  { key: 'track', label: 'Déport des roues', lo: 'Rentré', hi: 'Affleurant' },
+  { key: 'brakePower', group: 'Freins', label: 'Puissance de freinage', lo: 'Douce', hi: 'Mordante', def: 0.5, fx: 'Distance d’arrêt ±20 %' },
+  { key: 'brakeBias', group: 'Freins', label: 'Répartition avant / arrière', lo: 'Avant', hi: 'Arrière', def: 0.5, fx: 'Vers l’arrière : la voiture pivote au freinage' },
+  { key: 'handbrake', group: 'Freins', label: 'Frein à main', lo: 'Progressif', hi: 'Sec', def: 0.5, fx: 'Sec : l’arrière décroche d’un coup' },
+  { key: 'springF', group: 'Suspension', label: 'Raideur avant', lo: 'Souple', hi: 'Ferme', def: 0.5, fx: 'Ferme : moins d’accroche avant en appui' },
+  { key: 'springR', group: 'Suspension', label: 'Raideur arrière', lo: 'Souple', hi: 'Ferme', def: 0.5, fx: 'Ferme : l’arrière glisse plus facilement' },
+  { key: 'damper', group: 'Suspension', label: 'Amortisseurs', lo: 'Lents', hi: 'Vifs', def: 0.5, fx: 'Vifs : transferts de charge immédiats' },
+  { key: 'height', group: 'Suspension', label: 'Hauteur de caisse', lo: 'Rasante', hi: 'Haute', def: 0.5, fx: 'Basse : moins de transfert, plus stable' },
+  { key: 'camber', group: 'Suspension', label: 'Carrossage', lo: 'Droit', hi: 'Oni', def: 0.35, fx: 'Plus d’accroche avant en glisse, freinage moindre' },
+  { key: 'track', group: 'Style', label: 'Déport des roues', lo: 'Rentré', hi: 'Affleurant', def: 0.5, fx: 'Esthétique' },
 ];
+const defaultTune = () => Object.fromEntries(TUNE.map((t) => [t.key, t.def]));
 
 const CHALLENGES = [
   { id: 'first', label: 'Termine ton premier run noté', reward: 500, test: (r) => r.mode !== 'free' },
@@ -89,7 +99,8 @@ const CHALLENGES = [
   { id: 'clipsAll', label: 'Tous les clips d’une piste en un run', reward: 4000, test: (r) => r.zones > 0 && r.clips >= r.zones },
   { id: 'drift70', label: '70 % d’un run en glisse', reward: 2500, test: (r) => r.mode !== 'free' && r.driftPct >= 70 },
   { id: 'tandemA', label: 'Note A ou S en tandem', reward: 3000, test: (r) => r.mode === 'tandem' && (r.grade === 'A' || r.grade === 'S') },
-  { id: 'tour3', label: 'Un run sur chacune des 3 pistes', reward: 3000, test: (r, p) => p.stats.tracks.length >= 3 },
+  { id: 'tour3', label: 'Un run sur 3 pistes différentes', reward: 3000, test: (r, p) => p.stats.tracks.length >= 3 },
+  { id: 'tourAll', label: 'Un run sur chacune des 6 pistes', reward: 6000, test: (r, p) => p.stats.tracks.length >= 6 }, // = TRACKS.length (vérifié par les tests)
   { id: 'firstPart', label: 'Achète ta première pièce', reward: 500, event: 'buy' },
   { id: 'secondCar', label: 'Achète une deuxième voiture', reward: 2000, event: 'car' },
 ];
@@ -105,8 +116,8 @@ function defaultCar(kind) {
     paint: d.paint, finish: 'gloss', livery: 'club', accent: 'auto', number: d.number,
     rimStyle: 'six', rim: 'bronze', smoke: 'blanc',
     front: 'stock', wide: 'stock', wing: 'stock', hood: 'stock', exhaust: 'stock', cage: 'none', neon: 'none',
-    perf: { engine: 0, tires: 0, angle: 0, weight: 0, susp: 0 },
-    tune: { height: 0.5, camber: 0.35, track: 0.5 },
+    perf: { engine: 0, tires: 0, angle: 0, weight: 0, susp: 0, brakes: 0 },
+    tune: defaultTune(),
     owned: [],
   };
 }
@@ -243,9 +254,18 @@ function setTune(p, kind, key, v) {
 }
 
 // Fiche physique améliorée (copie) : jamais de mutation de la fiche de base.
-function tunedSpec(base, perf) {
-  const e = perf.engine | 0, t = perf.tires | 0, a = perf.angle | 0, w = perf.weight | 0, s = perf.susp | 0;
+// tune : réglages d'atelier ; chaque écart à la valeur neutre est centré sur 0 pour que le neutre soit exact.
+function tunedSpec(base, perf, tune) {
+  const e = perf.engine | 0, t = perf.tires | 0, a = perf.angle | 0, w = perf.weight | 0, s = perf.susp | 0, b = perf.brakes | 0;
+  const d = (k) => { const def = TUNE.find((x) => x.key === k).def; const v = tune && Number.isFinite(tune[k]) ? tune[k] : def; return v - def; };
+  const stiff = (d('springF') + d('springR')) / 2;
   return Object.assign({}, base, {
+    brakeK: (1 + 0.1 * b) * (1 + 0.4 * d('brakePower')),
+    brakeRear: d('brakeBias'), // −0,5 (avant) … +0,5 (arrière)
+    hbK: d('handbrake'),
+    latBal: d('springF') - d('springR'), // > 0 : avant plus ferme → sous-vireur
+    damp: 1 + 0.8 * d('damper'),
+    camber: d('camber'),
     power: base.power * (1 + 0.08 * e),
     fmax: base.fmax * (1 + 0.06 * e),
     top: base.top + 2 * e,
@@ -254,9 +274,9 @@ function tunedSpec(base, perf) {
     driftSteer: 0.42 + 0.05 * a,
     angleBoost: 0.04 * a,
     mass: base.mass * (1 - 0.04 * w),
-    steerRate: 4.2 * (1 + 0.1 * s),
-    rollK: 1 - 0.18 * s,
-    h: base.h - 0.01 * s,
+    steerRate: 4.2 * (1 + 0.1 * s) * (1 + 0.2 * stiff),
+    rollK: (1 - 0.18 * s) * (1 - 0.6 * stiff),
+    h: base.h - 0.01 * s + 0.08 * d('height'),
   });
 }
 // statistiques affichées (0..5, décimales permises) : base + gain des pièces
@@ -316,7 +336,7 @@ function claimDaily(p, today) {
 const fmt = (n) => '¥' + Math.round(n).toLocaleString('fr-FR');
 
 const Economy = {
-  START_MONEY, LOG_MAX, CAR_PRICES, PAINTS, RIMS, SMOKES, NEONS, SHOP, PERF, TUNE, CHALLENGES,
+  defaultTune, START_MONEY, LOG_MAX, CAR_PRICES, PAINTS, RIMS, SMOKES, NEONS, SHOP, PERF, TUNE, CHALLENGES,
   defaultCar, loadProfile, itemPrice, owns, equip, buyItem, perfPrice, buyPerf, buyCar, setTune,
   tunedSpec, carStats, computePayout, applyRun, dailyAmount, dailyPreview, claimDaily, credit, fmt,
 };
