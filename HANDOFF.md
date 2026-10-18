@@ -16,13 +16,14 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **Modes, commandes, accessibilité, son** : inchangés (voir README).
 - **Données** : aucune donnée personnelle. Réglages, records et profil en `localStorage`. Mention « conçu avec une IA » dans l'aide ; « monnaie fictive, sans achat réel » dans Carrière.
 
-## Direction artistique (2026-10-18) : « Presse auto 1995 »
-- Menus = pages de magazine : papier `#ebe8e1` + trame (`--halftone`), bord encre 3 px, ombre portée dure, bandeau de rubrique rouge avec kanji. HUD = plaques noires bordées de papier, chiffres Anton.
-- Palette : encre `#0a0a0a`, papier `#ebe8e1`, rouge `#e8433c` (action, alerte), bleu `#3a7bd5` (info), jaune `#f7d154` (combo, argent, sélection).
-- Polices (Google Fonts) : Anton (titres, chiffres), Special Gothic Expanded One (étiquettes), Inter (texte), Noto Sans JP 900 en sous-ensemble `text=` (kanji affichés seulement ; ajouter tout nouveau kanji à l'URL).
-- Les cartes redéfinissent `--fg`, `--muted`, `--line`, `--fill`, `--ok`, `--apex`, `--clip` : toujours utiliser ces variables plutôt que `--paper` pour le texte d'un composant.
+## Direction artistique (2026-10-18) : « Télémétrie de nuit »
+- Essai « Presse auto 1995 » (papier, trame, ombres dures, 4 polices) rejeté : jugé amateur et daté. Ne pas revenir au néo-brutalisme.
+- Principes : la 3D est le sujet, l'interface s'efface. Surfaces sombres étagées (`--s1`…`--s4`), filets 1 px (`--hair`), rayons 12–20 px, une seule couleur d'accent `#f7d154` (jaune de l'emblème) pour l'action principale, la sélection, le combo et l'argent. Rouge `#ff4d4f` réservé aux alertes.
+- Une seule famille : Archivo variable (graisse 400–900, chasse 62–125 %). Titres en chasse élargie (`font-stretch` 115–125 %), étiquettes en capitales espacées 10–11 px. Kanji : Noto Sans JP 700 en sous-ensemble `text=` (ajouter tout nouveau kanji à l'URL).
+- Écran titre : emblème + logotype en haut à gauche, sommaire typographique en bas à gauche (repère jaune à l'entrée active), dégradés pour la lisibilité.
+- HUD : chiffres larges sans boîte, jauges de 3 px, rapport en pastille, popups en pilules à point de couleur.
 - Emblème : `assets/logo.webp` (512 px, disque détouré), injecté une seule fois par `build.mjs` dans `--logo` ; `.emblem` l'affiche en fond. Icônes d'application régénérées depuis l'emblème.
-- Plus aucun `backdrop-filter` : cartes opaques, moins coûteux sur Android d'entrée de gamme.
+- Aucun `backdrop-filter` : cartes opaques, moins coûteuses sur Android d'entrée de gamme.
 
 ## Mesures de référence
 | Mesure | Valeur |
