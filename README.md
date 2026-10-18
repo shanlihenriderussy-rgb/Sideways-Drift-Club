@@ -15,10 +15,10 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 ## Structure
 | Fichier | Rôle |
 |---|---|
-| `src/physics.js` | Modèle bicyclette, pneus saturés, régulateur d'angle de drift (assistance) ; lit les champs de fiche tunée (`steerRate`, `driftSteer`, `angleBoost`, `rollK`) |
+| `src/physics.js` | Modèle bicyclette, pneus saturés, régulateur d'angle de drift (assistance) ; lit les champs de fiche tunée (`steerRate`, `driftSteer`, `angleBoost`, `rollK`, `brakeK`, `brakeRear`, `hbK`, `latBal`, `damp`, `camber`) et l'adhérence de piste (`grip`) |
 | `src/economy.js` | Portefeuille en yens, catalogue de l'atelier, gains de fin de run, défis, bonus quotidien, fiche tunée. Logique pure, testée |
-| `src/track.js` | Tracés, échantillonnage, zones de clipping, barème (`par`) |
-| `src/world.js` | Ciel (nuages, étoiles), crêtes, route et murs par lieu, décor instancié par thème, tribune, eau animée |
+| `src/track.js` | 6 tracés, échantillonnage, zones de clipping, barème (`par`), adhérence (`grip`, neige) |
+| `src/world.js` | Ciel (nuages, étoiles), crêtes, route et murs par lieu, décor instancié par thème, tribune, eau animée. Thèmes `dawn`, `snow`, `dusk` = palettes posées sur une famille de décor (`decor`) |
 | `src/car.js` | Voitures procédurales : caisse lissée (loft), habitacle, livrée peinte, pièces modulaires, roues instanciées |
 | `src/fx.js` | Fumée colorée (points), traces de gomme (envoi GPU partiel), étincelles |
 | `src/audio.js` | Moteur, turbo, crissement synthétisés (Web Audio) |
@@ -26,13 +26,15 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 | `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
 | `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |
 | `assets/favicon.svg`, `icons/`, `manifest.webmanifest` | Favicon (intégré au build), icônes d'application, manifeste PWA |
-| `tests/` | `node --test tests/*.test.js` : économie |
+| `tests/` | `node --test tests/*.test.js` : économie, effets physiques des réglages, validité des tracés |
 | `tools/` | Bancs d'essai : physique (Node), captures, tour complet, bot expert, perf, CPU ralenti, analyse audio (Playwright) |
 
 ## Économie et atelier
 - Monnaie fictive (¥), sans achat réel. Départ : HACHI offerte + ¥3 000. KOUKI ¥18 000, RAIJIN ¥45 000.
-- Gains : 5 % des points (×1,25 en tandem), bonus de note, clips, combo, record ; mode libre : 2 % plafonné. Bonus quotidien de ¥500 à ¥2 000 selon la série. 14 défis à récompense unique.
-- Atelier : carrosserie (pare-chocs, ailes, aileron, capot, échappement, arceau, néon), peinture (12 couleurs, 5 finitions, 6 livrées, numéro), roues (5 jantes, 8 couleurs, fumée colorée), performances (5 pièces × 3 niveaux), réglages visuels gratuits.
+- Gains : 5 % des points (×1,25 en tandem), bonus de note, clips, combo, record ; mode libre : 2 % plafonné. Bonus quotidien de ¥500 à ¥2 000 selon la série. 15 défis à récompense unique.
+- Atelier : carrosserie (pare-chocs, ailes, aileron, capot, échappement, arceau, néon), peinture (12 couleurs, 5 finitions, 6 livrées, numéro), roues (5 jantes, 8 couleurs, fumée colorée), performances (6 pièces × 3 niveaux, dont kit de freins visible sur les roues), réglages gratuits avec fiche technique en direct.
+- Réglages : freins (puissance, répartition avant/arrière, frein à main), suspension (raideur avant, raideur arrière, amortisseurs, hauteur, carrossage), style (déport). Valeur neutre = physique d'origine ; aux extrêmes : arrêt ±20 %, équilibre sous-vireur ↔ survireur, sans tête-à-queue au banc.
+- Pistes : Docks de Minato, Col d'Akane, Piton Volcan, Quai de Shiohama (aube), Col de Yukimi (neige, adhérence ×0,88), Corniche de Kaigan (crépuscule, lampadaires).
 
 ## Mesures de référence (2026-10-14)
 - Appels de dessin : 65–68 par image en tandem. JS : 0,4–0,5 ms/image ; 1,9–2,8 ms avec CPU ralenti ×6.

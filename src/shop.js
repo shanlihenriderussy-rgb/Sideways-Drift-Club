@@ -40,6 +40,30 @@ function createShop(api) {
     return `<button class="chip${sw || key === 'neon' || key === 'accent' ? ' swatch' : ''}" data-key="${key}" data-id="${id}" aria-pressed="${on}" title="${esc(name)}" aria-label="${esc(name)}${has ? '' : ', ' + fmt(price)}">${dot}<b>${esc(name)}</b>${tag}</button>`;
   }
 
+  // ---------- fiche technique : lue sur la fiche physique réellement utilisée en course ----------
+  const pct = (v) => Math.round(v * 100) + ' %';
+  const tuneVal = (t, v) => t.key === 'brakeBias' ? `${Math.round(80 - 30 * v)} / ${Math.round(20 + 30 * v)}` : pct(v);
+  function techSheet(cfg) {
+    const s = E.tunedSpec(CAR_SPECS[kind], cfg.perf, cfg.tune);
+    const dec = 0.95 * s.brakeK * (1 - 0.12 * Math.max(s.camber, 0)); // en g, voir stepCar
+    const stop = (100 / 3.6) ** 2 / (2 * dec * 9.81);
+    // équilibre en appui : −1 sous-vireur … +1 survireur (raideurs, puis carrossage avant)
+    const bal = Math.max(-1, Math.min(1, -s.latBal * 0.8 + s.camber * 0.5));
+    const balTxt = bal < -0.15 ? 'Sous-vireuse' : bal > 0.15 ? 'Survireuse' : 'Neutre';
+    const brk = s.brakeRear > 0.15 ? 'pivote au freinage' : s.brakeRear < -0.15 ? 'stable au freinage' : 'équilibrée';
+    const disc = 280 + 20 * (cfg.perf.brakes | 0);
+    const row = (k, v) => `<div><small>${k}</small><b>${v}</b></div>`;
+    return `<div class="tech" id="techSheet" aria-live="polite">`
+      + row('Freinage max', dec.toFixed(2).replace('.', ',') + ' g')
+      + row('100 → 0 km/h', '≈ ' + Math.round(stop) + ' m')
+      + row('Répartition', tuneVal({ key: 'brakeBias' }, cfg.tune.brakeBias) + ' · ' + brk)
+      + row('Disques', `Ø ${disc} mm${cfg.perf.brakes ? ' · kit niv. ' + cfg.perf.brakes : ' · origine'}`)
+      + row('Centre de gravité', Math.round(s.h * 100) + ' cm')
+      + row('Transferts', s.damp > 1.15 ? 'Vifs' : s.damp < 0.85 ? 'Lents' : 'Normaux')
+      + `<div class="bal"><small>Équilibre en appui · <b>${balTxt}</b></small><span class="balbar"><i style="left:${(50 + bal * 46).toFixed(0)}%"></i></span><span class="ends"><small>Sous-vireuse</small><small>Survireuse</small></span></div>`
+      + '</div>';
+  }
+
   function render() {
     const cfg = owned();
     $('garTitle').textContent = CAR_SPECS[kind].name;
@@ -67,11 +91,15 @@ function createShop(api) {
           + (price == null ? '<span class="maxed">MAX</span>' : `<button class="chip" data-perf="${pf.key}" aria-pressed="${!!(pending && pending.perf === pf.key)}"><b>Niveau ${lvl + 1}</b><small class="price">${fmt(price)}</small></button>`) + '</div>';
       }
     } else if (tab === 'tune') {
+      h += techSheet(cfg);
+      let group = '';
       for (const t of E.TUNE) {
+        if (t.group !== group) { group = t.group; h += `<h3 class="tune-h">${group}</h3>`; }
         const v = Math.round(cfg.tune[t.key] * 100);
-        h += `<label class="rng tune" for="tn-${t.key}"><span>${t.label} <output>${v} %</output></span><input type="range" id="tn-${t.key}" data-tune="${t.key}" min="0" max="100" step="1" value="${v}"><span class="ends"><small>${t.lo}</small><small>${t.hi}</small></span></label>`;
+        h += `<label class="rng tune" for="tn-${t.key}"><span>${t.label} <output>${tuneVal(t, cfg.tune[t.key])}</output></span><input type="range" id="tn-${t.key}" data-tune="${t.key}" min="0" max="100" step="1" value="${v}"><span class="ends"><small>${t.lo}</small><small>${t.hi}</small></span><small class="fx">${t.fx}</small></label>`;
       }
-      h += '<p class="sub">Réglages gratuits et réversibles : ils changent l’allure de la voiture, pas sa tenue de route.</p>';
+      h += '<button class="chip reset" data-reset><b>Valeurs d’origine</b></button>';
+      h += '<p class="sub">Réglages gratuits et réversibles. Ils agissent sur la tenue de route dès le prochain départ.</p>';
     } else {
       for (const e of E.SHOP.filter((x) => x.tab === tab)) {
         h += `<div class="shop-row"><div class="label">${e.label}</div><div class="chips">${e.items.map(([id, name, price]) => chip(e.key, id, name, price, cfg)).join('')}</div></div>`;
@@ -150,6 +178,10 @@ function createShop(api) {
       else setPending({ car: kind });
       return;
     }
+    if (e.target.closest('[data-reset]') && owned()) {
+      for (const t of E.TUNE) E.setTune(P(), kind, t.key, t.def);
+      api.save(); refresh(); api.sound.ui(); return;
+    }
     const num = e.target.closest('[data-num]');
     if (num && owned()) { const c = owned(); c.number = ((c.number - 1 + Number(num.dataset.num) + 99) % 99) + 1; api.save(); refresh(); api.sound.ui(); return; }
     const pf = e.target.closest('[data-perf]');
@@ -164,7 +196,8 @@ function createShop(api) {
     const t = e.target.dataset && e.target.dataset.tune;
     if (!t || !owned()) return;
     E.setTune(P(), kind, t, e.target.value / 100);
-    e.target.parentElement.querySelector('output').textContent = e.target.value + ' %';
+    e.target.parentElement.querySelector('output').textContent = tuneVal(E.TUNE.find((x) => x.key === t), e.target.value / 100);
+    $('techSheet').outerHTML = techSheet(owned());
     if (!tuneRaf) tuneRaf = requestAnimationFrame(() => { tuneRaf = 0; draft = clone(base()); api.preview(kind, draft); });
   });
   $('shopBody').addEventListener('change', (e) => { if (e.target.dataset && e.target.dataset.tune) api.save(); });

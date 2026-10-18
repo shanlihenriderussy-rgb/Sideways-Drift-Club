@@ -24,6 +24,7 @@ function createCarState(spec, x, z, heading) {
     steer: 0, // entrée lissée -1..1
     throttle: 0, brake: 0, handbrake: 0,
     surface: 1, // 1 = bitume, <1 = herbe / gravier
+    grip: 1, // adhérence de la piste (neige < 1)
     // sorties utiles au rendu / son / score
     speed: 0, fwd: 0, lat: 0, slip: 0, rearSlip: 0, frontSlip: 0,
     wheelSpin: 0, rpm: 900, gear: 1, shiftTimer: 0, reversing: false,
@@ -77,7 +78,12 @@ function stepCar(c, input, dt, assist) {
   let Nr = mg * s.a / L + s.mass * c.ax * s.h / L;
   Nf = Math.max(Nf, mg * 0.2); Nr = Math.max(Nr, mg * 0.2);
 
-  const mu = s.mu * c.surface;
+  const mu = s.mu * c.surface * (c.grip || 1); // grip : adhérence propre à la piste (neige)
+  // --- réglages d'atelier (tous neutres à 0 / 1 sur la fiche de base)
+  const brakeRear = s.brakeRear || 0, hbK = s.hbK || 0, camber = s.camber || 0;
+  // raideurs : le train le plus ferme encaisse le transfert latéral et perd de l'accroche
+  const latLoad = Math.min(Math.abs(c.ay) / (s.mu * G), 1);
+  const bal = (s.latBal || 0) * latLoad * 0.08;
   const dirX = vx >= 0 ? 1 : -1;
   const alphaF = Math.atan2(vy + c.omega * s.a, vxa) - delta * dirX;
   const alphaR = Math.atan2(vy - c.omega * s.b, vxa);
@@ -95,15 +101,19 @@ function stepCar(c, input, dt, assist) {
   }
   // freinage
   let brakeF = 0, rearBrake = 0;
-  if (!c.reversing && c.brake > 0.01) brakeF = c.brake * mg * 0.95;
-  if (c.handbrake > 0.5) rearBrake = Nr * mu * 0.75;
+  if (!c.reversing && c.brake > 0.01) brakeF = c.brake * mg * 0.95 * (s.brakeK || 1) * (1 - 0.12 * Math.max(camber, 0));
+  if (c.handbrake > 0.5) rearBrake = Nr * mu * 0.75 * (1 + 0.6 * hbK);
+  // répartition : un freinage porté sur l'arrière sature ses pneus (la voiture pivote), sur l'avant elle s'inscrit moins
+  const brakeLoad = brakeF > 0 ? c.brake : 0;
+  const gripR = (1 + bal) * (1 - brakeLoad * Math.max(brakeRear, 0) * 0.9);
+  const gripF = (1 - bal) * (1 + brakeLoad * Math.min(brakeRear, 0) * 0.5);
 
   // --- cercle de friction arrière : l'excès de motricité tue l'adhérence latérale
   // état de glisse entretenu (arcade) : une fois la dérive lancée, le gaz garde l'arrière libre
   const wantDrift = Math.abs(beta) > 0.14 && vx > 6 && c.throttle > 0.3 && !c.reversing;
   const dropDrift = Math.abs(beta) < 0.06 || c.throttle < 0.15 || vx < 4 || (-c.steer * Math.sign(beta) < -0.5 && Math.abs(beta) < 0.22) || (Math.abs(beta) < 0.1 && -c.steer * Math.sign(beta) < 0.15);
   c.drift = Math.max(0, Math.min(1, (c.drift || 0) + (wantDrift ? dt * 3 : dropDrift ? -dt * 2.5 : 0)));
-  const rearCap = Nr * mu * (c.handbrake > 0.5 ? 0.52 : 1) * (1 - 0.36 * c.drift * c.throttle);
+  const rearCap = Nr * mu * gripR * (c.handbrake > 0.5 ? 0.52 - 0.4 * hbK : 1) * (1 - 0.36 * c.drift * c.throttle);
   const lon = Math.abs(drive) + rearBrake;
   const spinRatio = lon / rearCap;
   c.wheelSpin += ((Math.max(0, spinRatio - 0.72) * 2.2 + Math.abs(alphaR) * 1.5) - c.wheelSpin) * Math.min(1, dt * 6);
@@ -111,7 +121,9 @@ function stepCar(c, input, dt, assist) {
   const latCapR = Math.sqrt(Math.max(rearCap * rearCap - lon * lon * 0.8, (rearCap * latFloor) ** 2));
   const driveEff = Math.sign(drive) * Math.min(Math.abs(drive), rearCap * 0.95);
 
-  const Fyf = -Nf * mu * tireCurve(Math.abs(alphaF) / AP) * Math.sign(alphaF);
+  // carrossage : l'avant accroche mieux une fois braqué en glisse
+  const camberF = 1 + 0.12 * camber * Math.min(Math.abs(alphaF) / AP, 1);
+  const Fyf = -Nf * mu * gripF * camberF * tireCurve(Math.abs(alphaF) / AP) * Math.sign(alphaF);
   const Fyr = -latCapR * tireCurve(Math.abs(alphaR) / (AP * 1.1)) * Math.sign(alphaR);
 
   // résistances
@@ -167,16 +179,19 @@ function stepCar(c, input, dt, assist) {
   c.x += c.vx * dt; c.z += c.vz * dt;
 
   // --- sorties
-  c.ax += (ax - c.ax) * Math.min(1, dt * 8);
-  c.ay += (ay - c.ay) * Math.min(1, dt * 8);
+  const damp = s.damp || 1; // amortisseurs : vitesse d'établissement des transferts de charge
+  c.ax += (ax - c.ax) * Math.min(1, dt * 8 * damp);
+  c.ay += (ay - c.ay) * Math.min(1, dt * 8 * damp);
   c.speed = Math.hypot(vx, vy);
   c.fwd = vx; c.lat = vy;
   c.slip = Math.atan2(vy, Math.max(Math.abs(vx), 0.5));
   c.rearSlip = Math.abs(alphaR);
   c.frontSlip = Math.abs(alphaF);
   c.wheelRot += (vx / WHEEL_R) * dt * (1 + Math.min(c.wheelSpin, 1.5) * 0.6);
-  c.rollAngle += ((-ay * 0.012 * (s.rollK || 1)) - c.rollAngle) * Math.min(1, dt * 7);
-  c.pitchAngle += ((ax * 0.008) - c.pitchAngle) * Math.min(1, dt * 7);
+  c.rollAngle += ((-ay * 0.012 * (s.rollK || 1)) - c.rollAngle) * Math.min(1, dt * 7 * damp);
+  c.pitchAngle += ((ax * 0.008) - c.pitchAngle) * Math.min(1, dt * 7 * damp);
+  // température des disques (affichage) : chauffe au freinage, refroidit à l'air
+  c.brakeTemp = Math.max(0, Math.min(1, (c.brakeTemp || 0) + (brakeF / mg) * speed * dt * 0.035 - dt * 0.12 * (0.3 + (c.brakeTemp || 0))));
 
   // --- boîte auto (pour le son et la coupure de couple)
   c.shiftTimer = Math.max(0, c.shiftTimer - dt);

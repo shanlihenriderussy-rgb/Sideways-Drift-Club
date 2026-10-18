@@ -124,7 +124,7 @@
     return {
       paint, accent, finish: cfg.finish, livery: cfg.livery, number: cfg.number, rimStyle: cfg.rimStyle, rim: hexOf(Economy.RIMS, cfg.rim, 0xb07a3a),
       front: cfg.front, wide: cfg.wide, wing: cfg.wing, hood: cfg.hood, exhaust: cfg.exhaust, cage: cfg.cage,
-      neon: cfg.neon === 'none' ? null : hexOf(Economy.NEONS, cfg.neon, null), tune: cfg.tune, night, lod: qLevel === 'low' ? 0 : 1,
+      neon: cfg.neon === 'none' ? null : hexOf(Economy.NEONS, cfg.neon, null), tune: cfg.tune, brakes: cfg.perf.brakes, night, lod: qLevel === 'low' ? 0 : 1,
     };
   }
   const smokeCol = { P: new THREE.Color(), L: new THREE.Color() };
@@ -176,7 +176,7 @@
 
   function startIndex() { return track.count - Math.round(40 / track.step); }
   function resetPlayer(idx, speed) {
-    const st = createCarState(Economy.tunedSpec(CAR_SPECS[profile.current], profile.cars[profile.current].perf), track.px[idx], track.pz[idx], track.heading[idx]);
+    const st = createCarState(Economy.tunedSpec(CAR_SPECS[profile.current], profile.cars[profile.current].perf, profile.cars[profile.current].tune), track.px[idx], track.pz[idx], track.heading[idx]);
     st.vx = Math.cos(st.heading) * speed; st.vz = Math.sin(st.heading) * speed; st.speed = speed; st.fwd = speed;
     st.gear = speed > 15 ? 3 : speed > 8 ? 2 : 1;
     if (player) { st.idx = idx; }
@@ -551,6 +551,7 @@
     const near = nearest(track, st.x, st.z, st.idx, 24);
     st.idx = near.i; st.lat0 = near.lat;
     st.surface = Math.abs(near.lat) > track.half + 0.4 ? 0.62 : 1;
+    st.grip = track.def.grip || 1;
     const corners = [[playerModel.frontX + 0.9, playerModel.halfW], [playerModel.frontX + 0.9, -playerModel.halfW], [playerModel.rearX - 0.85, playerModel.halfW], [playerModel.rearX - 0.85, -playerModel.halfW]];
     let worst = 0, side = 0, cornerX = 0;
     for (const [lx, lz] of corners) {

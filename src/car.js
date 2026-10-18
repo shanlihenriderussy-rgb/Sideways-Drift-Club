@@ -285,7 +285,8 @@ function glowTexture() {
 let _carbonTex = null, _glowTex = null;
 
 // ---------- roues (géométrie face extérieure vers +z) ----------
-function wheelGeos(style, R, rr, tw, lod) {
+// kit : niveau du kit de freins (0..3) → disque et étrier plus grands
+function wheelGeos(style, R, rr, tw, lod, kit) {
   const seg = lod ? 26 : 16;
   const fz = tw / 2 - 0.018;
   const rim = [], dark = [];
@@ -322,9 +323,11 @@ function wheelGeos(style, R, rr, tw, lod) {
     rim.push(new THREE.RingGeometry(rr - 0.08, rr - 0.002, seg).translate(0, 0, fz - 0.07));
   }
   if (style === 'mesh') rim.push(new THREE.TorusGeometry(0.06, 0.012, 5, 12).translate(0, 0, fz - 0.03));
-  const disc = new THREE.CylinderGeometry(rr - 0.035, rr - 0.035, 0.022, seg).rotateX(Math.PI / 2).translate(0, 0, fz - 0.095);
+  const dr = rr - 0.07 + 0.012 * (kit | 0);
+  const disc = new THREE.CylinderGeometry(dr, dr, 0.022, seg).rotateX(Math.PI / 2).translate(0, 0, fz - 0.095);
   const ca = 2.25; // étrier en haut, vers l'arrière
-  const caliper = new THREE.BoxGeometry(0.075, 0.15, 0.06).rotateZ(ca - Math.PI / 2).translate(Math.cos(ca) * (rr - 0.065), Math.sin(ca) * (rr - 0.065), fz - 0.075);
+  const ck = 1 + 0.14 * (kit | 0);
+  const caliper = new THREE.BoxGeometry(0.075 * ck, 0.15 * ck, 0.06).rotateZ(ca - Math.PI / 2).translate(Math.cos(ca) * (dr - 0.03), Math.sin(ca) * (dr - 0.03), fz - 0.075);
   return { tire: mergeGeos([tire]), rim: mergeGeos(rim), dark: mergeGeos(dark), disc: mergeGeos([disc]), caliper: mergeGeos([caliper]), caliperAngle: ca };
 }
 
@@ -650,13 +653,15 @@ function buildCar(kind, look) {
   }
 
   // ---------- roues : InstancedMesh (pneu, jante, fût, disque, étrier) ----------
-  const wg = wheelGeos(look.rimStyle || 'six', R, d.rr, d.tw, lod);
+  const kit = look.brakes | 0;
+  const wg = wheelGeos(look.rimStyle || 'six', R, d.rr, d.tw, lod, kit);
   const wMats = {
     tire: keep(new THREE.MeshStandardMaterial({ color: 0x19191b, roughness: 0.92, metalness: 0 })),
     rim: keep(new THREE.MeshStandardMaterial({ color: look.rim, metalness: 0.8, roughness: 0.26 })),
     dark: mats.trim,
-    disc: keep(new THREE.MeshStandardMaterial({ color: 0x77787d, metalness: 0.8, roughness: 0.45 })),
-    caliper: keep(new THREE.MeshStandardMaterial({ color: isDarkHex(look.accent) ? 0xd8262d : look.accent, metalness: 0.3, roughness: 0.4 })),
+    // disques : rougeoient quand ils chauffent (state.brakeTemp)
+    disc: keep(new THREE.MeshStandardMaterial({ color: kit ? 0x8a8b90 : 0x77787d, metalness: 0.8, roughness: kit ? 0.35 : 0.45, emissive: 0xff4a10, emissiveIntensity: 0 })),
+    caliper: keep(new THREE.MeshStandardMaterial({ color: kit ? 0xf2b51d : isDarkHex(look.accent) ? 0xd8262d : look.accent, metalness: 0.3, roughness: 0.4 })),
   };
   const inst = {};
   for (const k of ['tire', 'rim', 'dark', 'disc', 'caliper']) {
@@ -718,6 +723,8 @@ function buildCar(kind, look) {
         if (w.front) w.pivot.rotation.y = -state.steerAngle;
       }
       writeWheels();
+      const heat = state.brakeTemp || 0;
+      wMats.disc.emissiveIntensity = heat > 0.25 ? (heat - 0.25) * (heat - 0.25) * 4 : 0;
       mats.tail.emissiveIntensity = braking ? 3.2 : 0.7;
     },
     flicker() { for (const f of flame.children) f.scale.set(1, 0.7 + Math.random() * 0.8, 1); },

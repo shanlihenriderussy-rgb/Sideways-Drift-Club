@@ -30,6 +30,32 @@ const THEMES = {
     wallA: '#ffffff', wallB: '#1f6fb2', wallText: '#0e2236', lamps: false, headlights: false, exposure: 1.0,
     ridge: [0x8fb3c4, 0x5f8a6a], ridgeTop: [0x7a9fb2, 0x3f6a4c],
   },
+  // variantes : decor = famille de décor (night | sunset | day), sky = calque de ciel
+  dawn: {
+    decor: 'night', sky: 'sunset',
+    skyTop: 0x34457a, skyHorizon: 0xffb38a, skyBottom: 0x2a2a3a, sun: [0.8, 0.08, -0.3], sunColor: 0xffc9a0, sunSize: 0.9988,
+    fog: 0x9c8ca6, fogNear: 90, fogFar: 640, hemiSky: 0xd8c8e0, hemiGround: 0x2a2630, hemi: 0.8, dir: 1.0, dirColor: 0xffc8a0,
+    ground: '#34353c', groundSpeck: '#45464f', shoulder: '#44444a', road: '#34353b', line: '#ece6d4',
+    wallA: '#f2c230', wallB: '#1a1a1e', wallText: '#111', lamps: true, headlights: false, exposure: 1.05,
+    ridge: [0x5a5878, 0x3a3858], ridgeTop: [0x8a7a98, 0x5a5070],
+  },
+  snow: {
+    decor: 'sunset', sky: 'day',
+    skyTop: 0x6f8fb8, skyHorizon: 0xe6eef5, skyBottom: 0x9aa8b8, sun: [-0.5, 0.35, 0.5], sunColor: 0xfff4e6, sunSize: 0.999,
+    fog: 0xdfe8f0, fogNear: 80, fogFar: 600, hemiSky: 0xeef4ff, hemiGround: 0x8a94a8, hemi: 1.0, dir: 1.1, dirColor: 0xfff2e0,
+    ground: '#e4eaf0', groundSpeck: '#c9d3de', shoulder: '#b8c0c8', road: '#45474d', line: '#f4efe2',
+    wallA: '#e9ebee', wallB: '#2a6fc8', wallText: '#1b1b1b', lamps: false, headlights: false, exposure: 0.95,
+    ridge: [0xbcc8d8, 0x8a9ab0], ridgeTop: [0xffffff, 0xe8eef6],
+    blotch: ['#ffffff', '#d4dde6', '#c2ccd8', '#f2f5f8'], pines: [0x6f8a7a, 0x8aa094, 0xa8bab0, 0x5a7466], maples: [0xe8eef4, 0xd8e2ec, 0xc8302c, 0xf4f6f8],
+  },
+  dusk: {
+    decor: 'day', sky: 'sunset',
+    skyTop: 0x1e2458, skyHorizon: 0xe07a8a, skyBottom: 0x3a3050, sun: [0.6, 0.06, -0.5], sunColor: 0xff9a6a, sunSize: 0.9986,
+    fog: 0x8a6a8a, fogNear: 120, fogFar: 820, hemiSky: 0xd0a0c0, hemiGround: 0x3a3040, hemi: 0.8, dir: 0.9, dirColor: 0xff9a7a,
+    ground: '#2f2b29', groundSpeck: '#3f4a2c', shoulder: '#4a4440', road: '#3a3b40', line: '#ffffff',
+    wallA: '#ffffff', wallB: '#d4502a', wallText: '#2a0e0e', lamps: true, headlights: true, exposure: 1.1,
+    ridge: [0x4a3a6a, 0x2a2a4a], ridgeTop: [0x6a4a7a, 0x3a3050],
+  },
 };
 
 function canvasTex(w, h, draw, repeat) {
@@ -145,7 +171,7 @@ function ridgeGeo(cx, cz, radius, base, amp, seed, seg, mask) {
 
 function buildWorld(scene, track, quality) {
   const T = THEMES[track.def.theme];
-  const theme = track.def.theme;
+  const theme = T.decor || track.def.theme; // famille de décor
   const group = new THREE.Group();
   scene.add(group);
   const disposables = [];
@@ -153,7 +179,7 @@ function buildWorld(scene, track, quality) {
   const animated = []; // matériaux à uniform « time »
 
   // --- ciel
-  const skyTex = keep(skyLayer(theme));
+  const skyTex = keep(skyLayer(T.sky || theme));
   skyTex.minFilter = THREE.LinearFilter; skyTex.generateMipmaps = false; // pas de couture au raccord atan
   const skyMat = keep(new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
@@ -197,7 +223,8 @@ function buildWorld(scene, track, quality) {
       blotches(g, w, h, ['#3a3b44', '#22232a', '#454650'], 30, 40, 120, 0.35, 21);
       g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 2;
       for (let i = 0; i <= 4; i++) { g.beginPath(); g.moveTo(i * w / 4, 0); g.lineTo(i * w / 4, h); g.stroke(); g.beginPath(); g.moveTo(0, i * h / 4); g.lineTo(w, i * h / 4); g.stroke(); }
-    } else if (theme === 'sunset') blotches(g, w, h, ['#6b7a38', '#3d4a24', '#7a6a42', '#556b2f'], 46, 30, 110, 0.45, 22);
+    } else if (T.blotch) blotches(g, w, h, T.blotch, 46, 30, 110, 0.45, 22);
+    else if (theme === 'sunset') blotches(g, w, h, ['#6b7a38', '#3d4a24', '#7a6a42', '#556b2f'], 46, 30, 110, 0.45, 22);
     else blotches(g, w, h, ['#3f5a2c', '#4f6b32', '#1f1c1b', '#3a3230'], 46, 30, 120, 0.5, 23);
   }, true));
   groundTex.repeat.set(110, 110);
@@ -701,8 +728,8 @@ function buildWorld(scene, track, quality) {
     const sc = (d) => { const s = 0.7 + R() * 0.9; d.scale.set(s, s * (0.9 + R() * 0.3), s); };
     const trunk = new THREE.CylinderGeometry(0.25, 0.38, 3.4, 5); trunk.translate(0, 1.7, 0);
     instanced(trunk, new THREE.MeshLambertMaterial({ color: 0x4a3326 }), spots, sc);
-    instanced(pine, new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 }), pines, sc, [0x2f5a3a, 0x3c6e45, 0x28503a, 0x456f3e]);
-    instanced(maple, new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 }), maples, sc, [0xc8352a, 0xe0612b, 0xd9902e, 0xb02a3a, 0xe8b13a]);
+    instanced(pine, new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 }), pines, sc, T.pines || [0x2f5a3a, 0x3c6e45, 0x28503a, 0x456f3e]);
+    instanced(maple, new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 }), maples, sc, T.maples || [0xc8352a, 0xe0612b, 0xd9902e, 0xb02a3a, 0xe8b13a]);
     // rochers de falaise
     const rocks = scatter(Math.round(60 * dens), track.wall + 5, 60);
     instanced(new THREE.DodecahedronGeometry(2.2, 0), new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 2 }), rocks, (d) => { const s = 0.6 + R() * 1.8; d.scale.set(s * 1.3, s, s); d.position.y = s * 0.5; }, [0x6b6460, 0x7d7268, 0x5a5452]);
