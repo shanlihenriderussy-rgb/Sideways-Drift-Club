@@ -407,8 +407,9 @@
   addEventListener('resize', () => { applyLayout(); if (editing) syncLayoutUI(); });
   addEventListener('orientationchange', () => setTimeout(() => { applyLayout(); if (editing) syncLayoutUI(); }, 250));
 
-  // ---------- iPhone : plus de zoom sur double-tap ni pincement ----------
-  // (user-scalable=no est ignoré par iOS ; ces gardes le sont moins.)
+  // ---------- pas de zoom pendant le jeu, zoom libre dans les menus (accessibilité WCAG 1.4.4) ----------
+  // Le viewport autorise le zoom ; la surface de jeu le bloque (touch-action: none + ces gardes pour iOS),
+  // les cartes de menu l'acceptent (touch-action: pan-y pinch-zoom).
   let lastTouchEnd = 0;
   document.addEventListener('touchend', (e) => {
     const now = Date.now();
@@ -416,7 +417,7 @@
     if (gameSurface && !e.target.closest('.icon-btn') && now - lastTouchEnd < 350) e.preventDefault();
     lastTouchEnd = now;
   }, { passive: false });
-  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => { if (!(e.target.closest && e.target.closest('.card'))) e.preventDefault(); }, { passive: false });
   // ne bloque le glisser que hors des cartes défilantes et des curseurs
   document.addEventListener('touchmove', (e) => { if (!e.target.closest('.card, input[type=range]')) e.preventDefault(); }, { passive: false });
   document.addEventListener('contextmenu', (e) => { if (e.target.closest('#touch') || e.target === canvas) e.preventDefault(); });

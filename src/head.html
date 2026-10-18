@@ -59,7 +59,7 @@ button { font: inherit; color: inherit; }
 @keyframes rise { from { opacity: 0; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
 .select-grid { display: grid; gap: 4px; }
 @media (orientation: landscape) and (max-height: 560px) { #select .sub { display: none; } #select h2 { font-size: 24px; margin-bottom: 12px; } .select-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 24px; align-items: start; } #select .card { width: min(900px, 100%); } .card { padding: 16px 20px; } .card .sub { margin-bottom: 12px; } .seg.modes { grid-template-columns: 1fr; } .seg.modes .opt { min-height: 0; padding: 10px 12px; } .track-opt { padding: 8px 10px; } .setting { padding: 9px 0; } }
-.card { background: linear-gradient(180deg, rgba(22,25,30,.97), rgba(12,14,17,.97)); border: 1px solid var(--hair); border-radius: 20px; box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 30px 80px rgba(0,0,0,.55); padding: 24px; width: min(560px, 100%); max-height: 100%; overflow: auto; touch-action: pan-y; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--s4) transparent; }
+.card { background: linear-gradient(180deg, rgba(22,25,30,.97), rgba(12,14,17,.97)); border: 1px solid var(--hair); border-radius: 20px; box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 30px 80px rgba(0,0,0,.55); padding: 24px; width: min(560px, 100%); max-height: 100%; overflow: auto; touch-action: pan-y pinch-zoom; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--s4) transparent; }
 .card h2 { font-stretch: 116%; font-weight: 800; font-size: clamp(24px, 4vw, 32px); line-height: 1.05; letter-spacing: -.015em; margin: 8px 0 6px; text-wrap: balance; }
 .card .sub { color: var(--fg-2); margin: 0 0 20px; font-size: 14.5px; line-height: 1.5; }
 .eyebrow { display: inline-flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
@@ -141,7 +141,7 @@ button { font: inherit; color: inherit; }
 .tabs button:hover { color: var(--fg-2); }
 .tabs button[aria-selected="true"] { color: var(--fg); }
 .tabs button[aria-selected="true"]::after { transform: none; }
-.shop-body { flex: 1; min-height: 0; overflow: auto; display: grid; gap: 14px; align-content: start; touch-action: pan-y; overscroll-behavior: contain; padding-right: 2px; scrollbar-width: thin; scrollbar-color: var(--s4) transparent; }
+.shop-body { flex: 1; min-height: 0; overflow: auto; display: grid; gap: 14px; align-content: start; touch-action: pan-y pinch-zoom; overscroll-behavior: contain; padding-right: 2px; scrollbar-width: thin; scrollbar-color: var(--s4) transparent; }
 .shop-body .sub { margin: 0; font-size: 13px; }
 .shop-row { display: grid; gap: 8px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }

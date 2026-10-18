@@ -19,7 +19,7 @@ const doc = `<!doctype html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 ${favicon}
 ${src('head.html').replace('%LOGO%', logo)}
 </head>
