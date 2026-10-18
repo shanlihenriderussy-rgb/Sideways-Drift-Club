@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- une seule famille variable (graisse + chasse) ; kanji en sous-ensemble limité aux caractères affichés -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Instrument+Serif:ital@0;1&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&text=%E6%A8%AA%E6%BB%91%E3%82%8A%E5%80%B6%E6%A5%BD%E9%83%A8%E8%B5%B0%E8%A1%8C%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%A8%98%E9%8C%B2%E8%A8%AD%E5%AE%9A%E8%AA%AC%E6%98%8E%E4%BC%91%E6%86%A9%E7%B5%90%E6%9E%9C%E6%BA%96%E5%82%99%E6%93%8D%E4%BD%9C&display=swap">
 <style>
 /* DA « Télémétrie de nuit » : surfaces sombres profondes, filets fins, une seule couleur d'accent (le jaune de l'emblème),
@@ -33,6 +33,7 @@
   /* alias historiques, utilisés par les composants */
   --paper: var(--fg); --muted: var(--fg-2); --line: var(--hair); --tape: var(--accent); --tail: var(--red);
   --font: "Archivo", "Inter", "Segoe UI", system-ui, sans-serif;
+  --serif: "Instrument Serif", "Times New Roman", Georgia, serif; /* voix éditoriale : titres de une, chapôs, chiffres d'exception */
   --font-jp: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   --r: 14px;
   --ease: cubic-bezier(.2, .8, .2, 1);
@@ -350,5 +351,74 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
   .combo { top: calc(max(10px, env(safe-area-inset-top)) + 120px); }
   .res-side .row-end .btn { flex: 1 1 40%; }
 }
+/* ---------- couche éditoriale « journal de la glisse » ----------
+   Sur la base sombre : manchette de quotidien, filets doubles, chapôs en serif italique,
+   bandeau « dernière minute », et la une imprimée sur papier journal pour les résultats. */
+.dek { font-family: var(--serif); font-style: italic; font-weight: 400; font-stretch: 100%; letter-spacing: 0; text-transform: none; }
+.card h2::after { content: ""; display: block; height: 3px; margin-top: 10px; border-top: 1px solid var(--hair-2); border-bottom: 1px solid var(--hair-2); opacity: .9; }
+.shop-head h2::after { display: none; }
+.eyebrow { font-family: var(--font); }
+/* manchette */
+.masthead { display: grid; gap: 10px; width: min(560px, 100%); }
+.mast-rule { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 5px 0; border-top: 1px solid rgba(242,242,239,.35); border-bottom: 1px solid rgba(242,242,239,.35); font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: rgba(242,242,239,.7); }
+.mast-rule .jp { letter-spacing: .3em; color: var(--accent); }
+.mast-rule span:nth-child(2) { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 14px; letter-spacing: 0; text-transform: none; color: var(--fg); }
+.masthead .brand { padding-top: 0; }
+.logo em { display: block; font-family: var(--serif); font-style: italic; font-weight: 400; font-stretch: 100%; font-size: clamp(14px, 1.9vw, 18px); letter-spacing: 0; color: rgba(242,242,239,.75); margin-top: 6px; text-transform: none; }
+/* sommaire : rubrique + chapô */
+#menu .menu-btns .btn .dek { font-size: 15px; color: rgba(242,242,239,.5); margin-left: 12px; transition: color .2s; }
+#menu .menu-btns .btn:hover .dek, #menu .menu-btns .btn:focus-visible .dek { color: var(--accent); }
+#menu .menu-btns .btn.primary .dek { font-size: 18px; color: var(--accent); }
+/* bandeau défilant */
+.ticker { position: fixed; left: 0; right: 0; bottom: 0; height: 28px; display: flex; align-items: center; overflow: hidden; background: rgba(7,8,10,.82); border-top: 1px solid var(--hair-2); z-index: 1; pointer-events: none; }
+.ticker::before { content: "Dernière minute"; position: relative; z-index: 1; flex: none; height: 100%; display: flex; align-items: center; padding: 0 14px 0 max(14px, env(safe-area-inset-left)); background: var(--accent); color: var(--accent-ink); font-size: 10px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+.tk { display: flex; flex: none; white-space: nowrap; animation: tick 40s linear infinite; }
+.tk span { padding: 0 22px; font-size: 12.5px; color: rgba(242,242,239,.8); border-right: 1px solid var(--hair-2); }
+.tk span b { font-weight: 700; color: var(--fg); }
+.tk span i { font-family: var(--serif); font-size: 14px; color: var(--accent); }
+@keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+#menu { padding-bottom: calc(max(16px, env(safe-area-inset-bottom)) + 30px); }
+#menu .logo-jp { display: none; }
+/* HUD : légendes en italique de presse */
+.total .lbl:first-child, .combo .tag { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 15px; letter-spacing: .01em; text-transform: none; color: rgba(242,242,239,.85); }
+.combo .tag { text-transform: lowercase; font-size: 18px; }
+#count { font-family: var(--serif); font-style: italic; font-weight: 400; font-stretch: 100%; letter-spacing: 0; color: var(--fg); }
+#count span { text-shadow: 0 0 0 transparent, 6px 6px 0 var(--accent); }
+/* la une : résultats imprimés sur papier journal */
+.res-card.paper {
+  --fg: #141414; --fg-2: #4b4840; --fg-3: #77736a; --hair: rgba(20,20,20,.14); --hair-2: rgba(20,20,20,.3);
+  --s1: rgba(20,20,20,.035); --s2: rgba(20,20,20,.04); --s3: transparent; --s4: rgba(20,20,20,.06); --ok: #1c7a45;
+  color: var(--fg); border: 0; border-radius: 4px;
+  background: radial-gradient(rgba(0,0,0,.05) .6px, transparent .9px) 0 0 / 3px 3px, linear-gradient(180deg, #f1ede4, #e8e3d8);
+  box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 40px 90px rgba(0,0,0,.6), 0 2px 6px rgba(0,0,0,.3);
+}
+.res-card.paper .eyebrow { display: flex; justify-content: space-between; width: 100%; color: var(--fg); padding: 0 0 6px; border-bottom: 3px double var(--fg); font-size: 10px; letter-spacing: .24em; }
+.res-card.paper .eyebrow::after { content: "Édition spéciale"; font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 13px; color: var(--fg-2); }
+.res-card.paper .grade { color: var(--fg); background: var(--accent); box-shadow: none; font-family: var(--serif); font-style: italic; font-weight: 400; font-stretch: 100%; font-size: 76px; letter-spacing: 0; }
+.res-card.paper .res-head h2 { color: var(--fg-2); }
+.res-card.paper .res-head h2::after { display: none; }
+.res-card.paper .headline { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 3vw, 26px); line-height: 1.12; margin: 6px 0 14px; color: var(--fg); text-wrap: balance; }
+.res-card.paper .res-grid { gap: 0; border-top: 1px solid var(--fg); border-bottom: 1px solid var(--fg); }
+.res-card.paper .res-grid div { background: none; border: 0; border-radius: 0; padding: 9px 12px; }
+.res-card.paper .res-grid div:nth-child(even) { border-left: 1px solid var(--hair-2); }
+.res-card.paper .res-grid div:nth-child(n+3) { border-top: 1px solid var(--hair); }
+.res-card.paper .pay { background: none; border: 0; border-left: 1px solid var(--hair-2); border-radius: 0; padding: 2px 0 2px 16px; }
+.res-card.paper .pay-total b { color: var(--fg); background: linear-gradient(transparent 58%, var(--accent) 58% 90%, transparent 90%); padding: 0 4px; }
+.res-card.paper #payChal div { color: var(--fg); }
+.res-card.paper .record { background: var(--fg); color: var(--accent); box-shadow: none; }
+.res-card.paper .btn { border-color: var(--hair-2); }
+.res-card.paper .btn:hover { background: rgba(20,20,20,.06); }
+.res-card.paper .btn.primary { background: var(--fg); color: #f1ede4; box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+.res-card.paper .btn.primary:hover { background: #2a2a2a; }
+.res-card.paper .hint { color: var(--fg-2); }
+@media (max-width: 560px) { .res-card.paper .pay { border-left: 0; border-top: 1px solid var(--hair-2); padding: 12px 0 0; } }
+@media (orientation: landscape) and (max-height: 560px) {
+  .masthead { gap: 6px; } .logo em { display: none; }
+  #menu .menu-btns .btn:not(.primary) .dek { display: none; }
+  .res-card.paper .headline { font-size: 20px; margin-bottom: 10px; }
+}
+@media (orientation: portrait) { #menu .menu-btns .btn:not(.primary) .dek { display: none; } .masthead { padding-top: 40px; } }
+
+@media (prefers-reduced-motion: reduce) { .tk { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .pop, #count span { animation-duration: .01s; animation-iteration-count: 1; } .pop { animation: none; } #loading .emblem, #loading p::after, #menu .menu-btns .btn, .screen:not([hidden]) .card { animation: none; } }
 </style>

@@ -1009,6 +1009,7 @@
     $('resAngle').textContent = Math.round(score.maxAngle) + '°';
     $('resDrift').textContent = Math.round(score.driftT / Math.max(score.runT, 1) * 100) + ' %';
     $('resEyebrow').textContent = `${mode === 'run' ? 'Run noté' : mode === 'tandem' ? 'Tandem' : 'Libre'} · ${track.def.name}`;
+    $('resHeadline').textContent = mode === 'free' ? '« Séance libre : rien n’est noté, tout est permis. »' : record && grade !== 'D' ? `« Record battu sur ${track.def.name}. »` : HEADLINES[grade].replace('%', track.def.name);
     // gains en yens + défis
     const res = Economy.applyRun(profile, { trackId: track.def.id, trackName: track.def.name, mode, score: total, grade: mode === 'free' ? null : grade, clips: score.clips, zones: track.zones.length, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), record: record && mode !== 'free' });
     saveProfile(); refreshWallet();
@@ -1073,7 +1074,19 @@
     setTimeout(() => el.remove(), 3300);
     announce(text);
   }
-  function refreshWallet() { $('menuWallet').textContent = Economy.fmt(profile.money); }
+  function refreshWallet() { $('menuWallet').textContent = Economy.fmt(profile.money); refreshFrontPage(); }
+  // manchette et bandeau « dernière minute » du menu : date, numéro d'édition (= runs joués), records par piste
+  const HEADLINES = { S: '« % : une démonstration. »', A: '« Du grand art sur %. »', B: '« Belle ligne, angle à creuser. »', C: '« Des bases, encore timides. »', D: '« Rentrée discrète au paddock. »' };
+  function refreshFrontPage() {
+    const d = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    $('mastDate').textContent = d.charAt(0).toUpperCase() + d.slice(1);
+    $('mastNo').textContent = 'N° ' + String(profile.stats.runs + 1).padStart(3, '0');
+    const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const items = TRACKS.map((t) => { const b = bests[t.id + ':run']; return b ? `<b>${esc(t.name)}</b> · record <i>${b.toLocaleString('fr-FR')} pts</i>` : `<b>${esc(t.name)}</b> · <i>aucun record, la piste vous attend</i>`; });
+    items.push(`Votre cagnotte · <i>${Economy.fmt(profile.money)}</i>`, `<b>Col de Yukimi</b> · neige tassée, adhérence réduite`);
+    const row = items.map((h) => `<span>${h}</span>`).join('');
+    $('ticker').innerHTML = row + row; // doublé : défilement sans couture
+  }
   function claimDaily() {
     const d = Economy.claimDaily(profile, today());
     if (!d) return;

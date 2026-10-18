@@ -1,5 +1,5 @@
 <canvas id="gl" aria-label="Scène de course en 3D" role="img"></canvas>
-<div id="loading" role="status"><div><div class="emblem" role="img" aria-label="Sideways Drift Club"></div><p>Chauffe des pneus…</p></div></div>
+<div id="loading" role="status"><div><div class="emblem" role="img" aria-label="Sideways Drift Club"></div><p>Impression de l'édition…</p></div></div>
 <div id="live" class="sr" aria-live="polite"></div>
 
 <!-- HUD -->
@@ -37,16 +37,20 @@
 <section class="screen" id="menu" hidden aria-labelledby="logoTitle">
   <div class="wallet wallet-fixed" id="menuWallet" aria-label="Solde">¥0</div>
   <div class="logo-jp" aria-hidden="true">横<b>滑</b>り倶楽部</div>
-  <div class="brand"><div class="emblem" aria-hidden="true"></div><h1 class="logo" id="logoTitle">SIDEWAYS<span>DRIFT CLUB</span></h1></div>
+  <header class="masthead">
+    <div class="mast-rule"><span class="jp">横滑り倶楽部</span><span id="mastDate">Édition du soir</span><span id="mastNo">N° 001</span></div>
+    <div class="brand"><div class="emblem" aria-hidden="true"></div><h1 class="logo" id="logoTitle">SIDEWAYS<span>DRIFT CLUB</span><em>Le journal de la glisse, en direct de la piste.</em></h1></div>
+  </header>
   <div class="title-block">
     <nav class="menu-btns" aria-label="Menu principal">
-      <button class="btn primary" id="playBtn"><span>Rouler</span></button>
-      <button class="btn" id="garageBtn"><span><i class="no">01</i>Atelier</span></button>
-      <button class="btn" id="careerBtn"><span><i class="no">02</i>Carrière</span></button>
-      <button class="btn" id="settingsBtn"><span><i class="no">03</i>Réglages</span></button>
-      <button class="btn" id="helpBtn"><span><i class="no">04</i>Comment jouer</span></button>
+      <button class="btn primary" id="playBtn"><span>Rouler<em class="dek">six pistes, une ligne</em></span></button>
+      <button class="btn" id="garageBtn"><span><i class="no">01</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
+      <button class="btn" id="careerBtn"><span><i class="no">02</i>Carrière<em class="dek">défis et palmarès</em></span></button>
+      <button class="btn" id="settingsBtn"><span><i class="no">03</i>Réglages<em class="dek">pilotage et confort</em></span></button>
+      <button class="btn" id="helpBtn"><span><i class="no">04</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
     </nav>
     <div class="hint portrait-tip">Tourne ton téléphone à l'horizontale pour mieux voir la piste.</div>
+    <div class="ticker" aria-hidden="true"><div class="tk" id="ticker"></div></div>
     <div class="hint" id="kbHint"><span class="kbd">←</span><span class="kbd">→</span> diriger · <span class="kbd">↑</span> gaz · <span class="kbd">↓</span> frein · <span class="kbd">Espace</span> frein à main</div>
   </div>
 </section>
@@ -167,10 +171,11 @@
 
 <!-- résultats -->
 <section class="screen dim" id="results" hidden aria-labelledby="resTitle">
-  <div class="card res-card">
+  <div class="card res-card paper">
     <div class="res-main">
     <div class="eyebrow" id="resEyebrow">Run noté · Docks de Minato</div>
     <div class="res-head"><div class="grade" id="resGrade">A</div><div><h2 id="resTitle">Note des juges <span class="jp">結果</span></h2><div class="res-total" id="resTotal">0</div><div id="resRecord"></div></div></div>
+    <p class="headline" id="resHeadline"></p>
     <div class="res-grid">
       <div>Meilleur combo<b id="resCombo">0</b></div>
       <div>Clips réussis<b id="resClips">0</b></div>
