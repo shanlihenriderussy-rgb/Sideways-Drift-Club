@@ -43,6 +43,7 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **Économie pure** : `economy.js` ne touche ni au DOM ni à Three.js ; tout passe par le profil et renvoie `{ ok, reason, … }`. Les pièces à 0 ¥ sont toujours possédées. Une pièce équipée mais non payée revient à l'origine au chargement.
 - **Fiche tunée** : `tunedSpec(base, perf, tune)` copie la fiche de base. Sans amélioration et avec les réglages neutres (`TUNE[].def`), la physique est strictement identique (test `réglages par défaut`, banc `tools/tune.js`). Chaque effet est écrit en écart au neutre (`v − def`) pour que le neutre soit exact en flottant.
 - **Thèmes de piste** : `THEMES[x].decor` choisit la famille de décor (night/sunset/day), `sky` le calque de ciel. Nouvelle ambiance = nouvelle palette, pas de nouveau code de décor.
+- **Clips par virage** (2026-10-20) : comme en Formula Drift / D1GP, un virage porte une zone extérieure (pare-chocs arrière au mur) OU des points de corde (avant au cône), jamais les deux : viser les deux bords d'un même virage est impossible. `findTurns` liste les virages dans l'ordre de course ; `findZones` met le 1er (initiation) en zone, puis les virages les plus serrés (rayon mini) en cordes, les plus larges en zones ; épingle ≥ 140° = deux cônes. Chaque zone porte `turn`. La ligne du leader (`buildDriftLine`) suit le même choix : extérieur dans les zones, intérieur dans les cordes.
 - **Adhérence de piste** : `track.def.grip` → `state.grip`, séparé de `surface` (qui ajoute la traînée de l'herbe).
 - **Livrée** : une texture 1024×512 enveloppe la caisse. Flanc droit v∈[0,7;1], dessus v∈[0,3;0,7], flanc gauche v∈[0;0,3]. Les zones y < 0,2 m servent d'atlas (plaque, bandeau de pare-brise, peinture unie des faces avant/arrière).
 - **Roues** : `InstancedMesh` (pneu, jante, fût, disque, étrier), 4 instances. Roues gauches tournées de π (pas de miroir : un déterminant négatif inverserait les faces).
@@ -53,7 +54,7 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **Profondeur** : sol à y = −0,12 avec `polygonOffset`, caméra `near` = 0,5.
 
 ## Pièges
-- **Nouveau tracé** : lancer `node --test tests/tracks.test.js` (pas de recoupement, ≥ 5 virages, 900–1 900 m). Rayon mini visé ≥ 15 m. Ajouter la vignette `.sw-<id>` dans `head.html`.
+- **Nouveau tracé** : lancer `node --test tests/tracks.test.js` (pas de recoupement, ≥ 5 virages, 900–1 900 m, un seul type de clip par virage, initiation en zone). Rayon mini visé ≥ 15 m. Ajouter la vignette `.sw-<id>` dans `head.html`.
 - **Équilibre suspension** : coefficient 0,08 dans `stepCar` (`bal`). À 0,16 la voiture survireuse partait à 70° dans un virage doux : trop loin de l'arcade.
 - **Sens des triangles** : bandes de route et murs, normale vers le haut ou vers la piste. Le loft de caisse : quad (i,j)→(i,j+1)→(i+1,j) pour une normale sortante.
 - **Texte de livrée** : chaque bande a son propre sens (flanc droit retourné verticalement, flanc gauche en miroir, dessus tourné). Passer par `text()` dans `paintLivery`, jamais `fillText` direct.
