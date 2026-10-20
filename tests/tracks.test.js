@@ -23,8 +23,38 @@ for (const def of TRACKS) {
   });
   test(`${def.name} : virages notés, longueur raisonnable`, () => {
     const t = buildTrackData(def);
-    assert.ok(t.zones.filter((z) => z.type === 'outer').length >= 5, `${t.zones.length / 2} virages`);
+    assert.ok(t.turns.length >= 5, `${t.turns.length} virages`);
     assert.ok(t.length > 900 && t.length < 1900, `${t.length.toFixed(0)} m`);
+  });
+  // Règle des tracés officiels (Formula Drift, D1GP) : un virage porte une zone extérieure OU des points de corde,
+  // jamais les deux. Le pare-chocs arrière au mur extérieur et l'avant au cône intérieur dans le même virage :
+  // la voiture devrait mesurer toute la largeur de la piste.
+  test(`${def.name} : un seul type de clip par virage`, () => {
+    const t = buildTrackData(def);
+    for (const [k, u] of t.turns.entries()) {
+      const types = new Set(t.zones.filter((z) => z.turn === k).map((z) => z.type));
+      assert.equal(types.size, 1, `virage ${k + 1} : ${[...types].join(' + ') || 'aucun clip'}`);
+      assert.ok(types.has(u.type), `virage ${k + 1} : type ${u.type}`);
+    }
+    for (const z of t.zones) assert.ok(z.turn >= 0 && z.turn < t.turns.length, 'zone rattachée à un virage');
+  });
+  test(`${def.name} : initiation en zone extérieure, cordes dans les virages serrés`, () => {
+    const t = buildTrackData(def);
+    const outer = t.turns.filter((u) => u.type === 'outer'), inner = t.turns.filter((u) => u.type === 'inner');
+    assert.equal(t.turns[0].type, 'outer', 'premier virage après le départ : zone extérieure');
+    assert.ok(outer.length >= 2 && inner.length >= 2, `${outer.length} zones ext., ${inner.length} cordes`);
+    const rest = t.turns.slice(1);
+    const rIn = Math.max(...rest.filter((u) => u.type === 'inner').map((u) => u.radius));
+    const rOut = Math.min(...rest.filter((u) => u.type === 'outer').map((u) => u.radius));
+    assert.ok(rIn <= rOut, `corde à R ${rIn.toFixed(0)} m plus large qu’une zone à R ${rOut.toFixed(0)} m`);
+  });
+  test(`${def.name} : zones et cordes séparées le long du tracé`, () => {
+    const t = buildTrackData(def);
+    const ahead = (a, b) => (b - a + t.count) % t.count;
+    for (const o of t.zones.filter((z) => z.type === 'outer')) for (const c of t.zones.filter((z) => z.type === 'inner')) {
+      const inO = ahead(o.from, c.mid) <= ahead(o.from, o.to);
+      assert.ok(!inO, `corde du virage ${c.turn + 1} dans la zone du virage ${o.turn + 1}`);
+    }
   });
 }
 

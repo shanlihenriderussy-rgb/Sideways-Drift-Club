@@ -17,7 +17,7 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 |---|---|
 | `src/physics.js` | Modèle bicyclette, pneus saturés, régulateur d'angle de drift (assistance) ; lit les champs de fiche tunée (`steerRate`, `driftSteer`, `angleBoost`, `rollK`, `brakeK`, `brakeRear`, `hbK`, `latBal`, `damp`, `camber`) et l'adhérence de piste (`grip`) |
 | `src/economy.js` | Portefeuille en yens, catalogue de l'atelier, gains de fin de run, défis, bonus quotidien, fiche tunée. Logique pure, testée |
-| `src/track.js` | 6 tracés, échantillonnage, zones de clipping, barème (`par`), adhérence (`grip`, neige) |
+| `src/track.js` | 6 tracés, échantillonnage, virages et clips (un type par virage, règle des tracés officiels), barème (`par`), adhérence (`grip`, neige) |
 | `src/world.js` | Ciel (nuages, étoiles), crêtes, route et murs par lieu, décor instancié par thème, tribune, eau animée. Thèmes `dawn`, `snow`, `dusk` = palettes posées sur une famille de décor (`decor`) |
 | `src/car.js` | Voitures procédurales : caisse lissée (loft), habitacle, livrée peinte, pièces modulaires, roues instanciées |
 | `src/fx.js` | Fumée colorée (points), traces de gomme (envoi GPU partiel), étincelles |

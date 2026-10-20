@@ -109,11 +109,39 @@ function catmull(p0, p1, p2, p3, t) {
   return lerp(B1, B2, t1, t2);
 }
 
-// Virages : courbure soutenue. Zone extérieure (arrière près du bord extérieur) et point de corde intérieur (avant).
+// Virages et clips, sur le modèle des tracés officiels (Formula Drift, D1GP) : chaque virage porte une zone
+// extérieure (pare-chocs arrière au mur) OU des points de corde (pare-chocs avant au cône), jamais les deux.
+// Viser le mur extérieur puis la corde du même virage demanderait une voiture aussi large que la piste.
+// Répartition : le premier virage après le départ est l'initiation, en zone extérieure ; ensuite les virages
+// les plus serrés reçoivent les cordes, les plus larges les zones. Une épingle (≥ 140°) a deux cônes.
 function findZones(track) {
-  const { count, curv, step } = track;
+  const turns = findTurns(track);
+  const { count } = track;
+  const at = (u, f) => (u.from + Math.round(u.len * f)) % count;
+  const rest = turns.slice(1).sort((a, b) => a.radius - b.radius);
+  const nInner = Math.max(2, Math.round(rest.length / 2));
+  turns.forEach((u) => { u.type = 'outer'; });
+  rest.slice(0, nInner).forEach((u) => { u.type = 'inner'; });
   const zones = [];
+  turns.forEach((u, k) => {
+    if (u.type === 'outer') {
+      const half = Math.max(6, Math.round(u.len * 0.3));
+      const mid = at(u, 0.45);
+      zones.push({ type: 'outer', turn: k, side: -u.dir, from: (mid - half + count) % count, to: (mid + half) % count, mid, hit: false });
+    } else {
+      const spots = u.angle >= 140 * Math.PI / 180 ? [at(u, 0.35), at(u, 0.72)] : [u.apex];
+      for (const c of spots) zones.push({ type: 'inner', turn: k, side: u.dir, from: (c - 5 + count) % count, to: (c + 5) % count, mid: c, hit: false });
+    }
+  });
+  track.turns = turns;
+  return zones;
+}
+
+// Virage = courbure soutenue (> 1/75 m⁻¹ sur plus de 18 m, plus de 0,6 rad), dans l'ordre de course depuis la ligne.
+function findTurns(track) {
+  const { count, curv, step } = track;
   const TH = 1 / 75;
+  const turns = [];
   let i0 = -1;
   // démarre là où la courbure est faible pour ne pas couper un virage
   let start = 0;
@@ -124,20 +152,19 @@ function findZones(track) {
     if (on && i0 < 0) i0 = k;
     if ((!on || k === count) && i0 >= 0) {
       const len = k - i0;
-      let turn = 0;
-      for (let q = i0; q < k; q++) turn += curv[(start + q) % count] * step;
+      let turn = 0, peak = 0, apex = 0;
+      for (let q = i0; q < k; q++) {
+        const c = curv[(start + q) % count];
+        turn += c * step;
+        if (Math.abs(c) > peak) { peak = Math.abs(c); apex = (start + q) % count; }
+      }
       if (len * step > 18 && Math.abs(turn) > 0.6) {
-        const mid = (start + Math.floor((i0 + k) / 2)) % count;
-        const sign = Math.sign(turn);
-        const span = Math.max(8, Math.floor(len * 0.32));
-        zones.push({ type: 'outer', side: -sign, from: (mid - span + count) % count, to: (mid + span) % count, mid, hit: false });
-        const apex = (start + i0 + Math.floor(len * 0.55)) % count;
-        zones.push({ type: 'inner', side: sign, from: (apex - 5 + count) % count, to: (apex + 5) % count, mid: apex, hit: false });
+        turns.push({ from: (start + i0) % count, len, apex, dir: Math.sign(turn), angle: Math.abs(turn), radius: 1 / peak });
       }
       i0 = -1;
     }
   }
-  return zones;
+  return turns;
 }
 
 function inRange(i, from, to, count) {

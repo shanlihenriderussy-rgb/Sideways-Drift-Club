@@ -8,9 +8,12 @@ function buildDriftLine(track) {
     return out;
   };
   const curv = smooth(track.curv, 8);
+  // ligne jugée : mur extérieur dans les virages à zone, cône intérieur dans les virages à corde
+  const side = new Float32Array(N).fill(1);
+  for (const u of track.turns) if (u.type === 'inner') for (let q = 0; q < u.len; q++) side[(u.from + q) % N] = -1;
   for (let i = 0; i < N; i++) {
     const k = curv[i];
-    off[i] = -Math.sign(k) * Math.min(Math.abs(k) * 60, 1) * (half - 2.4);
+    off[i] = -side[i] * Math.sign(k) * Math.min(Math.abs(k) * 60, 1) * (half - 2.4);
     vmax[i] = Math.max(13, Math.min(29, Math.sqrt(8.5 / Math.max(Math.abs(k), 1e-4))));
   }
   const offS = smooth(smooth(off, 18), 18);
