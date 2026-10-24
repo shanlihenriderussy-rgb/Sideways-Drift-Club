@@ -24,6 +24,7 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 | `src/audio.js` | Moteur, turbo, crissement synthétisés (Web Audio) |
 | `src/ai.js` | Leader tandem sur trajectoire précalculée |
 | `src/story.js` | Aventure « Le Tour de l’Île » : 6 chapitres × 3 missions, dialogues, objectifs, exploration (archives, défis de rue, rencontres). Logique pure, testée |
+| `src/island.js` | L’île : monde ouvert continu (9 km de routes, carrefours, relief, volcan, mer), recherche de route, terrain (partie pure, testée) et rendu Three.js |
 | `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
 | `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |
 | `assets/favicon.svg`, `icons/`, `manifest.webmanifest` | Favicon (intégré au build), icônes d'application, manifeste PWA |
@@ -55,3 +56,9 @@ Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + tai
 - Personnages : Kenji (mécano, un secret de 2006), Lou (reporter du Journal de la glisse), Mika (cheffe des Kuro Kumo), Ryo Kaneshiro (promoteur), Mamie Zélie (gardienne du volcan), Daruma (juge masqué), Sayo (fondatrice, par sa lettre).
 - Missions : run ou tandem avec objectifs (score, note, clips, angle, combo, % en glisse, aucun contact mur). Récompense payée à la première réussite. Le chapitre suivant s’ouvre quand le précédent est fini.
 - Exploration libre de chaque lieu ouvert : 5 archives (l’histoire du club, à relire dans le carnet), 2 bornes de défi de rue, 1 rencontre. Progression dans `sdc:profile.story`.
+
+## L’île : monde ouvert
+- Menu → « L’île » : une île continue d’environ 2,1 × 1,5 km, 15 routes et 10 carrefours (9 km), relief jusqu’à 110 m au volcan, mer tout autour, régions (port, côte, montagne, volcan, neige).
+- Conduite libre partout, y compris hors route (l’herbe freine). En mer, la voiture est replacée sur la route la plus proche.
+- Les six lieux de l’aventure sont des portes jaunes sur l’île : en franchir une ouvre la carte de l’aventure sur ce chapitre (« Retour » remet sur la route).
+- 12 daruma dorés à trouver (¥500 chacun), mini-carte de l’île entière. Fin de balade : gains du mode libre.
