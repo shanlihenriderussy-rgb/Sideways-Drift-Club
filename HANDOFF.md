@@ -39,6 +39,7 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 | Bot expert, Col d'Akane, KOUKI | 21,3 k en moyenne contre 22,0 k pour la version d'origine (bruit d'un run à l'autre : 17 à 27 k) |
 
 ## Décisions actives
+- **Aventure** (`src/story.js`) : logique pure (pas de DOM), testée (`tests/story.test.js`). `adv` dans game.js : `{ ci, k }` mission, `{ explore, ci }` exploration. Le mode global est restauré depuis le stockage en quittant. Nouveau kanji dans un dialogue ou un titre → l’ajouter à l’URL Noto Sans JP. Joueur jamais genré dans les textes.
 - **Fichier unique** : `build.mjs` concatène `src/*` → `index.html`. Ordre : physics, economy, track, world, car, fx, audio, ai, shop, game. Le favicon SVG est intégré en data URI ; icônes PNG et manifeste ne sont liés qu'en production (pas dans `test.html`).
 - **Économie pure** : `economy.js` ne touche ni au DOM ni à Three.js ; tout passe par le profil et renvoie `{ ok, reason, … }`. Les pièces à 0 ¥ sont toujours possédées. Une pièce équipée mais non payée revient à l'origine au chargement.
 - **Fiche tunée** : `tunedSpec(base, perf, tune)` copie la fiche de base. Sans amélioration et avec les réglages neutres (`TUNE[].def`), la physique est strictement identique (test `réglages par défaut`, banc `tools/tune.js`). Chaque effet est écrit en écart au neutre (`v − def`) pour que le neutre soit exact en flottant.

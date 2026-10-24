@@ -208,7 +208,7 @@
       else if (phase === 'pause' && screenId === 'pause') resumeGame();
       else if (k === 'escape' && screenId === 'layout') closeLayoutEditor();
       else if (k === 'escape' && screenId === 'garage') closeShop();
-      else if (k === 'escape' && ['select', 'settings', 'help', 'career'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
+      else if (k === 'escape' && ['select', 'settings', 'help', 'career', 'adventure'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
     }
     if (k === 'c' && (phase === 'play' || phase === 'count')) cycleCam();
     if (k === 'r' && phase === 'play') respawn();
@@ -465,9 +465,9 @@
   function vibrate(ms) { if (settings.vibe && navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) { /* refusé */ } } }
 
   // ---------- score ----------
-  const score = { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, lastBank: 0 };
+  const score = { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, lastBank: 0, walls: 0 };
   function resetScore() {
-    Object.assign(score, { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0 });
+    Object.assign(score, { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, walls: 0 });
     for (const z of track.zones) z.hit = false;
   }
   const WORDS = [[1500, 'BIEN'], [4000, 'SUPER'], [9000, 'ÉNORME'], [16000, 'INSENSÉ'], [Infinity, 'LÉGENDAIRE']];
@@ -581,7 +581,7 @@
           const [cx, cz] = carPoint(st, cornerX, side * playerModel.halfW);
           for (let k = 0; k < Math.min(30, vn * 4); k++) sparks.emit(cx, gy(cx, cz) + 0.5, cz, (Math.random() - 0.5) * 6 + st.vx * 0.3, 2 + Math.random() * 4, (Math.random() - 0.5) * 6 + st.vz * 0.3, 0.4 + Math.random() * 0.3, 0.25, 0.08, 1);
         }
-        if (vn > 3 && phase === 'play') lose('Contact mur');
+        if (vn > 3 && phase === 'play') { score.walls++; lose('Contact mur'); }
       }
     }
     // contact avec le leader
@@ -742,6 +742,7 @@
         }
         updateProgress(dt);
         updateScore(dt);
+        if (explore) updateExplore(dt);
         if (mode === 'tandem') {
           let gap = (leader.state.s - lapS()) ;
           const L = track.length; gap = ((gap % L) + L) % L; if (gap > L / 2) gap -= L;
@@ -959,7 +960,12 @@
     show(null);
     $('hud').hidden = false;
     setTouchVisible();
-    $('hudMode').textContent = mode === 'run' ? 'RUN NOTÉ' : mode === 'tandem' ? 'TANDEM' : 'LIBRE';
+    $('hudMode').textContent = adv ? advLabel() : mode === 'run' ? 'RUN NOTÉ' : mode === 'tandem' ? 'TANDEM' : 'LIBRE';
+    clearExplore();
+    if (adv && adv.explore) buildExplore();
+    const goal = $('hudGoal');
+    goal.hidden = !adv; goal.className = 'hud-goal';
+    if (adv && !adv.explore) goal.textContent = 'Objectif · ' + Story.goalText(Story.CHAPTERS[adv.ci].missions[adv.k].goal);
     const b = bests[track.def.id + ':' + mode];
     $('hudBest').textContent = b ? 'RECORD ' + b.toLocaleString('fr-FR') : 'RECORD —';
     camPos.set(player.x - Math.cos(player.heading) * 8, gy(player.x, player.z) + 3, player.z - Math.sin(player.heading) * 8);
@@ -1030,9 +1036,42 @@
     saveProfile(); refreshWallet();
     $('payLines').innerHTML = res.payout.lines.map((l) => `<div><span>${l.label}</span><b>+${Economy.fmt(l.amount)}</b></div>`).join('') || '<div><span>Aucun gain sur ce run.</span></div>';
     $('payChal').innerHTML = res.challenges.map((c) => `<div>Défi réussi : ${c.label} · +${Economy.fmt(c.reward)}</div>`).join('');
+    // aventure : objectifs de la mission, récompense, suite de l'histoire
+    let fr = null;
+    advNext = null;
+    $('hudGoal').hidden = true;
+    const rg = $('resGoal');
+    rg.hidden = !adv;
+    if (adv && !adv.explore) {
+      const ch = Story.CHAPTERS[adv.ci], m = ch.missions[adv.k];
+      fr = Story.finishMission(profile, adv.ci, adv.k, { score: total, grade, clips: score.clips, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), walls: score.walls });
+      saveProfile(); refreshWallet();
+      rg.innerHTML = `<div class="h">Mission · ${esc(m.title)} — ${fr.ok ? 'réussie' : 'ratée'}</div>` + fr.rows.map((r) => `<div class="r ${r.ok ? 'ok' : 'ko'}"><i aria-hidden="true">${r.ok ? '✓' : '✗'}</i><span>${esc(r.label)}<span class="sr">${r.ok ? ', atteint' : ', manqué'}</span></span></div>`).join('');
+      if (fr.reward) $('payChal').insertAdjacentHTML('afterbegin', `<div>Mission réussie : ${esc(m.title)} · +${Economy.fmt(fr.reward)}</div>`);
+      if (fr.ok) {
+        const ci = Story.nextMission(profile, adv.ci) >= 0 ? adv.ci : adv.ci + 1;
+        if (ci < Story.CHAPTERS.length && Story.chapterOpen(profile, ci)) { advNext = { ci, k: Story.nextMission(profile, ci) }; advSel = ci; }
+      }
+    } else if (adv && adv.explore) {
+      const z = Story.zoneProgress(profile, adv.explore);
+      rg.innerHTML = `<div class="h">Exploration · ${esc(track.def.name)}</div><div class="r"><span>Archives ${z.arch} / 5 · défis de rue ${z.street} / ${Story.STREET.length} · rencontre ${z.npc} / 1</span></div>`;
+    }
+    $('menuBtn').firstElementChild.textContent = adv ? 'Carte' : 'Menu';
+    $('againBtn').firstElementChild.textContent = advNext ? 'Mission suivante' : 'Rejouer';
     $('payBal').textContent = 'Solde : ' + Economy.fmt(profile.money);
-    countUp($('payTotal'), res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0));
+    countUp($('payTotal'), res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0) + (fr ? fr.reward : 0));
     show('results');
+    if (fr) {
+      const ch = Story.CHAPTERS[adv.ci];
+      talk(fr.lines, () => {
+        if (!fr.chapterDone) return;
+        talk(ch.outro, () => {
+          const nx = Story.CHAPTERS[adv ? adv.ci + 1 : -1];
+          if (nx) toast(`Chapitre ${adv.ci + 2} ouvert : ${nx.title} · ${TRACKS[trackIndexOf(nx.track)].name}`, 'chal');
+          else toast('Aventure terminée. Les six lieux restent à explorer.', 'chal');
+        });
+      });
+    }
     announce(`Session terminée. ${total} points${mode !== 'free' ? ', note ' + grade : ''}.${record ? ' Nouveau record.' : ''}`);
     releaseWake();
   }
@@ -1050,7 +1089,8 @@
     claimDaily(); refreshWallet();
     Sound.suspend();
     $('hud').hidden = true; clearTouch(); setTouchVisible(); $('count').hidden = true;
-    show('menu');
+    $('hudGoal').hidden = true;
+    if (adv) { leaveAdventureRun(); openAdventure(); } else show('menu');
     releaseWake();
   }
 
@@ -1140,6 +1180,244 @@
   addEventListener('pointermove', (e) => { if (yawDrag && yawDrag.id === e.pointerId) garageYaw = yawDrag.y0 - (e.clientX - yawDrag.x) * 0.008; });
   addEventListener('pointerup', () => { yawDrag = null; });
 
+
+  // ---------- aventure : « Le Tour de l'Île » (logique dans story.js) ----------
+  // adv : null (jeu normal) | { ci, k } mission en cours | { explore: trackId, ci } exploration d'un lieu
+  let adv = null, advSel = Story.currentChapter(profile), advNext = null, explore = null, dlg = null;
+  const trackIndexOf = (id) => TRACKS.findIndex((t) => t.id === id);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function advLabel() {
+    if (adv.explore) return 'EXPLORATION';
+    const m = Story.CHAPTERS[adv.ci].missions[adv.k];
+    if (m.mode !== 'tandem') return 'MISSION';
+    const lead = Story.CAST[m.brief[0][0]];
+    return 'TANDEM · ' + (lead.name || 'LEADER').split(' ')[0].toUpperCase();
+  }
+
+  // dialogues : une ligne à la fois ; toucher, Entrée ou Espace pour continuer, Échap pour passer
+  function talk(lines, done) {
+    if (!lines || !lines.length) { if (done) done(); return; }
+    dlg = { lines, i: 0, done };
+    $('dialog').hidden = false;
+    showLine();
+    if (!isTouch) setTimeout(() => $('dlgNext').focus({ preventScroll: true }), 30);
+  }
+  function showLine() {
+    const [who, text] = dlg.lines[dlg.i], c = Story.CAST[who] || Story.CAST.narr;
+    const face = $('dlgFace');
+    face.textContent = c.ini; face.style.background = c.col; face.classList.toggle('narr', who === 'narr');
+    $('dlgName').textContent = c.name; $('dlgRole').textContent = who === 'narr' ? '' : c.role;
+    $('dlgText').textContent = text;
+    document.querySelector('.dlg-card').classList.toggle('narr', who === 'narr');
+    $('dlgNext').firstElementChild.textContent = dlg.i === dlg.lines.length - 1 ? 'Continuer' : 'Suite';
+    announce((c.name ? c.name + ' : ' : '') + text);
+  }
+  function dlgNext(all) {
+    if (!dlg) return;
+    Sound.ui();
+    if (!all && dlg.i < dlg.lines.length - 1) { dlg.i++; showLine(); return; }
+    const done = dlg.done;
+    dlg = null; $('dialog').hidden = true;
+    if (done) done();
+  }
+  $('dialog').addEventListener('click', (e) => dlgNext(!!e.target.closest('#dlgSkip')));
+  addEventListener('keydown', (e) => {
+    if (!dlg) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) dlgNext(false); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); dlgNext(true); }
+  }, true);
+
+  // carte de l'île : les six lieux dans l'ordre du Tour, en boucle autour du volcan
+  const ISLE = { minato: [62, 62], shiohama: [150, 34], akane: [250, 52], kaigan: [266, 128], piton: [168, 146], yukimi: [74, 132] };
+  function openAdventure() {
+    if (!Story.chapterOpen(profile, advSel)) advSel = Story.currentChapter(profile);
+    renderAdventure();
+    show('adventure');
+    const first = !Story.ensure(profile).seen.prologue;
+    if (first) { Story.ensure(profile).seen.prologue = true; saveProfile(); talk([['narr', 'Le Tour de l’Île : six lieux, six chapitres. Touche un lieu ouvert sur la carte pour lire son histoire, jouer ses missions ou l’explorer librement.']]); }
+  }
+  function renderAdventure() {
+    const C = Story.CHAPTERS;
+    let svg = '<path class="isle" d="M34,96 C26,52 80,14 152,16 C232,14 302,36 300,96 C298,150 242,178 166,176 C92,176 42,150 34,96 Z"/>';
+    svg += '<path d="M156,104 l12,-20 l12,20 z" fill="var(--s4)" stroke="var(--hair-2)"/><text x="168" y="116" text-anchor="middle" font-size="7.5" fill="var(--fg-3)" letter-spacing=".1em">VOLCAN</text>';
+    C.forEach((c, ci) => {
+      const a = ISLE[c.track], b = ISLE[C[(ci + 1) % C.length].track];
+      if (ci < C.length - 1) svg += `<path class="route${Story.chapterDone(profile, ci) ? ' done' : ''}" d="M${a[0]},${a[1]} Q${(a[0] + b[0]) / 2 + (168 - (a[0] + b[0]) / 2) * -0.15},${(a[1] + b[1]) / 2 + (96 - (a[1] + b[1]) / 2) * -0.15} ${b[0]},${b[1]}"/>`;
+    });
+    C.forEach((c, ci) => {
+      const [x, y] = ISLE[c.track], open = Story.chapterOpen(profile, ci), done = Story.chapterDone(profile, ci);
+      const name = TRACKS[trackIndexOf(c.track)].name;
+      svg += `<g class="node${open ? ' open' : ' locked'}${done ? ' done' : ''}${ci === advSel ? ' sel' : ''}" data-ci="${ci}" tabindex="0" role="button" aria-pressed="${ci === advSel}" aria-label="Chapitre ${ci + 1}, ${esc(name)}${done ? ', terminé' : open ? '' : ', fermé'}">`
+        + `<circle cx="${x}" cy="${y}" r="11"/><text class="n" x="${x}" y="${y}">${done ? '✓' : ci + 1}</text><text x="${x}" y="${y + 22}">${c.track[0].toUpperCase() + c.track.slice(1)}</text></g>`;
+    });
+    $('advMap').innerHTML = svg;
+    const pr = Story.progress(profile);
+    $('advProg').innerHTML = `<span>Missions <b>${pr.missions} / ${pr.total}</b></span><span>Trouvailles <b>${pr.found} / ${pr.foundTotal}</b></span><span>Solde <b>${Economy.fmt(profile.money)}</b></span>`;
+
+    const ci = advSel, ch = C[ci], open = Story.chapterOpen(profile, ci), nx = Story.nextMission(profile, ci);
+    const tname = TRACKS[trackIndexOf(ch.track)].name;
+    let h = `<div class="adv-ch"><div class="label">Chapitre ${ci + 1} · ${esc(tname)}</div><h3>${esc(ch.title)}<span class="jp">${ch.jp}</span></h3><p>${open ? esc(ch.pitch) : 'Termine le chapitre précédent pour ouvrir ce lieu.'}</p></div>`;
+    h += '<ol class="adv-ms">' + ch.missions.map((m, k) => {
+      const done = Story.missionDone(profile, m.id), can = Story.missionOpen(profile, ci, k);
+      const cls = done ? 'done' : k === nx ? 'next' : can ? '' : 'locked';
+      return `<li class="${cls}"><span class="ck" aria-hidden="true">${done ? '✓' : ''}</span><div><b><span class="mode">${m.mode === 'tandem' ? 'Tandem' : 'Run'}</span>${esc(m.title)}</b><small>${esc(Story.goalText(m.goal))}</small></div><span class="rw">${done ? 'Fait' : Economy.fmt(m.reward)}</span></li>`;
+    }).join('') + '</ol>';
+    if (open) {
+      h += '<div class="adv-acts">';
+      if (nx >= 0) h += `<button class="btn primary" data-play="${nx}"><span>Jouer : ${esc(ch.missions[nx].title)}</span></button>`;
+      else h += '<button class="btn" data-play="2"><span>Rejouer la finale du chapitre</span></button>';
+      h += `<button class="btn" data-explore><span>Explorer le lieu</span></button><button class="btn ghost" data-story><span>Revoir l’histoire</span></button></div>`;
+      const z = Story.zoneProgress(profile, ch.track), Z = Story.ZONES[ch.track];
+      h += `<div class="adv-explore">Exploration libre : <b>archives ${z.arch} / 5</b> · <b>défis de rue ${z.street} / ${Story.STREET.length}</b> · <b>rencontre ${z.npc} / 1</b>. Les archives flottent au bord de la route, les bornes lancent un défi au passage.</div>`;
+      h += `<details class="adv-notes"><summary>Carnet du club · ${z.arch} / 5</summary><ol>` + Z.archives.map((a, k) => Story.ensure(profile).arch[ch.track + ':' + k] ? `<li><b>${esc(a[0])}</b> — ${esc(a[1])}</li>` : '<li class="miss">Archive à retrouver sur ce lieu.</li>').join('') + '</ol></details>';
+    }
+    $('advPanel').innerHTML = h;
+  }
+  function pickNode(e) {
+    const g = e.target.closest('.node'); if (!g) return;
+    const ci = +g.dataset.ci;
+    if (!Story.chapterOpen(profile, ci)) { toast('Lieu fermé : termine le chapitre précédent.', 'lost'); return; }
+    advSel = ci; Sound.ui(); renderAdventure();
+    const n = $('advMap').querySelector(`[data-ci="${ci}"]`); if (n && e.type === 'keydown') n.focus();
+  }
+  $('advMap').addEventListener('click', pickNode);
+  $('advMap').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickNode(e); } });
+  $('advPanel').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const ch = Story.CHAPTERS[advSel];
+    if (b.dataset.play != null) playMission(advSel, +b.dataset.play);
+    else if (b.dataset.explore != null) exploreZone(advSel);
+    else if (b.dataset.story != null) { Sound.ui(); talk(Story.chapterDone(profile, advSel) ? [...ch.intro, ...ch.outro] : ch.intro); }
+  });
+  // la scène derrière les dialogues montre déjà le lieu de la mission
+  function goTrack(id) { const ti = trackIndexOf(id); if (track.def.id !== id) { trackIdx = ti; loadTrack(ti); } trackIdx = ti; }
+  function playMission(ci, k) {
+    if (!Story.missionOpen(profile, ci, k)) return;
+    const ch = Story.CHAPTERS[ci], m = ch.missions[k];
+    ensureAudio(); Sound.ui();
+    adv = { ci, k }; mode = m.mode;
+    show(null); phase = 'menu';
+    goTrack(ch.track);
+    const go = () => talk(m.brief, startRun);
+    const seen = Story.ensure(profile).seen;
+    if (!seen[ch.id]) { seen[ch.id] = true; saveProfile(); talk(ch.intro, go); } else go();
+  }
+  function exploreZone(ci) {
+    if (!Story.chapterOpen(profile, ci)) return;
+    const ch = Story.CHAPTERS[ci];
+    ensureAudio(); Sound.ui();
+    adv = { explore: ch.track, ci }; mode = 'free';
+    show(null); goTrack(ch.track);
+    startRun();
+  }
+  function leaveAdventureRun() {
+    clearExplore();
+    adv = null; advNext = null;
+    mode = store.get('mode', 'run');
+    $('menuBtn').firstElementChild.textContent = 'Menu';
+    $('againBtn').firstElementChild.textContent = 'Rejouer';
+  }
+
+  // exploration : archives (daruma flottants), bornes de défi de rue, rencontre (colonne de lumière)
+  function buildExplore() {
+    const id = adv.explore, Z = Story.ZONES[id], S = Story.ensure(profile), N = track.count;
+    const group = new THREE.Group(), items = [], mats = [], geos = [];
+    const mat = (c, add) => { const m = new THREE.MeshBasicMaterial({ color: c, transparent: !!add, opacity: add ? 0.35 : 1, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending, depthWrite: !add }); mats.push(m); return m; };
+    const geo = (g) => { geos.push(g); return g; };
+    const at = (f, lat) => { const i = Math.round(f * N) % N; return { i, x: track.px[i] - track.tz[i] * lat, z: track.pz[i] + track.tx[i] * lat }; };
+    const body = geo(new THREE.SphereGeometry(0.55, 14, 10)), face = geo(new THREE.CircleGeometry(0.3, 14)), red = mat(0xd8262d), white = mat(0xf4f1e6);
+    Story.ARCHIVE_AT.forEach((f, k) => {
+      if (S.arch[id + ':' + k]) return;
+      const p = at(f, (k % 2 ? 1 : -1) * (track.half - 2.2));
+      const g = new THREE.Group();
+      const b = new THREE.Mesh(body, red); b.scale.set(1, 1.15, 1); g.add(b);
+      const fc = new THREE.Mesh(face, white); fc.position.set(0, 0.08, 0.5); g.add(fc);
+      g.position.set(p.x, gy(p.x, p.z) + 1.2, p.z);
+      group.add(g); items.push({ kind: 'arch', k, ...p, r: 2.6, obj: g });
+    });
+    const postG = geo(new THREE.CylinderGeometry(0.14, 0.14, 4.2, 8)), barG = geo(new THREE.BoxGeometry(0.3, 0.5, track.def.width + 1.4)), blue = mat(0x7b8cff), glow = mat(0x7b8cff, true);
+    Story.STREET.forEach((s, k) => {
+      if (S.street[id + ':' + k]) return;
+      const p = at(s.at, 0), g = new THREE.Group(), y = gy(p.x, p.z);
+      for (const sd of [-1, 1]) { const q = new THREE.Mesh(postG, blue); q.position.set(0, 2.1, sd * (track.half + 0.7)); g.add(q); }
+      const bar = new THREE.Mesh(barG, glow); bar.position.y = 4.1; g.add(bar);
+      g.position.set(p.x, y, p.z); g.rotation.y = -track.heading[p.i];
+      group.add(g); items.push({ kind: 'street', k, ...p, obj: g, def: Story.streetFor(adv.ci, k) });
+    });
+    if (!S.npc[id + ':0']) {
+      const n = Z.npc, p = at(n.at, n.side * (track.half - 3)), c = Story.CAST[n.who];
+      const beam = new THREE.Mesh(geo(new THREE.CylinderGeometry(1.1, 1.1, 9, 16, 1, true)), mat(new THREE.Color(c.col).getHex(), true));
+      beam.position.set(p.x, gy(p.x, p.z) + 4.5, p.z);
+      group.add(beam); items.push({ kind: 'npc', k: 0, ...p, r: 3.6, obj: beam, npc: n });
+    }
+    scene.add(group);
+    explore = { id, group, items, mats, geos, active: null, t: 0 };
+    renderExploreHud();
+  }
+  function clearExplore() {
+    if (!explore) return;
+    scene.remove(explore.group);
+    for (const m of explore.mats) m.dispose();
+    for (const g of explore.geos) g.dispose();
+    explore = null;
+  }
+  function renderExploreHud() {
+    if (!explore || explore.active) return;
+    const z = Story.zoneProgress(profile, explore.id);
+    const el = $('hudGoal'); el.className = 'hud-goal';
+    el.textContent = `Exploration · archives ${z.arch}/5 · défis de rue ${z.street}/${Story.STREET.length} · rencontre ${z.npc}/1`;
+  }
+  function updateExplore(dt) {
+    const st = player, N = track.count, E = explore;
+    E.t += dt;
+    for (const it of E.items) {
+      if (it.taken) continue;
+      if (it.kind === 'arch') { it.obj.rotation.y += dt * 1.6; it.obj.position.y += Math.sin(E.t * 2 + it.k) * dt * 0.25; }
+      let hit;
+      if (it.kind === 'street') { let d = Math.abs(st.idx - it.i); d = Math.min(d, N - d); hit = d <= 2 && !E.active; }
+      else hit = Math.hypot(st.x - it.x, st.z - it.z) < it.r;
+      if (!hit) continue;
+      if (it.kind === 'arch') {
+        it.taken = true; it.obj.visible = false;
+        const r = Story.collect(profile, E.id, 'arch', it.k);
+        if (r) { saveProfile(); refreshWallet(); Sound.clip(); vibrate(30); popup(`Archive +${Economy.fmt(r.reward)}`, 'clip'); toast(`Archive retrouvée : ${Story.ZONES[E.id].archives[it.k][0]} (à lire dans le carnet)`, 'chal'); }
+        renderExploreHud();
+      } else if (it.kind === 'npc') {
+        it.taken = true; it.obj.visible = false;
+        meet(it.npc);
+      } else {
+        E.active = { it, t: it.def.window, prog: 0 };
+        popup('Défi de rue !', 'apex'); Sound.clip();
+      }
+    }
+    const a = E.active;
+    if (a) {
+      const d = a.it.def, el = $('hudGoal');
+      a.t -= dt;
+      if (d.type === 'hold') { if (Math.abs(st.slip) * 180 / Math.PI >= d.angle && st.speed > 8) a.prog += dt; }
+      else a.prog = Math.max(a.prog, score.combo);
+      const need = d.type === 'hold' ? d.secs : d.pts;
+      el.className = 'hud-goal street';
+      el.textContent = d.type === 'hold' ? `Défi de rue · tiens ${d.angle}° : ${a.prog.toFixed(1)} / ${d.secs} s · reste ${Math.ceil(a.t)} s` : `Défi de rue · combo de ${d.pts.toLocaleString('fr-FR')} pts : ${Math.round(a.prog).toLocaleString('fr-FR')} · reste ${Math.ceil(a.t)} s`;
+      if (a.prog >= need) {
+        a.it.taken = true; a.it.obj.visible = false; E.active = null;
+        const r = Story.collect(profile, E.id, 'street', a.it.k);
+        if (r) { saveProfile(); refreshWallet(); Sound.bank(true); toast(`Défi de rue réussi · +${Economy.fmt(r.reward)}`, 'chal'); }
+        renderExploreHud();
+      } else if (a.t <= 0) { E.active = null; popup('Défi raté · repasse sous la borne', 'lost'); renderExploreHud(); }
+    }
+  }
+  // rencontre : la partie s'arrête le temps du dialogue
+  function meet(n) {
+    phase = 'pause'; clearTouch(); Sound.suspend();
+    talk(n.lines, () => {
+      const r = Story.collect(profile, explore ? explore.id : '', 'npc', 0);
+      if (r) { saveProfile(); refreshWallet(); toast(`${r.label} · +${Economy.fmt(r.reward)}`, 'chal'); }
+      renderExploreHud();
+      resumeGame();
+    });
+  }
+
   function syncSettingsUI() {
     pressGroup($('assistSeg'), 'data-v', settings.assist);
     pressGroup($('qualSeg'), 'data-v', settings.quality);
@@ -1171,6 +1449,7 @@
   $('pSettingsBtn').addEventListener('click', () => { returnTo = 'pause'; syncSettingsUI(); show('settings'); });
   $('layoutBtn').addEventListener('click', openLayoutEditor);
   $('helpBtn').addEventListener('click', go('help'));
+  $('advBtn').addEventListener('click', () => { Sound.ui(); ensureAudio(); openAdventure(); });
   for (const b of document.querySelectorAll('[data-back]')) b.addEventListener('click', () => {
     Sound.ui();
     const scr = b.closest('.screen').id;
@@ -1184,7 +1463,7 @@
   $('quitBtn').addEventListener('click', () => { if (mode === 'free' && score.runT > 5) finishRun(); else toMenu(); });
   $('pauseBtn').addEventListener('click', pauseGame);
   $('camBtn').addEventListener('click', cycleCam);
-  $('againBtn').addEventListener('click', startRun);
+  $('againBtn').addEventListener('click', () => { if (advNext) { const n = advNext; advNext = null; playMission(n.ci, n.k); } else startRun(); });
   $('menuBtn').addEventListener('click', toMenu);
   if (isTouch) $('kbHint').hidden = true;
 

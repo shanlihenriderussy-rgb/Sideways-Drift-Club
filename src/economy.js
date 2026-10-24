@@ -202,6 +202,8 @@ function loadProfile(raw, legacy) {
   if (Array.isArray(raw.log)) p.log = raw.log.filter((l) => l && typeof l.label === 'string' && Number.isFinite(l.amount)).slice(0, LOG_MAX);
   if (raw.daily && typeof raw.daily === 'object') p.daily = { last: typeof raw.daily.last === 'string' ? raw.daily.last : null, streak: Number.isInteger(raw.daily.streak) ? raw.daily.streak : 0 };
   if (raw.done && typeof raw.done === 'object') for (const c of CHALLENGES) if (raw.done[c.id]) p.done[c.id] = true;
+  // progression de l'aventure : nettoyée par story.js (Story.ensure)
+  if (raw.story && typeof raw.story === 'object') p.story = JSON.parse(JSON.stringify(raw.story));
   if (raw.stats && typeof raw.stats === 'object') {
     for (const k of ['runs', 'earned', 'spent', 'bestPayout']) if (Number.isFinite(raw.stats[k])) p.stats[k] = raw.stats[k];
     if (Array.isArray(raw.stats.tracks)) p.stats.tracks = raw.stats.tracks.filter((t) => typeof t === 'string');

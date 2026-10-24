@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- une seule famille variable (graisse + chasse) ; kanji en sous-ensemble limité aux caractères affichés -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Instrument+Serif:ital@0;1&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&text=%E6%A8%AA%E6%BB%91%E3%82%8A%E5%80%B6%E6%A5%BD%E9%83%A8%E8%B5%B0%E8%A1%8C%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%A8%98%E9%8C%B2%E8%A8%AD%E5%AE%9A%E8%AA%AC%E6%98%8E%E4%BC%91%E6%86%A9%E7%B5%90%E6%9E%9C%E6%BA%96%E5%82%99%E6%93%8D%E4%BD%9C&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&text=%E6%A8%AA%E6%BB%91%E3%82%8A%E5%80%B6%E6%A5%BD%E9%83%A8%E8%B5%B0%E8%A1%8C%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%A8%98%E9%8C%B2%E8%A8%AD%E5%AE%9A%E8%AA%AC%E6%98%8E%E4%BC%91%E6%86%A9%E7%B5%90%E6%9E%9C%E6%BA%96%E5%82%99%E6%93%8D%E4%BD%9C%E5%B3%B6%E4%B8%80%E5%91%A8%E9%81%BA%E7%94%A3%E9%9D%A2%E9%BB%92%E9%9B%B2%E6%96%AD%E5%B4%96%E7%A7%98%E5%AF%86%E9%81%94&display=swap">
 <style>
 /* DA « Télémétrie de nuit » : surfaces sombres profondes, filets fins, une seule couleur d'accent (le jaune de l'emblème),
    une seule famille de caractères. La scène 3D reste le sujet ; l'interface s'efface et hiérarchise. */
@@ -434,6 +434,78 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
 
 @media (prefers-reduced-motion: reduce) { .tk { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .pop, #count span { animation-duration: .01s; animation-iteration-count: 1; } .pop { animation: none; } #loading .emblem, #loading p::after, #menu .menu-btns .btn, .screen:not([hidden]) .card { animation: none; } }
+
+/* ---------- aventure : carte de l'île, chapitres, dialogues ---------- */
+.adv { width: min(960px, 100%); display: grid; gap: 18px; }
+@media (min-width: 720px), (orientation: landscape) { .adv { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; } }
+.adv h2 { margin-bottom: 4px; }
+#advMap { width: 100%; height: auto; display: block; margin: 4px 0 6px; }
+#advMap .sea { fill: none; }
+#advMap .isle { fill: var(--s2); stroke: var(--hair-2); stroke-width: 1; }
+#advMap .route { fill: none; stroke: var(--fg-3); stroke-width: 1.2; stroke-dasharray: 3 4; }
+#advMap .route.done { stroke: var(--accent); stroke-dasharray: none; opacity: .6; }
+#advMap .node { cursor: pointer; }
+#advMap .node circle { fill: var(--s3); stroke: var(--hair-2); stroke-width: 1.5; transition: fill .15s; }
+#advMap .node text { fill: var(--fg-2); font-size: 9px; font-weight: 700; letter-spacing: .06em; text-anchor: middle; pointer-events: none; }
+#advMap .node .n { fill: var(--fg); font-size: 11px; font-weight: 800; dominant-baseline: central; }
+#advMap .node.open circle { stroke: var(--accent-2); }
+#advMap .node.done circle { fill: var(--accent); stroke: var(--accent); }
+#advMap .node.done .n { fill: var(--accent-ink); }
+#advMap .node.locked { cursor: not-allowed; opacity: .45; }
+#advMap .node.sel circle { stroke: var(--accent); stroke-width: 3; }
+#advMap .node:focus { outline: none; }
+#advMap .node:focus-visible circle { stroke: #fff; stroke-width: 3; }
+.adv-prog { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
+.adv-prog b { color: var(--fg); letter-spacing: 0; font-size: 13px; }
+.adv-ch { display: grid; gap: 4px; margin-bottom: 12px; }
+.adv-ch .label { margin: 0; }
+.adv-ch h3 { margin: 0; font-stretch: 116%; font-size: 22px; font-weight: 800; line-height: 1.1; }
+.adv-ch h3 .jp { font-family: var(--font-jp); color: var(--accent-2); font-size: 14px; margin-left: 8px; }
+.adv-ch p { margin: 2px 0 0; color: var(--fg-2); font-family: var(--serif); font-style: italic; font-size: 16px; line-height: 1.35; }
+.adv-ms { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 6px; }
+.adv-ms li { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--hair); border-radius: 12px; background: var(--s2); }
+.adv-ms li.next { border-color: var(--accent); background: var(--accent-soft); }
+.adv-ms li.locked { opacity: .5; }
+.adv-ms .ck { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--hair-2); display: grid; place-items: center; font-size: 12px; color: var(--accent-ink); }
+.adv-ms li.done .ck { background: var(--accent); border-color: var(--accent); }
+.adv-ms b { display: block; font-size: 14px; }
+.adv-ms small { display: block; color: var(--fg-2); font-size: 12px; margin-top: 1px; }
+.adv-ms .rw { font-size: 12.5px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.adv-ms .mode { font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-2); font-weight: 700; margin-right: 6px; }
+.adv-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.adv-acts .btn { flex: 1 1 auto; }
+.adv-explore { padding: 10px 12px; border: 1px dashed var(--hair-2); border-radius: 12px; font-size: 12.5px; color: var(--fg-2); margin-bottom: 10px; }
+.adv-explore b { color: var(--fg); }
+.adv-notes { margin: 0 0 10px; }
+.adv-notes summary { cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent-2); padding: 6px 0; }
+.adv-notes ol { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 6px; font-size: 13px; color: var(--fg-2); line-height: 1.4; }
+.adv-notes li b { color: var(--fg); }
+.adv-notes li.miss { color: var(--fg-3); font-style: italic; }
+@media (orientation: landscape) and (max-height: 560px) { #adventure .card { padding: 14px 18px; } #advMap { max-height: 190px; } .adv-ch p { font-size: 14px; } .adv-ms li { padding: 6px 10px; } }
+
+.hud-goal { position: fixed; z-index: 11; left: 50%; top: calc(max(12px, env(safe-area-inset-top)) + 84px); transform: translateX(-50%); pointer-events: none; padding: 6px 12px; border-radius: 999px; background: rgba(7,8,10,.72); border: 1px solid var(--hair-2); font-size: 11.5px; font-weight: 700; letter-spacing: .04em; color: var(--fg); white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
+.hud-goal::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); margin-right: 8px; vertical-align: 1px; }
+.hud-goal.street::before { background: var(--accent); }
+.hud-goal.ok { border-color: var(--accent); }
+
+.dialog { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; padding: 16px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: linear-gradient(0deg, rgba(7,8,10,.85), rgba(7,8,10,.25) 55%, rgba(7,8,10,0)); }
+.dlg-card { width: min(760px, 100%); display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; padding: 16px 18px; border-radius: 18px; background: linear-gradient(180deg, rgba(22,25,30,.98), rgba(12,14,17,.98)); border: 1px solid var(--hair); box-shadow: 0 30px 80px rgba(0,0,0,.6); animation: rise .25s var(--ease) both; cursor: pointer; }
+.dlg-face { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-stretch: 115%; font-weight: 800; font-size: 18px; color: #0b0c0f; box-shadow: 0 0 0 3px rgba(255,255,255,.08); }
+.dlg-face.narr { background: none !important; box-shadow: none; width: 0; }
+.dlg-who { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.dlg-who b { font-stretch: 115%; font-size: 16px; font-weight: 800; }
+.dlg-who span { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-2); font-weight: 700; }
+#dlgText { margin: 6px 0 10px; font-size: 16.5px; line-height: 1.45; color: var(--fg); min-height: 2.9em; }
+.dlg-card.narr #dlgText { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--fg-2); }
+.dlg-foot { display: flex; justify-content: flex-end; gap: 8px; }
+.dlg-foot .btn { min-height: 42px; padding: 0 16px; }
+@media (orientation: landscape) and (max-height: 560px) { .dlg-card { padding: 12px 14px; gap: 12px; } .dlg-face { width: 46px; height: 46px; font-size: 15px; } #dlgText { font-size: 15px; margin: 4px 0 6px; } }
+
+.res-goal { display: grid; gap: 4px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; }
+.res-goal .h { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-2); }
+.res-goal .r { display: flex; gap: 8px; align-items: center; }
+.res-goal .r i { font-style: normal; font-weight: 800; width: 16px; text-align: center; }
+.res-goal .r.ko { opacity: .6; }
 </style>
 
 </head>
@@ -462,6 +534,19 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
   <div class="speedo"><div class="kmh" id="hudSpeed">0</div><div class="unit">KM/H</div><div class="rpm" id="rpmBar"><i id="rpmFill"></i></div><div class="gear" id="hudGear">1</div></div>
 </div>
 <div id="count" hidden></div>
+<div class="hud-goal" id="hudGoal" hidden aria-live="polite"></div>
+
+<!-- dialogues de l'aventure : une ligne à la fois, toucher ou Entrée pour continuer -->
+<div class="dialog" id="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="dlgName" aria-describedby="dlgText">
+  <div class="dlg-card">
+    <div class="dlg-face" id="dlgFace" aria-hidden="true"></div>
+    <div class="dlg-body">
+      <div class="dlg-who"><b id="dlgName"></b><span id="dlgRole"></span></div>
+      <p id="dlgText"></p>
+      <div class="dlg-foot"><button class="btn ghost" id="dlgSkip"><span>Passer</span></button><button class="btn primary" id="dlgNext"><span>Suite</span></button></div>
+    </div>
+  </div>
+</div>
 
 <!-- commandes tactiles : cinq boutons indépendants, placés par le code (voir game.js, « disposition ») -->
 <div id="touch" aria-hidden="true">
@@ -485,10 +570,11 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
   <div class="title-block">
     <nav class="menu-btns" aria-label="Menu principal">
       <button class="btn primary" id="playBtn"><span>Rouler<em class="dek">six pistes, une ligne</em></span></button>
-      <button class="btn" id="garageBtn"><span><i class="no">01</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
-      <button class="btn" id="careerBtn"><span><i class="no">02</i>Carrière<em class="dek">défis et palmarès</em></span></button>
-      <button class="btn" id="settingsBtn"><span><i class="no">03</i>Réglages<em class="dek">pilotage et confort</em></span></button>
-      <button class="btn" id="helpBtn"><span><i class="no">04</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
+      <button class="btn" id="advBtn"><span><i class="no">01</i>Aventure<em class="dek">le Tour de l’Île, six chapitres</em></span></button>
+      <button class="btn" id="garageBtn"><span><i class="no">02</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
+      <button class="btn" id="careerBtn"><span><i class="no">03</i>Carrière<em class="dek">défis et palmarès</em></span></button>
+      <button class="btn" id="settingsBtn"><span><i class="no">04</i>Réglages<em class="dek">pilotage et confort</em></span></button>
+      <button class="btn" id="helpBtn"><span><i class="no">05</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
     </nav>
     <div class="hint portrait-tip">Tourne ton téléphone à l'horizontale pour mieux voir la piste.</div>
     <div class="ticker" aria-hidden="true"><div class="tk" id="ticker"></div></div>
@@ -516,6 +602,22 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
         <button class="btn ghost" data-back><span>Retour</span></button>
         <button class="btn primary" id="goBtn"><span>Départ</span></button>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- aventure : carte de l'île, chapitres, exploration (voir story.js) -->
+<section class="screen dim" id="adventure" hidden aria-labelledby="advTitle">
+  <div class="card adv">
+    <div class="adv-map">
+      <div class="eyebrow"><span>Aventure</span><span class="jp">島一周</span></div>
+      <h2 id="advTitle">Le Tour de l’Île</h2>
+      <svg id="advMap" viewBox="0 0 320 190" role="group" aria-label="Carte de l’île : choisis un lieu"></svg>
+      <div class="adv-prog" id="advProg"></div>
+    </div>
+    <div class="adv-side">
+      <div id="advPanel"></div>
+      <div class="row-end adv-back"><button class="btn ghost" data-back><span>Retour</span></button></div>
     </div>
   </div>
 </section>
@@ -617,6 +719,7 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
     <div class="eyebrow" id="resEyebrow">Run noté · Docks de Minato</div>
     <div class="res-head"><div class="grade" id="resGrade">A</div><div><h2 id="resTitle">Note des juges <span class="jp">結果</span></h2><div class="res-total" id="resTotal">0</div><div id="resRecord"></div></div></div>
     <p class="headline" id="resHeadline"></p>
+    <div class="res-goal" id="resGoal" hidden></div>
     <div class="res-grid">
       <div>Meilleur combo<b id="resCombo">0</b></div>
       <div>Clips réussis<b id="resClips">0</b></div>
@@ -1070,6 +1173,8 @@ function loadProfile(raw, legacy) {
   if (Array.isArray(raw.log)) p.log = raw.log.filter((l) => l && typeof l.label === 'string' && Number.isFinite(l.amount)).slice(0, LOG_MAX);
   if (raw.daily && typeof raw.daily === 'object') p.daily = { last: typeof raw.daily.last === 'string' ? raw.daily.last : null, streak: Number.isInteger(raw.daily.streak) ? raw.daily.streak : 0 };
   if (raw.done && typeof raw.done === 'object') for (const c of CHALLENGES) if (raw.done[c.id]) p.done[c.id] = true;
+  // progression de l'aventure : nettoyée par story.js (Story.ensure)
+  if (raw.story && typeof raw.story === 'object') p.story = JSON.parse(JSON.stringify(raw.story));
   if (raw.stats && typeof raw.stats === 'object') {
     for (const k of ['runs', 'earned', 'spent', 'bestPayout']) if (Number.isFinite(raw.stats[k])) p.stats[k] = raw.stats[k];
     if (Array.isArray(raw.stats.tracks)) p.stats.tracks = raw.stats.tracks.filter((t) => typeof t === 'string');
@@ -3913,6 +4018,405 @@ function createShop(api) {
   };
 }
 
+// --- story.js
+// ===== Aventure : « Le Tour de l’Île », six chapitres et une île à explorer =====
+// Logique pure (aucun DOM, aucun Three.js) : le jeu passe le profil, ces fonctions lisent et écrivent profile.story
+// et créditent les récompenses par Economy.credit. Les dialogues sont des lignes [personnage, texte].
+// Le pilote n’est jamais genré : on lui parle à la deuxième personne, sans accord.
+
+// Economy : même script dans le jeu, module à part sous Node (tests)
+const Eco = typeof Economy !== 'undefined' ? Economy : require('./economy.js');
+
+const CAST = {
+  narr: { name: '', role: 'Récit', ini: '', col: '#a4a8af' },
+  kenji: { name: 'Kenji Arakawa', role: 'Mécano du club', ini: 'KA', col: '#f7d154' },
+  lou: { name: 'Lou Payet', role: 'Journal de la glisse', ini: 'LP', col: '#7b8cff' },
+  mika: { name: 'Mika', role: 'Cheffe des Kuro Kumo', ini: 'MI', col: '#e8e6f0' },
+  hoshi: { name: 'Hoshi', role: 'Marmay des docks', ini: 'HO', col: '#4be38a' },
+  ryo: { name: 'Ryo Kaneshiro', role: 'Kaneshiro Holdings', ini: 'RK', col: '#9aa0aa' },
+  zelie: { name: 'Mamie Zélie', role: 'Gardienne du volcan', ini: 'MZ', col: '#ff9a4a' },
+  daruma: { name: 'Daruma', role: 'Juge du Tour de l’Île', ini: '達', col: '#ff4d4f' },
+  sayo: { name: 'Sayo Ishikawa', role: 'Fondatrice du club · lettre', ini: 'SI', col: '#f1efe9' },
+  kai: { name: 'Kai', role: 'Pilote des Kuro Kumo', ini: 'KI', col: '#5b5d66' },
+  ume: { name: 'Ume', role: 'Pêcheur de la corniche', ini: 'UM', col: '#2fc7d6' },
+  sora: { name: 'Sora', role: 'Gardien du refuge', ini: 'SO', col: '#cfe6ff' },
+};
+
+const GRADES = ['D', 'C', 'B', 'A', 'S'];
+
+// goal : { score, grade, clips, angle, combo, drift (% du run en glisse), noWall }
+const CHAPTERS = [
+  {
+    id: 'ch1', track: 'minato', title: 'L’héritage', jp: '遺産',
+    pitch: 'Le garage du club va être rasé. Sayo t’a laissé sa HACHI, et un dernier pari.',
+    intro: [
+      ['narr', 'Docks de Minato, 23 h. La pluie vient de s’arrêter. Le garage du Sideways Drift Club sent l’huile et le café froid.'],
+      ['kenji', 'Alors c’est toi. Sayo parlait de toi dans toutes ses lettres. Elle t’a laissé sa HACHI… et ses parts du club.'],
+      ['kenji', 'Je ne vais pas te mentir : il reste trois membres, un compresseur qui tousse, et un courrier recommandé.'],
+      ['narr', 'Sur l’établi, une lettre à en-tête doré : KANESHIRO HOLDINGS. « Le terminal sera rasé le 1er décembre. »'],
+      ['kenji', 'Sauf si le club remporte le Tour de l’Île. Le règlement du port le dit : le champion garde son garage. Sayo l’a fait écrire en 1995.'],
+      ['kenji', 'Six lieux, six épreuves, et un juge que personne n’a jamais vu sans son masque : Daruma. Montre-moi d’abord que tu sais glisser.'],
+    ],
+    missions: [
+      {
+        id: 'ch1m1', title: 'Premiers tours', mode: 'run', goal: { score: 4000 }, reward: 1500,
+        brief: [['kenji', 'Un tour, rien de plus. Lance la voiture, tiens l’angle, et ne regarde pas le mur : on va toujours là où on regarde.']],
+        win: [['kenji', 'Pas mal. Sayo aussi freinait trop tard, la première fois.']],
+        lose: [['kenji', 'Le mur ne bouge pas : c’est à toi de bouger. On recommence.']],
+      },
+      {
+        id: 'ch1m2', title: 'Raser les conteneurs', mode: 'run', goal: { clips: 3 }, reward: 2000,
+        brief: [['kenji', 'Les juges regardent les clips. Dehors, le pare-chocs arrière frôle le mur. Dedans, l’avant embrasse le cône. Trois clips.']],
+        win: [['hoshi', 'J’ai tout filmé ! Trois clips, monsieur Kenji, trois !'], ['kenji', 'Hoshi traîne au garage depuis ses huit ans. Ne lui donne pas les clés, surtout.']],
+        lose: [['kenji', 'Plus près. Le mur ne mord pas, il juge.']],
+      },
+      {
+        id: 'ch1m3', title: 'Le tandem du vieux', mode: 'tandem', goal: { grade: 'C' }, reward: 3000,
+        brief: [['kenji', 'Dernière leçon. Je prends la voiture du club et je mène. Colle-toi à ma portière et ne me lâche pas.']],
+        win: [['kenji', '… Bon. Tu as la main de Sayo. Demain, on va voir quelqu’un qui peut faire parler de nous.']],
+        lose: [['kenji', 'Trop loin. Un tandem, c’est une conversation : si tu ne m’entends pas, tu es déjà seul.']],
+      },
+    ],
+    outro: [['kenji', 'Le Tour de l’Île se gagne aussi dans les journaux. Il nous faut du public, des sponsors. Direction Shiohama, à l’aube.']],
+  },
+  {
+    id: 'ch2', track: 'shiohama', title: 'La une', jp: '一面',
+    pitch: 'Lou Payet, reporter du Journal de la glisse, cherche une histoire. Donne-lui des chiffres.',
+    intro: [
+      ['narr', 'Quai de Shiohama, 6 h. Les mouettes, l’odeur du gasoil, et une voix derrière toi.'],
+      ['lou', 'Lou Payet, Journal de la glisse. Le club de Sayo Ishikawa relancé par une recrue au volant de sa HACHI ? C’est ma une de la semaine. Si tu la mérites.'],
+      ['lou', 'Mes lecteurs veulent du spectacle. Tu fais les chiffres, je fais les mots.'],
+    ],
+    missions: [
+      {
+        id: 'ch2m1', title: 'La page trois', mode: 'run', goal: { grade: 'B' }, reward: 2500,
+        brief: [['lou', 'Une note B des juges, et je t’offre la page trois.']],
+        win: [['lou', '« Le retour du Sideways ». Ça sonne bien, non ?']],
+        lose: [['lou', 'Page douze, entre la météo et les petites annonces. Retente.']],
+      },
+      {
+        id: 'ch2m2', title: 'Grand angle', mode: 'run', goal: { angle: 50, combo: 4000 }, reward: 2500,
+        brief: [['lou', 'Le photographe veut un cliché de profil. Passe les 50°, et enchaîne un combo de 4 000.']],
+        win: [['lou', 'Cette photo va faire le tour de l’île avant toi.']],
+        lose: [['lou', 'Joli, mais pas assez de travers pour une couverture.']],
+      },
+      {
+        id: 'ch2m3', title: 'Propre comme un sou neuf', mode: 'run', goal: { score: 9000, noWall: true }, reward: 3500,
+        brief: [['kenji', 'Les sponsors détestent la tôle froissée. 9 000 points, zéro contact avec le mur.']],
+        win: [['lou', 'Kaizen Pneus m’a écrit : ils veulent voir ta voiture.'], ['narr', 'Dans le même numéro, un entrefilet : sur le col d’Akane, le crew Kuro Kumo « ne laisse passer personne ».']],
+        lose: [['kenji', 'Un sponsor qui voit une portière pliée, c’est un sponsor qui raccroche.']],
+      },
+    ],
+    outro: [['lou', 'Un conseil : si tu montes à Akane, ne parle pas du club à Mika. Elle a ses raisons.']],
+  },
+  {
+    id: 'ch3', track: 'akane', title: 'Les Nuages noirs', jp: '黒雲',
+    pitch: 'Le crew Kuro Kumo règne sur les lacets d’Akane. Sa cheffe, Mika, déteste le club.',
+    intro: [
+      ['narr', 'Col d’Akane, au couchant. Une dizaine de voitures noires au sommet, un drapeau brodé d’un nuage : 黒雲.'],
+      ['mika', 'Le Sideways ? Je croyais que le club était mort avec la vieille.'],
+      ['kenji', 'Respecte Sayo, Mika.'],
+      ['mika', 'Kenji. Toujours là pour les grands discours. Ici, ça se règle dans les lacets. Trois épreuves. Tu perds, tu redescends à pied.'],
+    ],
+    missions: [
+      {
+        id: 'ch3m1', title: 'Les épingles', mode: 'run', goal: { score: 12000 }, reward: 3000,
+        brief: [['mika', 'Mes pilotes montent le col à 12 000. Fais pareil, on verra après.']],
+        win: [['mika', 'Hm. De la chance.']],
+        lose: [['mika', 'La descente à pied, c’est par là.']],
+      },
+      {
+        id: 'ch3m2', title: 'L’ombre de Kuro Kumo', mode: 'tandem', goal: { grade: 'B' }, reward: 4000,
+        brief: [['kai', 'Kai, Kuro Kumo. Je mène, tu suis. Si tu me perds dans les lacets, c’est fini pour toi.']],
+        win: [['narr', 'Au dernier lacet, Kai lève la main par la fenêtre. Chez les Kuro Kumo, c’est un salut.']],
+        lose: [['kai', 'Je ne t’ai même pas vu dans le rétro.']],
+      },
+      {
+        id: 'ch3m3', title: 'Le roi du col', mode: 'run', goal: { grade: 'A', angle: 55 }, reward: 5000,
+        brief: [['mika', 'Note A, et au moins 55° quelque part. Je veux savoir si tu glisses vraiment, ou si tu pries.']],
+        win: [['mika', '… D’accord. Tu peux rouler sur mon col.'], ['mika', 'Mais ne crois pas qu’on soit amis. Mon père paie mes pneus. Mon père, c’est Ryo Kaneshiro.']],
+        lose: [['mika', 'Tu pries. Ça se voit d’ici.']],
+      },
+    ],
+    outro: [['kenji', 'Kaneshiro… Je savais qu’on finirait par le croiser.'], ['narr', 'Kenji n’en dit pas plus. Il fixe la route du bord de mer, là où les Kuro Kumo s’entraînent la nuit.']],
+  },
+  {
+    id: 'ch4', track: 'kaigan', title: 'La corniche', jp: '断崖',
+    pitch: 'Ryo Kaneshiro sort de sa limousine. Il a une offre, et une vieille rancune contre le club.',
+    intro: [
+      ['narr', 'Corniche de Kaigan. L’océan cogne la falaise. Une limousine grise attend sur le parking du belvédère.'],
+      ['ryo', 'Alors voici l’héritage de Sayo. Vous conduisez bien. Elle aussi. Ça ne l’a pas empêchée de tout perdre.'],
+      ['ryo', 'Je vous propose un marché : renoncez au Tour, et je rachète vos parts au double. Vous repartez riche.'],
+      ['kenji', 'Le club n’est pas à vendre.'],
+      ['ryo', 'Tout est à vendre, Kenji. Tu es bien placé pour le savoir.'],
+    ],
+    missions: [
+      {
+        id: 'ch4m1', title: 'Au bord du vide', mode: 'run', goal: { drift: 45 }, reward: 3500,
+        brief: [['kenji', 'Oublie-le. La corniche est longue : glisse au moins 45 % du run.']],
+        win: [['kenji', 'Voilà. La route est à toi, pas à lui.']],
+        lose: [['kenji', 'Trop de ligne droite dans ta tête. Mets la voiture de travers et laisse-la y rester.']],
+      },
+      {
+        id: 'ch4m2', title: 'Duel au crépuscule', mode: 'tandem', goal: { grade: 'B', noWall: true }, reward: 5000,
+        brief: [['mika', 'Mon père veut que je te batte ici. Moi, je veux juste un vrai tandem. Sans contact, d’accord ?']],
+        win: [['mika', 'Tu sais pourquoi mon père déteste le club ? Ils l’ont chassé en 2006, pour un accident au volcan.'], ['mika', 'Il n’en parle jamais. Kenji non plus, je parie.']],
+        lose: [['mika', 'Sans contact, j’ai dit. On la refait.']],
+      },
+      {
+        id: 'ch4m3', title: 'Le grand large', mode: 'run', goal: { score: 22000 }, reward: 5500,
+        brief: [['lou', 'Toute l’île a lu le duel ce matin. Un gros score sur la corniche, et les sponsors font la queue.']],
+        win: [['lou', 'Kaizen Pneus signe. Et quelqu’un a déposé une enveloppe au journal pour toi : un masque de Daruma, et un mot. « Piton Volcan. »']],
+        lose: [['lou', 'Les sponsors aiment les chiffres ronds. Plus gros, le chiffre.']],
+      },
+    ],
+    outro: [['kenji', 'Le volcan… Il faut que je te raconte quelque chose avant d’y monter. Pas ce soir.']],
+  },
+  {
+    id: 'ch5', track: 'piton', title: 'Ce que Kenji cache', jp: '秘密',
+    pitch: 'Au pied du cratère, Kenji avoue ce qui s’est passé en 2006. Et Sayo a laissé une lettre.',
+    intro: [
+      ['narr', 'Piton Volcan. La route grimpe vers le cratère entre les cannes et le basalte.'],
+      ['zelie', 'Lé bon, marmay ? Alors c’est toi qui roules avec Kenji. Ça fait vingt ans qu’il n’est pas monté ici, celui-là.'],
+      ['zelie', 'Mi koné l’histoire. Mais c’est à lui de la raconter.'],
+      ['kenji', 'En 2006, on roulait de nuit ici, Sayo, Ryo et moi. J’ai pris la voiture de Ryo sans lui demander. Je l’ai mise dans le ravin.'],
+      ['kenji', 'Le club a cru que c’était lui. Je n’ai rien dit. Sayo l’a exclu. J’avais vingt-cinq ans, et j’avais peur.'],
+      ['kenji', 'Sayo l’a su des années plus tard. Elle m’a pardonné. Lui ne l’a jamais su.'],
+    ],
+    missions: [
+      {
+        id: 'ch5m1', title: 'Le carrousel', mode: 'run', goal: { clips: 4, score: 14000 }, reward: 4500,
+        brief: [['kenji', 'Le carrousel du cratère ne pardonne rien. Quatre clips, 14 000 points. Fais-le pour nous deux.']],
+        win: [['kenji', 'Merci. Je crois que j’avais besoin de voir quelqu’un réussir ici.']],
+        lose: [['zelie', 'Le volcan, il prend son temps. Prends le tien aussi.']],
+      },
+      {
+        id: 'ch5m2', title: 'La lettre de Sayo', mode: 'run', goal: { grade: 'A' }, reward: 5500,
+        brief: [
+          ['narr', 'Dans la boîte à gants de la HACHI, une enveloppe jaunie : « Pour quand tu monteras au volcan. »'],
+          ['sayo', 'Si tu lis ça, Kenji t’a tout dit. Ne le juge pas. Gagne pour lui, et dis la vérité à Ryo.'],
+          ['sayo', 'Le club, ce n’est pas un garage. C’est une parole tenue.'],
+        ],
+        win: [['zelie', 'Sayo aurait été fière. Allons, descends dire ça à qui de droit.']],
+        lose: [['zelie', 'Relis la lettre, marmay. Et remonte.']],
+      },
+      {
+        id: 'ch5m3', title: 'Vérité au cratère', mode: 'tandem', goal: { grade: 'B', combo: 6000 }, reward: 6000,
+        brief: [['mika', 'Kenji m’a appelée. Il veut parler à mon père. Avant ça… un dernier tandem autour du cratère ?']],
+        win: [
+          ['mika', 'Mon père a écouté Kenji jusqu’au bout. Il n’a rien dit. Puis il a sorti un masque de son manteau.'],
+          ['daruma', 'Rendez-vous au col de Yukimi, à la première neige. Le Tour de l’Île se jouera là-haut.'],
+        ],
+        lose: [['mika', 'Encore un tour. Mon père peut attendre, il a attendu vingt ans.']],
+      },
+    ],
+    outro: [['lou', 'Daruma, c’était Ryo Kaneshiro depuis le début ?! Je tiens la une du siècle.']],
+  },
+  {
+    id: 'ch6', track: 'yukimi', title: 'Le Tour de l’Île', jp: '島一周',
+    pitch: 'Finale dans la neige contre Mika. Les docks se jouent sur un tandem.',
+    intro: [
+      ['narr', 'Col de Yukimi, première neige. Tout le club est là, les Kuro Kumo aussi, et la moitié de l’île derrière les barrières.'],
+      ['daruma', 'Pendant vingt ans, j’ai jugé ce Tour pour comprendre ce que Sayo voyait dans ce club.'],
+      ['daruma', 'La règle est simple. Bats ma fille dans la neige, et les docks restent au Sideways. Sinon, les bulldozers passent le 1er décembre.'],
+      ['mika', 'Ne me fais pas de cadeau. Moi, je ne t’en ferai pas.'],
+    ],
+    missions: [
+      {
+        id: 'ch6m1', title: 'Reconnaissance', mode: 'run', goal: { score: 12000, noWall: true }, reward: 5000,
+        brief: [['kenji', 'La neige glisse partout, pas seulement là où tu veux. Doux sur les gaz. Un run propre pour reconnaître le tracé.']],
+        win: [['kenji', 'Propre. Garde ce rythme.']],
+        lose: [['kenji', 'Le mur est plus près qu’il n’en a l’air, avec la neige. Encore une fois.']],
+      },
+      {
+        id: 'ch6m2', title: 'Le serpentin', mode: 'run', goal: { grade: 'A', clips: 6 }, reward: 7000,
+        brief: [['lou', 'Les juges regardent le serpentin à la loupe. Six clips, note A. Toute l’île retient son souffle.']],
+        win: [['lou', 'Les tribunes chantent le nom du club. Je n’avais jamais entendu ça.']],
+        lose: [['lou', 'Le serpentin a mangé plus fort que toi. Retente.']],
+      },
+      {
+        id: 'ch6m3', title: 'Finale : Sideways contre Kuro Kumo', mode: 'tandem', goal: { grade: 'A', noWall: true }, reward: 12000,
+        brief: [['mika', 'Dernier tandem. Je mène. Si tu tiens ma portière jusqu’à la ligne sans toucher un mur, les docks sont à toi.']],
+        win: [
+          ['daruma', 'Le Sideways Drift Club garde ses docks.'],
+          ['ryo', 'Et moi… je retire ma rancune. Kenji, tu me dois une voiture depuis 2006.'],
+          ['kenji', 'Je te la prépare au garage. Si tu reviens rouler avec nous.'],
+        ],
+        lose: [['mika', 'Pas encore. Remonte au départ, je t’attends.']],
+      },
+    ],
+    outro: [
+      ['lou', 'Journal de la glisse, édition spéciale : « Le Sideways est de retour. »'],
+      ['mika', 'Kuro Kumo et Sideways, même garage le dimanche. Mon père appelle ça une fusion. Moi, j’appelle ça un club.'],
+      ['kenji', 'Sayo avait raison. Le club, c’est une parole tenue. Bienvenue chez toi.'],
+      ['narr', 'Fin du Tour de l’Île. Les six lieux restent ouverts : il reste des souvenirs du club à retrouver.'],
+    ],
+  },
+];
+
+// Exploration de chaque lieu (mode libre) : archives cachées (coupures du Journal), défis de rue, une rencontre.
+// at = position le long du tracé (0..1), side = côté (−1 gauche, +1 droite, 0 centre).
+const ZONES = {
+  minato: {
+    archives: [
+      ['1995 · La fondation', 'Sayo Ishikawa loue un hangar du terminal 4 pour 3 000 ¥ par mois. Le panneau « SIDEWAYS » est peint à la main, à l’envers la première fois.'],
+      ['1996 · Le règlement du port', 'Sayo obtient une clause unique : le club champion du Tour de l’Île garde son hangar, quoi qu’il arrive.'],
+      ['1998 · La HACHI', 'Une HACHI blanche rachetée à un livreur de tofu. Sayo refuse de la repeindre : « Elle a déjà une histoire. »'],
+      ['2003 · Trois mousquetaires', 'Photo en une : Sayo, Kenji Arakawa et un jeune pilote prometteur, Ryo Kaneshiro, autour du compresseur.'],
+      ['2025 · Dernier article', '« Sayo Ishikawa s’éteint. Le club perd sa voix, mais pas sa voiture. »'],
+    ],
+    npc: { at: 0.42, side: -1, who: 'hoshi', reward: 800, lines: [['hoshi', 'Lé bon ? Tu sais que les grues, la nuit, on dirait des girafes ? Sayo disait ça.'], ['hoshi', 'Elle me laissait cirer la HACHI. Si tu gagnes le Tour, tu me laisses la cirer aussi ?']] },
+  },
+  shiohama: {
+    archives: [
+      ['1997 · Le premier Tour', 'Sept voitures au départ, quarante spectateurs, une glacière. Le Sideways termine deuxième.'],
+      ['2000 · Le phare', 'Le gardien du phare de Shiohama allume la lanterne à chaque passage du club. On ne sait pas s’il a le droit.'],
+      ['2004 · Doublé', 'Le club gagne le Tour deux ans de suite. Lou Payet, stagiaire, signe son premier article.'],
+      ['2006 · L’exclusion', 'Bref communiqué : « Ryo Kaneshiro quitte le Sideways Drift Club. » Aucune explication.'],
+      ['2014 · Kaneshiro Holdings', 'Ryo Kaneshiro rachète la moitié du port. Il refuse toute interview sur le drift.'],
+    ],
+    npc: { at: 0.42, side: 1, who: 'lou', reward: 800, lines: [['lou', 'Tu sais ce qui fait une bonne une ? Un visage, une phrase, et une vérité que personne n’a dite.'], ['lou', 'Pour l’instant, j’ai ton visage. La phrase viendra. La vérité aussi.']] },
+  },
+  akane: {
+    archives: [
+      ['1999 · Le col interdit', 'La préfecture ferme Akane la nuit. Le club obtient le droit d’y rouler un dimanche par mois.'],
+      ['2008 · Naissance de Kuro Kumo', 'Un nouveau crew s’installe au sommet. Leur cheffe a quinze ans et s’appelle Mika.'],
+      ['2012 · Les lacets', 'Record du col : Mika, en RAIJIN noire, au nez et à la barbe des anciens du Sideways.'],
+      ['2019 · Le torii', 'Les Kuro Kumo repeignent le torii du col. Les habitants les remercient avec des onigiri.'],
+      ['2024 · Défi refusé', 'Mika défie le Sideways. Sayo, malade, décline : « Pas cette année. Mais quelqu’un viendra. »'],
+    ],
+    npc: { at: 0.42, side: -1, who: 'kai', reward: 800, lines: [['kai', 'Mika fait la dure, mais elle a gardé toutes les coupures de journal sur Sayo.'], ['kai', 'Ne lui dis pas que je t’ai dit ça.']] },
+  },
+  kaigan: {
+    archives: [
+      ['2001 · La corniche', 'Inauguration de la route du bord de mer. Le club y roule avant même les officiels.'],
+      ['2005 · La tempête', 'Un cyclone emporte une partie de la falaise. Le club aide à dégager la route trois jours durant.'],
+      ['2010 · Nuits de corniche', 'Les Kuro Kumo s’entraînent ici chaque nuit de pleine lune. Ume, le pêcheur, compte les passages.'],
+      ['2016 · Kaizen Pneus', 'Petite marque locale, Kaizen Pneus cherche un club à sponsoriser. Personne ne répond.'],
+      ['2023 · Belvédère', 'Ryo Kaneshiro achète le parking du belvédère. Il y vient seul, le soir, regarder la route.'],
+    ],
+    npc: { at: 0.42, side: 1, who: 'ume', reward: 800, lines: [['ume', 'Le soir, le monsieur à la limousine regarde passer les voitures. Il ne sourit jamais.'], ['ume', 'Sauf une fois. Une HACHI blanche, il y a longtemps.']] },
+  },
+  piton: {
+    archives: [
+      ['2002 · Le carrousel', 'Le club découvre la boucle du cratère. Sayo l’appelle « le carrousel » : on y tourne sans fin.'],
+      ['2006 · La nuit du ravin', 'Une voiture au fond du ravin, personne de blessé. Le club ne fait aucun commentaire.'],
+      ['2007 · Silence', 'Kenji Arakawa cesse de piloter. Il ne quittera plus le garage.'],
+      ['2018 · La lettre', 'Sayo écrit une lettre qu’elle range dans la boîte à gants de la HACHI. Elle ne l’envoie pas.'],
+      ['2025 · Mamie Zélie', 'La gardienne du volcan confie au Journal : « Les volcans et les hommes, ça finit toujours par parler. »'],
+    ],
+    npc: { at: 0.42, side: -1, who: 'zelie', reward: 800, lines: [['zelie', 'Allons, marmay. Ou lé fatigué ? Assieds-toi deux minutes.'], ['zelie', 'Le volcan, il gronde, il fume, et puis un jour il se tait. Les gens, c’est pareil.']] },
+  },
+  yukimi: {
+    archives: [
+      ['1996 · Le refuge', 'Le Tour de l’Île se termine pour la première fois au col de Yukimi. Sora, le gardien du refuge, sert le thé aux pilotes.'],
+      ['2003 · Daruma', 'Un juge masqué apparaît. Il note sans un mot. On l’appelle Daruma, d’après son masque.'],
+      ['2006 · Le juge reste', 'Après l’exclusion de Ryo Kaneshiro, Daruma continue de juger chaque Tour. Personne ne fait le lien.'],
+      ['2015 · Neige tardive', 'Un Tour couru sous la neige. Seule Sayo termine sans toucher un mur.'],
+      ['2025 · Le dernier Tour ?', 'Kaneshiro Holdings annonce la fin du terminal 4. Le Tour de l’Île pourrait ne jamais revenir.'],
+    ],
+    npc: { at: 0.42, side: 1, who: 'sora', reward: 800, lines: [['sora', 'Daruma prend toujours son thé sans sucre. Comme quelqu’un qui a quelque chose à se reprocher.'], ['sora', 'Bonne chance pour le Tour. La neige ne choisit personne.']] },
+  },
+};
+const ARCHIVE_AT = [0.14, 0.3, 0.56, 0.72, 0.88];
+const ARCHIVE_REWARD = 300;
+// défis de rue : une borne au milieu de la piste ; le défi démarre au passage
+const STREET = [
+  { at: 0.22, type: 'hold', angle: 35, secs: 3, window: 9 },
+  { at: 0.64, type: 'combo', pts: 2500, window: 14 },
+];
+const streetFor = (zi, k) => {
+  const s = STREET[k], z = zi * 0.18; // plus exigeant au fil des chapitres
+  return s.type === 'hold' ? { ...s, angle: Math.round(s.angle + zi * 3), secs: Math.round((s.secs + z * 2) * 10) / 10 } : { ...s, pts: Math.round(s.pts * (1 + z) / 100) * 100 };
+};
+const streetReward = (zi) => 1200 + zi * 200;
+
+// ---------- état ----------
+function ensure(p) {
+  const s = p.story && typeof p.story === 'object' ? p.story : {};
+  const bag = (o) => (o && typeof o === 'object' && !Array.isArray(o) ? o : {});
+  p.story = { done: bag(s.done), seen: bag(s.seen), arch: bag(s.arch), street: bag(s.street), npc: bag(s.npc) };
+  return p.story;
+}
+const missionDone = (p, id) => !!ensure(p).done[id];
+function chapterDone(p, ci) { return CHAPTERS[ci].missions.every((m) => missionDone(p, m.id)); }
+function chapterOpen(p, ci) { return ci === 0 || (ci > 0 && ci < CHAPTERS.length && chapterDone(p, ci - 1)); }
+// première mission non faite d'un chapitre ouvert, ou -1
+function nextMission(p, ci) {
+  if (!chapterOpen(p, ci)) return -1;
+  return CHAPTERS[ci].missions.findIndex((m) => !missionDone(p, m.id));
+}
+function missionOpen(p, ci, k) { return chapterOpen(p, ci) && CHAPTERS[ci].missions.slice(0, k).every((m) => missionDone(p, m.id)); }
+// chapitre courant : le premier non terminé (ou le dernier)
+function currentChapter(p) { const i = CHAPTERS.findIndex((c, ci) => !chapterDone(p, ci)); return i < 0 ? CHAPTERS.length - 1 : i; }
+const zoneIndex = (trackId) => CHAPTERS.findIndex((c) => c.track === trackId);
+const zoneOpen = (p, trackId) => { const i = zoneIndex(trackId); return i >= 0 && chapterOpen(p, i); };
+
+// ---------- objectifs ----------
+const fmtN = (n) => Math.round(n).toLocaleString('fr-FR');
+function goalRows(goal, run) {
+  const rows = [];
+  const row = (label, ok) => rows.push({ label, ok: run ? !!ok : null });
+  const r = run || {};
+  if (goal.score != null) row(`${fmtN(goal.score)} pts`, r.score >= goal.score);
+  if (goal.grade) row(`Note ${goal.grade} ou mieux`, r.grade && GRADES.indexOf(r.grade) >= GRADES.indexOf(goal.grade));
+  if (goal.clips != null) row(`${goal.clips} clips`, r.clips >= goal.clips);
+  if (goal.angle != null) row(`Angle ${goal.angle}°`, r.maxAngle >= goal.angle);
+  if (goal.combo != null) row(`Combo ${fmtN(goal.combo)} pts`, r.bestCombo >= goal.combo);
+  if (goal.drift != null) row(`${goal.drift} % en glisse`, r.driftPct >= goal.drift);
+  if (goal.noWall) row('Aucun contact mur', r.walls === 0);
+  return rows;
+}
+const goalText = (goal) => goalRows(goal).map((r) => r.label).join(' · ');
+
+// fin de mission : objectifs, récompense à la première réussite, fin de chapitre
+// run : { score, grade, clips, maxAngle, bestCombo, driftPct, walls }
+function finishMission(p, ci, k, run) {
+  const ch = CHAPTERS[ci], m = ch && ch.missions[k];
+  if (!m || !missionOpen(p, ci, k)) return { ok: false, rows: [], reward: 0, first: false, chapterDone: false };
+  const rows = goalRows(m.goal, run);
+  const ok = rows.every((r) => r.ok);
+  const first = ok && !missionDone(p, m.id);
+  if (first) {
+    ensure(p).done[m.id] = true;
+    Eco.credit(p, `Aventure : ${m.title}`, m.reward);
+  }
+  return { ok, rows, reward: first ? m.reward : 0, first, chapterDone: first && chapterDone(p, ci), lines: ok ? m.win : m.lose };
+}
+
+// exploration : archive, défi de rue ou rencontre ; récompense une seule fois
+function collect(p, trackId, kind, k) {
+  const zi = zoneIndex(trackId), Z = ZONES[trackId];
+  if (zi < 0 || !Z || !zoneOpen(p, trackId)) return null;
+  const s = ensure(p), key = trackId + ':' + k;
+  const bag = kind === 'arch' ? s.arch : kind === 'street' ? s.street : kind === 'npc' ? s.npc : null;
+  if (!bag || bag[key]) return null;
+  let reward, label;
+  if (kind === 'arch') { if (!Z.archives[k]) return null; reward = ARCHIVE_REWARD; label = 'Archive : ' + Z.archives[k][0]; }
+  else if (kind === 'street') { if (!STREET[k]) return null; reward = streetReward(zi); label = 'Défi de rue · ' + CHAPTERS[zi].title; }
+  else { if (k !== 0) return null; reward = Z.npc.reward; label = 'Rencontre : ' + CAST[Z.npc.who].name; }
+  bag[key] = true;
+  Eco.credit(p, label, reward);
+  return { reward, label };
+}
+function zoneProgress(p, trackId) {
+  const s = ensure(p), n = (bag, len) => Array.from({ length: len }, (_, k) => bag[trackId + ':' + k]).filter(Boolean).length;
+  return { arch: n(s.arch, 5), street: n(s.street, STREET.length), npc: n(s.npc, 1) };
+}
+function progress(p) {
+  const all = CHAPTERS.flatMap((c) => c.missions);
+  let found = 0;
+  for (const c of CHAPTERS) { const z = zoneProgress(p, c.track); found += z.arch + z.street + z.npc; }
+  return { missions: all.filter((m) => missionDone(p, m.id)).length, total: all.length, found, foundTotal: CHAPTERS.length * (5 + STREET.length + 1) };
+}
+
+const Story = {
+  CAST, CHAPTERS, ZONES, STREET, ARCHIVE_AT, ARCHIVE_REWARD, GRADES,
+  ensure, missionDone, chapterDone, chapterOpen, nextMission, missionOpen, currentChapter, zoneIndex, zoneOpen,
+  goalRows, goalText, finishMission, collect, zoneProgress, progress, streetFor, streetReward,
+};
+
+
 // --- game.js
 // ===== Jeu : état, boucle, caméra, score, collisions, entrées, interface =====
 (() => {
@@ -4124,7 +4628,7 @@ function createShop(api) {
       else if (phase === 'pause' && screenId === 'pause') resumeGame();
       else if (k === 'escape' && screenId === 'layout') closeLayoutEditor();
       else if (k === 'escape' && screenId === 'garage') closeShop();
-      else if (k === 'escape' && ['select', 'settings', 'help', 'career'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
+      else if (k === 'escape' && ['select', 'settings', 'help', 'career', 'adventure'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
     }
     if (k === 'c' && (phase === 'play' || phase === 'count')) cycleCam();
     if (k === 'r' && phase === 'play') respawn();
@@ -4381,9 +4885,9 @@ function createShop(api) {
   function vibrate(ms) { if (settings.vibe && navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) { /* refusé */ } } }
 
   // ---------- score ----------
-  const score = { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, lastBank: 0 };
+  const score = { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, lastBank: 0, walls: 0 };
   function resetScore() {
-    Object.assign(score, { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0 });
+    Object.assign(score, { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, walls: 0 });
     for (const z of track.zones) z.hit = false;
   }
   const WORDS = [[1500, 'BIEN'], [4000, 'SUPER'], [9000, 'ÉNORME'], [16000, 'INSENSÉ'], [Infinity, 'LÉGENDAIRE']];
@@ -4497,7 +5001,7 @@ function createShop(api) {
           const [cx, cz] = carPoint(st, cornerX, side * playerModel.halfW);
           for (let k = 0; k < Math.min(30, vn * 4); k++) sparks.emit(cx, gy(cx, cz) + 0.5, cz, (Math.random() - 0.5) * 6 + st.vx * 0.3, 2 + Math.random() * 4, (Math.random() - 0.5) * 6 + st.vz * 0.3, 0.4 + Math.random() * 0.3, 0.25, 0.08, 1);
         }
-        if (vn > 3 && phase === 'play') lose('Contact mur');
+        if (vn > 3 && phase === 'play') { score.walls++; lose('Contact mur'); }
       }
     }
     // contact avec le leader
@@ -4658,6 +5162,7 @@ function createShop(api) {
         }
         updateProgress(dt);
         updateScore(dt);
+        if (explore) updateExplore(dt);
         if (mode === 'tandem') {
           let gap = (leader.state.s - lapS()) ;
           const L = track.length; gap = ((gap % L) + L) % L; if (gap > L / 2) gap -= L;
@@ -4875,7 +5380,12 @@ function createShop(api) {
     show(null);
     $('hud').hidden = false;
     setTouchVisible();
-    $('hudMode').textContent = mode === 'run' ? 'RUN NOTÉ' : mode === 'tandem' ? 'TANDEM' : 'LIBRE';
+    $('hudMode').textContent = adv ? advLabel() : mode === 'run' ? 'RUN NOTÉ' : mode === 'tandem' ? 'TANDEM' : 'LIBRE';
+    clearExplore();
+    if (adv && adv.explore) buildExplore();
+    const goal = $('hudGoal');
+    goal.hidden = !adv; goal.className = 'hud-goal';
+    if (adv && !adv.explore) goal.textContent = 'Objectif · ' + Story.goalText(Story.CHAPTERS[adv.ci].missions[adv.k].goal);
     const b = bests[track.def.id + ':' + mode];
     $('hudBest').textContent = b ? 'RECORD ' + b.toLocaleString('fr-FR') : 'RECORD —';
     camPos.set(player.x - Math.cos(player.heading) * 8, gy(player.x, player.z) + 3, player.z - Math.sin(player.heading) * 8);
@@ -4946,9 +5456,42 @@ function createShop(api) {
     saveProfile(); refreshWallet();
     $('payLines').innerHTML = res.payout.lines.map((l) => `<div><span>${l.label}</span><b>+${Economy.fmt(l.amount)}</b></div>`).join('') || '<div><span>Aucun gain sur ce run.</span></div>';
     $('payChal').innerHTML = res.challenges.map((c) => `<div>Défi réussi : ${c.label} · +${Economy.fmt(c.reward)}</div>`).join('');
+    // aventure : objectifs de la mission, récompense, suite de l'histoire
+    let fr = null;
+    advNext = null;
+    $('hudGoal').hidden = true;
+    const rg = $('resGoal');
+    rg.hidden = !adv;
+    if (adv && !adv.explore) {
+      const ch = Story.CHAPTERS[adv.ci], m = ch.missions[adv.k];
+      fr = Story.finishMission(profile, adv.ci, adv.k, { score: total, grade, clips: score.clips, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), walls: score.walls });
+      saveProfile(); refreshWallet();
+      rg.innerHTML = `<div class="h">Mission · ${esc(m.title)} — ${fr.ok ? 'réussie' : 'ratée'}</div>` + fr.rows.map((r) => `<div class="r ${r.ok ? 'ok' : 'ko'}"><i aria-hidden="true">${r.ok ? '✓' : '✗'}</i><span>${esc(r.label)}<span class="sr">${r.ok ? ', atteint' : ', manqué'}</span></span></div>`).join('');
+      if (fr.reward) $('payChal').insertAdjacentHTML('afterbegin', `<div>Mission réussie : ${esc(m.title)} · +${Economy.fmt(fr.reward)}</div>`);
+      if (fr.ok) {
+        const ci = Story.nextMission(profile, adv.ci) >= 0 ? adv.ci : adv.ci + 1;
+        if (ci < Story.CHAPTERS.length && Story.chapterOpen(profile, ci)) { advNext = { ci, k: Story.nextMission(profile, ci) }; advSel = ci; }
+      }
+    } else if (adv && adv.explore) {
+      const z = Story.zoneProgress(profile, adv.explore);
+      rg.innerHTML = `<div class="h">Exploration · ${esc(track.def.name)}</div><div class="r"><span>Archives ${z.arch} / 5 · défis de rue ${z.street} / ${Story.STREET.length} · rencontre ${z.npc} / 1</span></div>`;
+    }
+    $('menuBtn').firstElementChild.textContent = adv ? 'Carte' : 'Menu';
+    $('againBtn').firstElementChild.textContent = advNext ? 'Mission suivante' : 'Rejouer';
     $('payBal').textContent = 'Solde : ' + Economy.fmt(profile.money);
-    countUp($('payTotal'), res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0));
+    countUp($('payTotal'), res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0) + (fr ? fr.reward : 0));
     show('results');
+    if (fr) {
+      const ch = Story.CHAPTERS[adv.ci];
+      talk(fr.lines, () => {
+        if (!fr.chapterDone) return;
+        talk(ch.outro, () => {
+          const nx = Story.CHAPTERS[adv ? adv.ci + 1 : -1];
+          if (nx) toast(`Chapitre ${adv.ci + 2} ouvert : ${nx.title} · ${TRACKS[trackIndexOf(nx.track)].name}`, 'chal');
+          else toast('Aventure terminée. Les six lieux restent à explorer.', 'chal');
+        });
+      });
+    }
     announce(`Session terminée. ${total} points${mode !== 'free' ? ', note ' + grade : ''}.${record ? ' Nouveau record.' : ''}`);
     releaseWake();
   }
@@ -4966,7 +5509,8 @@ function createShop(api) {
     claimDaily(); refreshWallet();
     Sound.suspend();
     $('hud').hidden = true; clearTouch(); setTouchVisible(); $('count').hidden = true;
-    show('menu');
+    $('hudGoal').hidden = true;
+    if (adv) { leaveAdventureRun(); openAdventure(); } else show('menu');
     releaseWake();
   }
 
@@ -5056,6 +5600,244 @@ function createShop(api) {
   addEventListener('pointermove', (e) => { if (yawDrag && yawDrag.id === e.pointerId) garageYaw = yawDrag.y0 - (e.clientX - yawDrag.x) * 0.008; });
   addEventListener('pointerup', () => { yawDrag = null; });
 
+
+  // ---------- aventure : « Le Tour de l'Île » (logique dans story.js) ----------
+  // adv : null (jeu normal) | { ci, k } mission en cours | { explore: trackId, ci } exploration d'un lieu
+  let adv = null, advSel = Story.currentChapter(profile), advNext = null, explore = null, dlg = null;
+  const trackIndexOf = (id) => TRACKS.findIndex((t) => t.id === id);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function advLabel() {
+    if (adv.explore) return 'EXPLORATION';
+    const m = Story.CHAPTERS[adv.ci].missions[adv.k];
+    if (m.mode !== 'tandem') return 'MISSION';
+    const lead = Story.CAST[m.brief[0][0]];
+    return 'TANDEM · ' + (lead.name || 'LEADER').split(' ')[0].toUpperCase();
+  }
+
+  // dialogues : une ligne à la fois ; toucher, Entrée ou Espace pour continuer, Échap pour passer
+  function talk(lines, done) {
+    if (!lines || !lines.length) { if (done) done(); return; }
+    dlg = { lines, i: 0, done };
+    $('dialog').hidden = false;
+    showLine();
+    if (!isTouch) setTimeout(() => $('dlgNext').focus({ preventScroll: true }), 30);
+  }
+  function showLine() {
+    const [who, text] = dlg.lines[dlg.i], c = Story.CAST[who] || Story.CAST.narr;
+    const face = $('dlgFace');
+    face.textContent = c.ini; face.style.background = c.col; face.classList.toggle('narr', who === 'narr');
+    $('dlgName').textContent = c.name; $('dlgRole').textContent = who === 'narr' ? '' : c.role;
+    $('dlgText').textContent = text;
+    document.querySelector('.dlg-card').classList.toggle('narr', who === 'narr');
+    $('dlgNext').firstElementChild.textContent = dlg.i === dlg.lines.length - 1 ? 'Continuer' : 'Suite';
+    announce((c.name ? c.name + ' : ' : '') + text);
+  }
+  function dlgNext(all) {
+    if (!dlg) return;
+    Sound.ui();
+    if (!all && dlg.i < dlg.lines.length - 1) { dlg.i++; showLine(); return; }
+    const done = dlg.done;
+    dlg = null; $('dialog').hidden = true;
+    if (done) done();
+  }
+  $('dialog').addEventListener('click', (e) => dlgNext(!!e.target.closest('#dlgSkip')));
+  addEventListener('keydown', (e) => {
+    if (!dlg) return;
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) dlgNext(false); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); dlgNext(true); }
+  }, true);
+
+  // carte de l'île : les six lieux dans l'ordre du Tour, en boucle autour du volcan
+  const ISLE = { minato: [62, 62], shiohama: [150, 34], akane: [250, 52], kaigan: [266, 128], piton: [168, 146], yukimi: [74, 132] };
+  function openAdventure() {
+    if (!Story.chapterOpen(profile, advSel)) advSel = Story.currentChapter(profile);
+    renderAdventure();
+    show('adventure');
+    const first = !Story.ensure(profile).seen.prologue;
+    if (first) { Story.ensure(profile).seen.prologue = true; saveProfile(); talk([['narr', 'Le Tour de l’Île : six lieux, six chapitres. Touche un lieu ouvert sur la carte pour lire son histoire, jouer ses missions ou l’explorer librement.']]); }
+  }
+  function renderAdventure() {
+    const C = Story.CHAPTERS;
+    let svg = '<path class="isle" d="M34,96 C26,52 80,14 152,16 C232,14 302,36 300,96 C298,150 242,178 166,176 C92,176 42,150 34,96 Z"/>';
+    svg += '<path d="M156,104 l12,-20 l12,20 z" fill="var(--s4)" stroke="var(--hair-2)"/><text x="168" y="116" text-anchor="middle" font-size="7.5" fill="var(--fg-3)" letter-spacing=".1em">VOLCAN</text>';
+    C.forEach((c, ci) => {
+      const a = ISLE[c.track], b = ISLE[C[(ci + 1) % C.length].track];
+      if (ci < C.length - 1) svg += `<path class="route${Story.chapterDone(profile, ci) ? ' done' : ''}" d="M${a[0]},${a[1]} Q${(a[0] + b[0]) / 2 + (168 - (a[0] + b[0]) / 2) * -0.15},${(a[1] + b[1]) / 2 + (96 - (a[1] + b[1]) / 2) * -0.15} ${b[0]},${b[1]}"/>`;
+    });
+    C.forEach((c, ci) => {
+      const [x, y] = ISLE[c.track], open = Story.chapterOpen(profile, ci), done = Story.chapterDone(profile, ci);
+      const name = TRACKS[trackIndexOf(c.track)].name;
+      svg += `<g class="node${open ? ' open' : ' locked'}${done ? ' done' : ''}${ci === advSel ? ' sel' : ''}" data-ci="${ci}" tabindex="0" role="button" aria-pressed="${ci === advSel}" aria-label="Chapitre ${ci + 1}, ${esc(name)}${done ? ', terminé' : open ? '' : ', fermé'}">`
+        + `<circle cx="${x}" cy="${y}" r="11"/><text class="n" x="${x}" y="${y}">${done ? '✓' : ci + 1}</text><text x="${x}" y="${y + 22}">${c.track[0].toUpperCase() + c.track.slice(1)}</text></g>`;
+    });
+    $('advMap').innerHTML = svg;
+    const pr = Story.progress(profile);
+    $('advProg').innerHTML = `<span>Missions <b>${pr.missions} / ${pr.total}</b></span><span>Trouvailles <b>${pr.found} / ${pr.foundTotal}</b></span><span>Solde <b>${Economy.fmt(profile.money)}</b></span>`;
+
+    const ci = advSel, ch = C[ci], open = Story.chapterOpen(profile, ci), nx = Story.nextMission(profile, ci);
+    const tname = TRACKS[trackIndexOf(ch.track)].name;
+    let h = `<div class="adv-ch"><div class="label">Chapitre ${ci + 1} · ${esc(tname)}</div><h3>${esc(ch.title)}<span class="jp">${ch.jp}</span></h3><p>${open ? esc(ch.pitch) : 'Termine le chapitre précédent pour ouvrir ce lieu.'}</p></div>`;
+    h += '<ol class="adv-ms">' + ch.missions.map((m, k) => {
+      const done = Story.missionDone(profile, m.id), can = Story.missionOpen(profile, ci, k);
+      const cls = done ? 'done' : k === nx ? 'next' : can ? '' : 'locked';
+      return `<li class="${cls}"><span class="ck" aria-hidden="true">${done ? '✓' : ''}</span><div><b><span class="mode">${m.mode === 'tandem' ? 'Tandem' : 'Run'}</span>${esc(m.title)}</b><small>${esc(Story.goalText(m.goal))}</small></div><span class="rw">${done ? 'Fait' : Economy.fmt(m.reward)}</span></li>`;
+    }).join('') + '</ol>';
+    if (open) {
+      h += '<div class="adv-acts">';
+      if (nx >= 0) h += `<button class="btn primary" data-play="${nx}"><span>Jouer : ${esc(ch.missions[nx].title)}</span></button>`;
+      else h += '<button class="btn" data-play="2"><span>Rejouer la finale du chapitre</span></button>';
+      h += `<button class="btn" data-explore><span>Explorer le lieu</span></button><button class="btn ghost" data-story><span>Revoir l’histoire</span></button></div>`;
+      const z = Story.zoneProgress(profile, ch.track), Z = Story.ZONES[ch.track];
+      h += `<div class="adv-explore">Exploration libre : <b>archives ${z.arch} / 5</b> · <b>défis de rue ${z.street} / ${Story.STREET.length}</b> · <b>rencontre ${z.npc} / 1</b>. Les archives flottent au bord de la route, les bornes lancent un défi au passage.</div>`;
+      h += `<details class="adv-notes"><summary>Carnet du club · ${z.arch} / 5</summary><ol>` + Z.archives.map((a, k) => Story.ensure(profile).arch[ch.track + ':' + k] ? `<li><b>${esc(a[0])}</b> — ${esc(a[1])}</li>` : '<li class="miss">Archive à retrouver sur ce lieu.</li>').join('') + '</ol></details>';
+    }
+    $('advPanel').innerHTML = h;
+  }
+  function pickNode(e) {
+    const g = e.target.closest('.node'); if (!g) return;
+    const ci = +g.dataset.ci;
+    if (!Story.chapterOpen(profile, ci)) { toast('Lieu fermé : termine le chapitre précédent.', 'lost'); return; }
+    advSel = ci; Sound.ui(); renderAdventure();
+    const n = $('advMap').querySelector(`[data-ci="${ci}"]`); if (n && e.type === 'keydown') n.focus();
+  }
+  $('advMap').addEventListener('click', pickNode);
+  $('advMap').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickNode(e); } });
+  $('advPanel').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const ch = Story.CHAPTERS[advSel];
+    if (b.dataset.play != null) playMission(advSel, +b.dataset.play);
+    else if (b.dataset.explore != null) exploreZone(advSel);
+    else if (b.dataset.story != null) { Sound.ui(); talk(Story.chapterDone(profile, advSel) ? [...ch.intro, ...ch.outro] : ch.intro); }
+  });
+  // la scène derrière les dialogues montre déjà le lieu de la mission
+  function goTrack(id) { const ti = trackIndexOf(id); if (track.def.id !== id) { trackIdx = ti; loadTrack(ti); } trackIdx = ti; }
+  function playMission(ci, k) {
+    if (!Story.missionOpen(profile, ci, k)) return;
+    const ch = Story.CHAPTERS[ci], m = ch.missions[k];
+    ensureAudio(); Sound.ui();
+    adv = { ci, k }; mode = m.mode;
+    show(null); phase = 'menu';
+    goTrack(ch.track);
+    const go = () => talk(m.brief, startRun);
+    const seen = Story.ensure(profile).seen;
+    if (!seen[ch.id]) { seen[ch.id] = true; saveProfile(); talk(ch.intro, go); } else go();
+  }
+  function exploreZone(ci) {
+    if (!Story.chapterOpen(profile, ci)) return;
+    const ch = Story.CHAPTERS[ci];
+    ensureAudio(); Sound.ui();
+    adv = { explore: ch.track, ci }; mode = 'free';
+    show(null); goTrack(ch.track);
+    startRun();
+  }
+  function leaveAdventureRun() {
+    clearExplore();
+    adv = null; advNext = null;
+    mode = store.get('mode', 'run');
+    $('menuBtn').firstElementChild.textContent = 'Menu';
+    $('againBtn').firstElementChild.textContent = 'Rejouer';
+  }
+
+  // exploration : archives (daruma flottants), bornes de défi de rue, rencontre (colonne de lumière)
+  function buildExplore() {
+    const id = adv.explore, Z = Story.ZONES[id], S = Story.ensure(profile), N = track.count;
+    const group = new THREE.Group(), items = [], mats = [], geos = [];
+    const mat = (c, add) => { const m = new THREE.MeshBasicMaterial({ color: c, transparent: !!add, opacity: add ? 0.35 : 1, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending, depthWrite: !add }); mats.push(m); return m; };
+    const geo = (g) => { geos.push(g); return g; };
+    const at = (f, lat) => { const i = Math.round(f * N) % N; return { i, x: track.px[i] - track.tz[i] * lat, z: track.pz[i] + track.tx[i] * lat }; };
+    const body = geo(new THREE.SphereGeometry(0.55, 14, 10)), face = geo(new THREE.CircleGeometry(0.3, 14)), red = mat(0xd8262d), white = mat(0xf4f1e6);
+    Story.ARCHIVE_AT.forEach((f, k) => {
+      if (S.arch[id + ':' + k]) return;
+      const p = at(f, (k % 2 ? 1 : -1) * (track.half - 2.2));
+      const g = new THREE.Group();
+      const b = new THREE.Mesh(body, red); b.scale.set(1, 1.15, 1); g.add(b);
+      const fc = new THREE.Mesh(face, white); fc.position.set(0, 0.08, 0.5); g.add(fc);
+      g.position.set(p.x, gy(p.x, p.z) + 1.2, p.z);
+      group.add(g); items.push({ kind: 'arch', k, ...p, r: 2.6, obj: g });
+    });
+    const postG = geo(new THREE.CylinderGeometry(0.14, 0.14, 4.2, 8)), barG = geo(new THREE.BoxGeometry(0.3, 0.5, track.def.width + 1.4)), blue = mat(0x7b8cff), glow = mat(0x7b8cff, true);
+    Story.STREET.forEach((s, k) => {
+      if (S.street[id + ':' + k]) return;
+      const p = at(s.at, 0), g = new THREE.Group(), y = gy(p.x, p.z);
+      for (const sd of [-1, 1]) { const q = new THREE.Mesh(postG, blue); q.position.set(0, 2.1, sd * (track.half + 0.7)); g.add(q); }
+      const bar = new THREE.Mesh(barG, glow); bar.position.y = 4.1; g.add(bar);
+      g.position.set(p.x, y, p.z); g.rotation.y = -track.heading[p.i];
+      group.add(g); items.push({ kind: 'street', k, ...p, obj: g, def: Story.streetFor(adv.ci, k) });
+    });
+    if (!S.npc[id + ':0']) {
+      const n = Z.npc, p = at(n.at, n.side * (track.half - 3)), c = Story.CAST[n.who];
+      const beam = new THREE.Mesh(geo(new THREE.CylinderGeometry(1.1, 1.1, 9, 16, 1, true)), mat(new THREE.Color(c.col).getHex(), true));
+      beam.position.set(p.x, gy(p.x, p.z) + 4.5, p.z);
+      group.add(beam); items.push({ kind: 'npc', k: 0, ...p, r: 3.6, obj: beam, npc: n });
+    }
+    scene.add(group);
+    explore = { id, group, items, mats, geos, active: null, t: 0 };
+    renderExploreHud();
+  }
+  function clearExplore() {
+    if (!explore) return;
+    scene.remove(explore.group);
+    for (const m of explore.mats) m.dispose();
+    for (const g of explore.geos) g.dispose();
+    explore = null;
+  }
+  function renderExploreHud() {
+    if (!explore || explore.active) return;
+    const z = Story.zoneProgress(profile, explore.id);
+    const el = $('hudGoal'); el.className = 'hud-goal';
+    el.textContent = `Exploration · archives ${z.arch}/5 · défis de rue ${z.street}/${Story.STREET.length} · rencontre ${z.npc}/1`;
+  }
+  function updateExplore(dt) {
+    const st = player, N = track.count, E = explore;
+    E.t += dt;
+    for (const it of E.items) {
+      if (it.taken) continue;
+      if (it.kind === 'arch') { it.obj.rotation.y += dt * 1.6; it.obj.position.y += Math.sin(E.t * 2 + it.k) * dt * 0.25; }
+      let hit;
+      if (it.kind === 'street') { let d = Math.abs(st.idx - it.i); d = Math.min(d, N - d); hit = d <= 2 && !E.active; }
+      else hit = Math.hypot(st.x - it.x, st.z - it.z) < it.r;
+      if (!hit) continue;
+      if (it.kind === 'arch') {
+        it.taken = true; it.obj.visible = false;
+        const r = Story.collect(profile, E.id, 'arch', it.k);
+        if (r) { saveProfile(); refreshWallet(); Sound.clip(); vibrate(30); popup(`Archive +${Economy.fmt(r.reward)}`, 'clip'); toast(`Archive retrouvée : ${Story.ZONES[E.id].archives[it.k][0]} (à lire dans le carnet)`, 'chal'); }
+        renderExploreHud();
+      } else if (it.kind === 'npc') {
+        it.taken = true; it.obj.visible = false;
+        meet(it.npc);
+      } else {
+        E.active = { it, t: it.def.window, prog: 0 };
+        popup('Défi de rue !', 'apex'); Sound.clip();
+      }
+    }
+    const a = E.active;
+    if (a) {
+      const d = a.it.def, el = $('hudGoal');
+      a.t -= dt;
+      if (d.type === 'hold') { if (Math.abs(st.slip) * 180 / Math.PI >= d.angle && st.speed > 8) a.prog += dt; }
+      else a.prog = Math.max(a.prog, score.combo);
+      const need = d.type === 'hold' ? d.secs : d.pts;
+      el.className = 'hud-goal street';
+      el.textContent = d.type === 'hold' ? `Défi de rue · tiens ${d.angle}° : ${a.prog.toFixed(1)} / ${d.secs} s · reste ${Math.ceil(a.t)} s` : `Défi de rue · combo de ${d.pts.toLocaleString('fr-FR')} pts : ${Math.round(a.prog).toLocaleString('fr-FR')} · reste ${Math.ceil(a.t)} s`;
+      if (a.prog >= need) {
+        a.it.taken = true; a.it.obj.visible = false; E.active = null;
+        const r = Story.collect(profile, E.id, 'street', a.it.k);
+        if (r) { saveProfile(); refreshWallet(); Sound.bank(true); toast(`Défi de rue réussi · +${Economy.fmt(r.reward)}`, 'chal'); }
+        renderExploreHud();
+      } else if (a.t <= 0) { E.active = null; popup('Défi raté · repasse sous la borne', 'lost'); renderExploreHud(); }
+    }
+  }
+  // rencontre : la partie s'arrête le temps du dialogue
+  function meet(n) {
+    phase = 'pause'; clearTouch(); Sound.suspend();
+    talk(n.lines, () => {
+      const r = Story.collect(profile, explore ? explore.id : '', 'npc', 0);
+      if (r) { saveProfile(); refreshWallet(); toast(`${r.label} · +${Economy.fmt(r.reward)}`, 'chal'); }
+      renderExploreHud();
+      resumeGame();
+    });
+  }
+
   function syncSettingsUI() {
     pressGroup($('assistSeg'), 'data-v', settings.assist);
     pressGroup($('qualSeg'), 'data-v', settings.quality);
@@ -5087,6 +5869,7 @@ function createShop(api) {
   $('pSettingsBtn').addEventListener('click', () => { returnTo = 'pause'; syncSettingsUI(); show('settings'); });
   $('layoutBtn').addEventListener('click', openLayoutEditor);
   $('helpBtn').addEventListener('click', go('help'));
+  $('advBtn').addEventListener('click', () => { Sound.ui(); ensureAudio(); openAdventure(); });
   for (const b of document.querySelectorAll('[data-back]')) b.addEventListener('click', () => {
     Sound.ui();
     const scr = b.closest('.screen').id;
@@ -5100,7 +5883,7 @@ function createShop(api) {
   $('quitBtn').addEventListener('click', () => { if (mode === 'free' && score.runT > 5) finishRun(); else toMenu(); });
   $('pauseBtn').addEventListener('click', pauseGame);
   $('camBtn').addEventListener('click', cycleCam);
-  $('againBtn').addEventListener('click', startRun);
+  $('againBtn').addEventListener('click', () => { if (advNext) { const n = advNext; advNext = null; playMission(n.ci, n.k); } else startRun(); });
   $('menuBtn').addEventListener('click', toMenu);
   if (isTouch) $('kbHint').hidden = true;
 

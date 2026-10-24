@@ -23,6 +23,7 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 | `src/fx.js` | Fumée colorée (points), traces de gomme (envoi GPU partiel), étincelles |
 | `src/audio.js` | Moteur, turbo, crissement synthétisés (Web Audio) |
 | `src/ai.js` | Leader tandem sur trajectoire précalculée |
+| `src/story.js` | Aventure « Le Tour de l’Île » : 6 chapitres × 3 missions, dialogues, objectifs, exploration (archives, défis de rue, rencontres). Logique pure, testée |
 | `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
 | `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |
 | `assets/favicon.svg`, `icons/`, `manifest.webmanifest` | Favicon (intégré au build), icônes d'application, manifeste PWA |
@@ -48,3 +49,9 @@ Jeu conçu et codé avec l'assistance d'une IA (mention dans l'écran d'aide).
 
 ## Commandes tactiles
 Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + taille par bouton, transparence, miroir, réinitialisation. Disposition enregistrée par orientation (`localStorage`, clé `sdc:touchLayout`). Un doigt peut glisser d'un bouton à l'autre sans lâcher (hit-test + hystérésis de 28 px). Zoom : bloqué sur la surface de jeu (`touch-action: none`, garde `touchend`, `gesture*`), autorisé dans les menus (`pan-y pinch-zoom`) ; le viewport ne l’interdit pas (WCAG 1.4.4).
+
+## Aventure : « Le Tour de l’Île »
+- Le garage du club, aux docks de Minato, va être rasé par Kaneshiro Holdings. Le règlement du port le protège si le club gagne le Tour de l’Île. Six chapitres, un par lieu, dans l’ordre du Tour : Minato, Shiohama, Akane, Kaigan, Piton, Yukimi.
+- Personnages : Kenji (mécano, un secret de 2006), Lou (reporter du Journal de la glisse), Mika (cheffe des Kuro Kumo), Ryo Kaneshiro (promoteur), Mamie Zélie (gardienne du volcan), Daruma (juge masqué), Sayo (fondatrice, par sa lettre).
+- Missions : run ou tandem avec objectifs (score, note, clips, angle, combo, % en glisse, aucun contact mur). Récompense payée à la première réussite. Le chapitre suivant s’ouvre quand le précédent est fini.
+- Exploration libre de chaque lieu ouvert : 5 archives (l’histoire du club, à relire dans le carnet), 2 bornes de défi de rue, 1 rencontre. Progression dans `sdc:profile.story`.
