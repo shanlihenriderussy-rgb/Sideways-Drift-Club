@@ -59,7 +59,8 @@
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   const _camT = new THREE.Vector3(), _camL = new THREE.Vector3(); // tampons : aucune allocation par image
   // relief : hauteur du sol (terrain de la piste) et pente, sans allocation
-  const gy = (x, z) => track.terrain.at(x, z);
+  const curTer = () => (isle ? isle.I.terrain : track.terrain);
+  const gy = (x, z) => curTer().at(x, z);
   const _grad = [0, 0];
   const showroom = { x: 0, z: 0, heading: 0, wheelRot: 0, steerAngle: 0, rollAngle: 0, pitchAngle: 0 };
 
@@ -208,6 +209,7 @@
       else if (phase === 'pause' && screenId === 'pause') resumeGame();
       else if (k === 'escape' && screenId === 'layout') closeLayoutEditor();
       else if (k === 'escape' && screenId === 'garage') closeShop();
+      else if (k === 'escape' && screenId === 'adventure' && isle) { show(null); resumeGame(); }
       else if (k === 'escape' && ['select', 'settings', 'help', 'career', 'adventure'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
     }
     if (k === 'c' && (phase === 'play' || phase === 'count')) cycleCam();
@@ -512,7 +514,7 @@
   function updateScore(dt) {
     const st = player;
     const ang = Math.abs(st.slip) * 180 / Math.PI;
-    const onRoad = Math.abs(st.lat0) < track.half + 0.6;
+    const onRoad = isle ? st.roadD < isle.I.half + 0.6 : Math.abs(st.lat0) < track.half + 0.6;
     const drifting = ang > 12 && st.speed > 8 && st.fwd > 2 && onRoad;
     score.runT += dt;
     if (drifting) {
@@ -534,8 +536,8 @@
     if (ang > 105 && st.speed > 3) lose('Tête-à-queue');
     if (!onRoad && st.speed > 4) { score.offT += dt; if (score.offT > 0.45) lose('Hors piste'); } else score.offT = 0;
 
-    // zones de clipping
-    if (drifting) {
+    // zones de clipping (pas sur l'île)
+    if (drifting && !isle) {
       for (const z of track.zones) {
         if (z.hit) continue;
         const inZ = inRange(st.idx, z.from, z.to, track.count);
@@ -735,14 +737,15 @@
         acc += dt;
         while (acc >= STEP) {
           player.x0 = player.x; player.z0 = player.z; player.h0 = player.heading;
-          track.terrain.grad(player.x, player.z, _grad); player.gx = _grad[0]; player.gz = _grad[1];
+          curTer().grad(player.x, player.z, _grad); player.gx = _grad[0]; player.gz = _grad[1];
           stepCar(player, input, STEP, settings.assist);
-          collide(player, STEP);
+          if (isle) isleCollide(player); else collide(player, STEP);
           acc -= STEP;
         }
-        updateProgress(dt);
+        if (!isle) updateProgress(dt);
         updateScore(dt);
         if (explore) updateExplore(dt);
+        if (isle) isleTick(dt);
         if (mode === 'tandem') {
           let gap = (leader.state.s - lapS()) ;
           const L = track.length; gap = ((gap % L) + L) % L; if (gap > L / 2) gap -= L;
@@ -775,7 +778,7 @@
     if (phase !== 'pause') { smoke.update(dt); sparks.update(dt); }
     skids.flush();
     updateFavicon(dt);
-    world.update(t);
+    world.update(t, camera.position);
     // ombre qui suit la voiture visible
     const focus = phase === 'play' || phase === 'count' || phase === 'pause' ? player : leader.state;
     if (focus) {
@@ -803,11 +806,12 @@
 
   let stuckT = 0;
   function updateStuck(dt) {
-    const offFar = Math.abs(player.lat0) > track.wall + 2;
+    const offFar = isle ? player.wetT > 0.8 : Math.abs(player.lat0) > track.wall + 2;
     if ((player.speed < 1.2 && input.throttle > 0.5) || offFar) stuckT += dt; else stuckT = 0;
     if (stuckT > 2.5) { stuckT = 0; respawn(); }
   }
   function respawn() {
+    if (isle) { isleRespawn(); return; }
     const i = player.idx;
     lose('Replacement');
     resetPlayer(i, 10);
@@ -880,7 +884,7 @@
     if (hudCache.red !== r > 0.88) { hudCache.red = r > 0.88; el('rpmBar').classList.toggle('red', r > 0.88); }
     setNum('hudTotal', Math.round(score.total));
     setText('hudTime', fmtTime(score.runT));
-    setText('hudLap', mode === 'free' ? `Tour ${lap.n + 1}` : `${Math.round(clamp(lap.progress / track.length, 0, 1) * 100)} %`);
+    if (!isle) setText('hudLap', mode === 'free' ? `Tour ${lap.n + 1}` : `${Math.round(clamp(lap.progress / track.length, 0, 1) * 100)} %`);
     let tandemNear = false;
     if (mode === 'tandem') tandemNear = Math.hypot(st.x - leader.state.x, st.z - leader.state.z) < 11;
     const comboEl = el('combo');
@@ -929,6 +933,7 @@
   function drawMinimap() {
     const g = $('minimap').getContext('2d');
     g.clearRect(0, 0, 208, 208);
+    if (isle) { drawIsleMinimap(g); return; }
     g.drawImage(mmBase, 0, 0);
     const dot = (st, col, r) => { const [x, y] = mmT(st.x, st.z); g.fillStyle = '#000'; g.beginPath(); g.arc(x, y, r + 2.5, 0, 7); g.fill(); g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); };
     if (mode === 'tandem') dot(leader.state, '#ff7ad9', 6);
@@ -1008,6 +1013,7 @@
     setTimeout(() => { if (phase === 'count') { phase = 'play'; last = performance.now(); } el.hidden = true; }, 500);
   }
   function finishRun() {
+    if (isle) { finishIsle(); return; }
     bank();
     phase = 'results';
     Sound.suspend();
@@ -1090,6 +1096,7 @@
     Sound.suspend();
     $('hud').hidden = true; clearTouch(); setTouchVisible(); $('count').hidden = true;
     $('hudGoal').hidden = true;
+    if (isle) leaveIsle();
     if (adv) { leaveAdventureRun(); openAdventure(); } else show('menu');
     releaseWake();
   }
@@ -1228,7 +1235,7 @@
   }, true);
 
   // carte de l'île : les six lieux dans l'ordre du Tour, en boucle autour du volcan
-  const ISLE = { minato: [62, 62], shiohama: [150, 34], akane: [250, 52], kaigan: [266, 128], piton: [168, 146], yukimi: [74, 132] };
+  const MAPXY = { minato: [62, 62], shiohama: [150, 34], akane: [250, 52], kaigan: [266, 128], piton: [168, 146], yukimi: [74, 132] };
   function openAdventure() {
     if (!Story.chapterOpen(profile, advSel)) advSel = Story.currentChapter(profile);
     renderAdventure();
@@ -1241,11 +1248,11 @@
     let svg = '<path class="isle" d="M34,96 C26,52 80,14 152,16 C232,14 302,36 300,96 C298,150 242,178 166,176 C92,176 42,150 34,96 Z"/>';
     svg += '<path d="M156,104 l12,-20 l12,20 z" fill="var(--s4)" stroke="var(--hair-2)"/><text x="168" y="116" text-anchor="middle" font-size="7.5" fill="var(--fg-3)" letter-spacing=".1em">VOLCAN</text>';
     C.forEach((c, ci) => {
-      const a = ISLE[c.track], b = ISLE[C[(ci + 1) % C.length].track];
+      const a = MAPXY[c.track], b = MAPXY[C[(ci + 1) % C.length].track];
       if (ci < C.length - 1) svg += `<path class="route${Story.chapterDone(profile, ci) ? ' done' : ''}" d="M${a[0]},${a[1]} Q${(a[0] + b[0]) / 2 + (168 - (a[0] + b[0]) / 2) * -0.15},${(a[1] + b[1]) / 2 + (96 - (a[1] + b[1]) / 2) * -0.15} ${b[0]},${b[1]}"/>`;
     });
     C.forEach((c, ci) => {
-      const [x, y] = ISLE[c.track], open = Story.chapterOpen(profile, ci), done = Story.chapterDone(profile, ci);
+      const [x, y] = MAPXY[c.track], open = Story.chapterOpen(profile, ci), done = Story.chapterDone(profile, ci);
       const name = TRACKS[trackIndexOf(c.track)].name;
       svg += `<g class="node${open ? ' open' : ' locked'}${done ? ' done' : ''}${ci === advSel ? ' sel' : ''}" data-ci="${ci}" tabindex="0" role="button" aria-pressed="${ci === advSel}" aria-label="Chapitre ${ci + 1}, ${esc(name)}${done ? ', terminé' : open ? '' : ', fermé'}">`
         + `<circle cx="${x}" cy="${y}" r="11"/><text class="n" x="${x}" y="${y}">${done ? '✓' : ci + 1}</text><text x="${x}" y="${y + 22}">${c.track[0].toUpperCase() + c.track.slice(1)}</text></g>`;
@@ -1267,6 +1274,7 @@
       if (nx >= 0) h += `<button class="btn primary" data-play="${nx}"><span>Jouer : ${esc(ch.missions[nx].title)}</span></button>`;
       else h += '<button class="btn" data-play="2"><span>Rejouer la finale du chapitre</span></button>';
       h += `<button class="btn" data-explore><span>Explorer le lieu</span></button><button class="btn ghost" data-story><span>Revoir l’histoire</span></button></div>`;
+      if (isle) h += '<p class="sub" style="margin:0 0 10px">Tu es sur l’île : « Retour » te remet sur la route, là où tu t’es arrêté.</p>';
       const z = Story.zoneProgress(profile, ch.track), Z = Story.ZONES[ch.track];
       h += `<div class="adv-explore">Exploration libre : <b>archives ${z.arch} / 5</b> · <b>défis de rue ${z.street} / ${Story.STREET.length}</b> · <b>rencontre ${z.npc} / 1</b>. Les archives flottent au bord de la route, les bornes lancent un défi au passage.</div>`;
       h += `<details class="adv-notes"><summary>Carnet du club · ${z.arch} / 5</summary><ol>` + Z.archives.map((a, k) => Story.ensure(profile).arch[ch.track + ':' + k] ? `<li><b>${esc(a[0])}</b> — ${esc(a[1])}</li>` : '<li class="miss">Archive à retrouver sur ce lieu.</li>').join('') + '</ol></details>';
@@ -1295,6 +1303,7 @@
     if (!Story.missionOpen(profile, ci, k)) return;
     const ch = Story.CHAPTERS[ci], m = ch.missions[k];
     ensureAudio(); Sound.ui();
+    leaveIsle();
     adv = { ci, k }; mode = m.mode;
     show(null); phase = 'menu';
     goTrack(ch.track);
@@ -1306,6 +1315,7 @@
     if (!Story.chapterOpen(profile, ci)) return;
     const ch = Story.CHAPTERS[ci];
     ensureAudio(); Sound.ui();
+    leaveIsle();
     adv = { explore: ch.track, ci }; mode = 'free';
     show(null); goTrack(ch.track);
     startRun();
@@ -1418,6 +1428,174 @@
     });
   }
 
+
+  // ---------- l'île : monde ouvert continu (island.js) ----------
+  // isle : null hors de l'île | { I : routes + terrain (calculés une fois), gate : porte franchie, hub : lieu le plus proche }
+  let isle = null, isleData = null;
+  const isleQ = { i: -1, d: Infinity, lat: 0, edge: -1 };
+  function enterIsland() {
+    ensureAudio();
+    clearExplore(); adv = null; advNext = null;
+    if (!isleData) isleData = buildIsland(ISLE);
+    if (world) world.dispose();
+    isle = { I: isleData, gate: null, hubName: '', wasIn: null };
+    world = buildIslandWorld(scene, isleData, quality);
+    renderer.toneMappingExposure = world.theme.exposure;
+    buildEnv(); buildFx(); buildCars(true);
+    playerModel.ground = isleData.terrain.at;
+    const found = (profile.isle && profile.isle.found) || {};
+    world.daruma.forEach((g, k) => { g.visible = !found[k]; });
+    mode = 'free';
+    resetScore();
+    skids.clear(); smoke.clear();
+    const hb = isleData.hubs.minato;
+    const st = createCarState(Economy.tunedSpec(CAR_SPECS[profile.current], profile.cars[profile.current].perf, profile.cars[profile.current].tune), hb.x + Math.cos(hb.heading) * 14, hb.z + Math.sin(hb.heading) * 14, hb.heading);
+    player = st; player.x0 = st.x; player.z0 = st.z; player.h0 = st.heading; player.idx = 0; player.prevIdx = 0; player.wetT = 0; player.roadD = 0;
+    isle.wasIn = 'minato'; // pas de porte au départ
+    phase = 'count';
+    show(null);
+    $('hud').hidden = false;
+    setTouchVisible();
+    $('hudMode').textContent = 'L’ÎLE';
+    $('hudBest').textContent = 'MONDE OUVERT';
+    $('hudGoal').hidden = false; renderIsleGoal();
+    drawIsleMinimapBase();
+    camPos.set(player.x - Math.cos(player.heading) * 8, gy(player.x, player.z) + 3, player.z - Math.sin(player.heading) * 8);
+    camLook.set(player.x, gy(player.x, player.z) + 1, player.z);
+    try { renderer.compile(scene, camera); } catch (e) { /* facultatif */ }
+    countdown();
+    requestWake();
+    announce('L’île de Sideways : roule où tu veux. Les portes jaunes mènent aux lieux de l’aventure.');
+  }
+  // retour au jeu sur piste : on reconstruit la piste courante
+  function leaveIsle() {
+    if (!isle) return;
+    isle = null;
+    $('hudGoal').hidden = true;
+    loadTrack(trackIdx);
+  }
+  function isleCollide(st) {
+    const q = isleData.nearestRoad(st.x, st.z, isleQ);
+    st.roadD = q.d; st.lat0 = q.lat;
+    st.surface = q.d > isleData.half + 0.4 ? 0.62 : 1;
+    // la mer : l'eau freine fort, puis on est replacé
+    if (isleData.terrain.at(st.x, st.z) < 0.2) { st.wetT = (st.wetT || 0) + STEP; st.vx *= 0.985; st.vz *= 0.985; } else st.wetT = 0;
+  }
+  function isleRespawn() {
+    const q = isleData.nearestRoad(player.x, player.z, {});
+    let i = q.i;
+    const wet = player.wetT > 0.5;
+    const I = isleData;
+    if (i < 0) { let bd = Infinity; for (let k = 0; k < I.N; k += 2) { const d = (I.X[k] - player.x) ** 2 + (I.Z[k] - player.z) ** 2; if (d < bd) { bd = d; i = k; } } } // loin de tout : la route la plus proche de l'île
+    for (const [id, hb] of Object.entries(I.hubs)) if (Math.hypot(I.X[i] - hb.x, I.Z[i] - hb.z) < 40) isle.wasIn = id; // pas de porte au repêchage
+    let h = Math.atan2(I.TZ[i], I.TX[i]);
+    let dh = h - player.heading; while (dh > Math.PI) dh -= 2 * Math.PI; while (dh < -Math.PI) dh += 2 * Math.PI;
+    if (Math.abs(dh) > Math.PI / 2) h += Math.PI; // garde le sens dans lequel on roulait
+    lose('Replacement');
+    const st = createCarState(player.spec, I.X[i], I.Z[i], h);
+    st.vx = Math.cos(h) * 8; st.vz = Math.sin(h) * 8;
+    Object.assign(st, { x0: st.x, z0: st.z, h0: h, idx: 0, prevIdx: 0, wetT: 0, roadD: 0 });
+    player = st;
+    skids.mark('P-1', st.x, st.z, 0, 0.3); skids.mark('P1', st.x, st.z, 0, 0.3);
+    popup(wet ? 'Plouf · replacé sur la route' : 'Replacé sur la route', 'apex');
+  }
+  function renderIsleGoal() {
+    const el = $('hudGoal'); el.className = 'hud-goal';
+    el.textContent = `Daruma dorés ${isleFound(profile)}/${ISLE.daruma.length} · les portes jaunes ouvrent l’aventure`;
+  }
+  function isleTick(dt) {
+    const st = player, I = isleData;
+    if (st.wetT > 0.8) { st.wetT = 0; isleRespawn(); return; }
+    // lieu le plus proche (affiché sous le chrono) et portes
+    let best = null, bd = Infinity;
+    for (const [id, hb] of Object.entries(I.hubs)) { const d = Math.hypot(st.x - hb.x, st.z - hb.z); if (d < bd) { bd = d; best = id; } }
+    const tr = TRACKS.find((t) => t.id === best);
+    const label = bd < 60 ? tr.name : `${tr.name} · ${bd < 1000 ? Math.round(bd / 10) * 10 + ' m' : (bd / 1000).toFixed(1).replace('.', ',') + ' km'}`;
+    if (label !== isle.hubName) { isle.hubName = label; $('hudLap').textContent = label; }
+    if (bd < 11 && isle.wasIn !== best) {
+      isle.wasIn = best;
+      const ci = Story.zoneIndex(best);
+      if (Story.chapterOpen(profile, ci)) {
+        // on s'arrête à la porte : la carte s'ouvre sur ce lieu
+        phase = 'pause'; clearTouch(); Sound.suspend();
+        advSel = ci; renderAdventure(); show('adventure');
+        toast(`${tr.name} : missions, exploration et histoire du lieu`, 'chal');
+        return;
+      }
+      toast(`${tr.name} : lieu fermé, avance dans l’aventure pour l’ouvrir`, 'lost');
+    }
+    if (bd > 40 && isle.wasIn === best) isle.wasIn = null;
+    // daruma dorés
+    I.daruma.forEach((d, k) => {
+      const g = world.daruma[k];
+      if (!g.visible || Math.hypot(st.x - d.x, st.z - d.z) > 3) return;
+      g.visible = false;
+      const r = isleCollect(profile, k);
+      if (r) { saveProfile(); refreshWallet(); Sound.clip(); vibrate(30); popup(`Daruma doré +${Economy.fmt(r)}`, 'clip'); renderIsleGoal(); }
+    });
+  }
+  // mini-carte de l'île entière : routes, portes, daruma restants, voiture
+  let isleMM = null;
+  function drawIsleMinimapBase() {
+    const I = isleData, c = document.createElement('canvas'); c.width = c.height = 208;
+    const g = c.getContext('2d'), { cx, cz, rx, rz } = I.def.shape;
+    const s = 196 / (rx * 2.1), ox = 104 - cx * s, oz = 104 - cz * s;
+    const T = (x, z) => [ox + x * s, oz + z * s];
+    g.fillStyle = 'rgba(29,79,99,.55)'; g.beginPath(); g.ellipse(104, 104, 102, 102, 0, 0, 7); g.fill();
+    g.fillStyle = 'rgba(79,107,50,.75)'; g.beginPath(); g.ellipse(...T(cx, cz), rx * s, rz * s, 0, 0, 7); g.fill();
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    for (const r of I.roads) {
+      g.beginPath();
+      for (let i = 0; i < r.count; i += 4) { const [x, y] = T(r.px[i], r.pz[i]); i ? g.lineTo(x, y) : g.moveTo(x, y); }
+      const [ex, ey] = T(r.px[r.count - 1], r.pz[r.count - 1]); g.lineTo(ex, ey);
+      g.strokeStyle = 'rgba(0,0,0,.55)'; g.lineWidth = 4.5; g.stroke();
+      g.strokeStyle = 'rgba(243,239,228,.9)'; g.lineWidth = 2.2; g.stroke();
+    }
+    for (const hb of Object.values(I.hubs)) { const [x, y] = T(hb.x, hb.z); g.fillStyle = '#f7d154'; g.fillRect(x - 4, y - 4, 8, 8); }
+    isleMM = { c, T };
+  }
+  function drawIsleMinimap(g) {
+    g.drawImage(isleMM.c, 0, 0);
+    const found = (profile.isle && profile.isle.found) || {};
+    g.fillStyle = '#ffb020';
+    isleData.daruma.forEach((d, k) => { if (found[k]) return; const [x, y] = isleMM.T(d.x, d.z); g.beginPath(); g.arc(x, y, 2.2, 0, 7); g.fill(); });
+    const [x, y] = isleMM.T(player.x, player.z), h = player.heading;
+    g.save(); g.translate(x, y); g.rotate(h);
+    g.fillStyle = '#000'; g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, 6); g.lineTo(-6, -6); g.closePath(); g.fill();
+    g.fillStyle = '#ff3d3d'; g.beginPath(); g.moveTo(7, 0); g.lineTo(-4, 4.5); g.lineTo(-4, -4.5); g.closePath(); g.fill();
+    g.restore();
+  }
+  // fin de balade : gains du mode libre, daruma trouvés
+  function finishIsle() {
+    bank();
+    phase = 'results';
+    Sound.suspend();
+    $('hud').hidden = true; $('hudGoal').hidden = true;
+    setTouchVisible();
+    const total = Math.round(score.total), driftPct = Math.round(score.driftT / Math.max(score.runT, 1) * 100);
+    $('resGrade').textContent = '—';
+    $('resTotal').textContent = total.toLocaleString('fr-FR') + ' pts';
+    $('resRecord').innerHTML = '';
+    $('resCombo').textContent = Math.round(score.best).toLocaleString('fr-FR');
+    $('resClips').textContent = '—';
+    $('resAngle').textContent = Math.round(score.maxAngle) + '°';
+    $('resDrift').textContent = driftPct + ' %';
+    $('resEyebrow').textContent = 'Balade · L’île de Sideways';
+    $('resHeadline').textContent = '« Une île, neuf kilomètres de routes, et personne pour te dire où tourner. »';
+    const res = Economy.applyRun(profile, { day: today(), trackId: 'ile', trackName: 'L’île', mode: 'free', score: total, grade: null, clips: 0, zones: 0, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct, record: false });
+    saveProfile(); refreshWallet();
+    const rg = $('resGoal'); rg.hidden = false;
+    rg.innerHTML = `<div class="h">L’île</div><div class="r"><span>Daruma dorés ${isleFound(profile)} / ${ISLE.daruma.length} · temps sur la route ${fmtTime(score.runT)}</span></div>`;
+    $('payLines').innerHTML = res.payout.lines.map((l) => `<div><span>${l.label}</span><b>+${Economy.fmt(l.amount)}</b></div>`).join('') || '<div><span>Aucun gain sur cette balade.</span></div>';
+    $('payChal').innerHTML = res.challenges.map((c) => `<div>Défi réussi : ${c.label} · +${Economy.fmt(c.reward)}</div>`).join('');
+    $('payBal').textContent = 'Solde : ' + Economy.fmt(profile.money);
+    $('menuBtn').firstElementChild.textContent = 'Menu';
+    $('againBtn').firstElementChild.textContent = 'Reprendre la route';
+    countUp($('payTotal'), res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0));
+    show('results');
+    releaseWake();
+  }
+
   function syncSettingsUI() {
     pressGroup($('assistSeg'), 'data-v', settings.assist);
     pressGroup($('qualSeg'), 'data-v', settings.quality);
@@ -1450,20 +1628,23 @@
   $('layoutBtn').addEventListener('click', openLayoutEditor);
   $('helpBtn').addEventListener('click', go('help'));
   $('advBtn').addEventListener('click', () => { Sound.ui(); ensureAudio(); openAdventure(); });
+  // construire l'île prend un instant sur mobile : on l'annonce d'abord
+  $('isleBtn').addEventListener('click', () => { Sound.ui(); toast('Chargement de l’île…', 'apex'); setTimeout(enterIsland, 40); });
   for (const b of document.querySelectorAll('[data-back]')) b.addEventListener('click', () => {
     Sound.ui();
     const scr = b.closest('.screen').id;
     if (scr === 'help' && helpThenSelect) { helpThenSelect = false; openSelect(); return; }
+    if (scr === 'adventure' && isle) { show(null); resumeGame(); return; } // retour sur la route de l'île
     show(scr === 'settings' ? returnTo : 'menu');
   });
   $('goBtn').addEventListener('click', startRun);
   $('resumeBtn').addEventListener('click', resumeGame);
   $('resetBtn').addEventListener('click', () => { show(null); respawn(); phase = 'count'; countdownShort(); });
-  $('restartBtn').addEventListener('click', startRun);
+  $('restartBtn').addEventListener('click', () => { if (isle) enterIsland(); else startRun(); });
   $('quitBtn').addEventListener('click', () => { if (mode === 'free' && score.runT > 5) finishRun(); else toMenu(); });
   $('pauseBtn').addEventListener('click', pauseGame);
   $('camBtn').addEventListener('click', cycleCam);
-  $('againBtn').addEventListener('click', () => { if (advNext) { const n = advNext; advNext = null; playMission(n.ci, n.k); } else startRun(); });
+  $('againBtn').addEventListener('click', () => { if (advNext) { const n = advNext; advNext = null; playMission(n.ci, n.k); } else if (isle) enterIsland(); else startRun(); });
   $('menuBtn').addEventListener('click', toMenu);
   if (isTouch) $('kbHint').hidden = true;
 
@@ -1485,7 +1666,7 @@
     claimDaily();
     requestAnimationFrame((n) => { last = n; frame(n); });
     // accès de test (non utilisé par le jeu)
-    window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); }, carRoot: () => playerModel.root, trace: (on) => { const t = dbgTrace; dbgTrace = on ? [] : null; return t; }, profile, preview: (k, c) => { showKind = k; showCfg = c; buildCars(); }, view: (v) => { shopView = v; snapCam = true; }, yaw: (y) => { garageYaw = y; } };
+    window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); }, carRoot: () => playerModel.root, trace: (on) => { const t = dbgTrace; dbgTrace = on ? [] : null; return t; }, profile, isle: () => isleData, preview: (k, c) => { showKind = k; showCfg = c; buildCars(); }, view: (v) => { shopView = v; snapCam = true; }, yaw: (y) => { garageYaw = y; } };
     window.__sdc = { get phase() { return phase; }, get player() { return player; }, get score() { return score; }, get track() { return track; }, get line() { return line; }, lossLog, startRun, input, touch, layouts, tState: () => tState, openLayoutEditor, setMode: (m) => { mode = m; }, setTrack: (i) => { trackIdx = i; loadTrack(i); }, finishRun, get fps() { return 1000 / frameAvg; } };
   }
   if (document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]).then(boot);

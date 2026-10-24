@@ -204,6 +204,7 @@ function loadProfile(raw, legacy) {
   if (raw.done && typeof raw.done === 'object') for (const c of CHALLENGES) if (raw.done[c.id]) p.done[c.id] = true;
   // progression de l'aventure : nettoyée par story.js (Story.ensure)
   if (raw.story && typeof raw.story === 'object') p.story = JSON.parse(JSON.stringify(raw.story));
+  if (raw.isle && raw.isle.found && typeof raw.isle.found === 'object') p.isle = { found: Object.fromEntries(Object.keys(raw.isle.found).filter((k) => raw.isle.found[k] === true && /^\d+$/.test(k)).map((k) => [k, true])) };
   if (raw.stats && typeof raw.stats === 'object') {
     for (const k of ['runs', 'earned', 'spent', 'bestPayout']) if (Number.isFinite(raw.stats[k])) p.stats[k] = raw.stats[k];
     if (Array.isArray(raw.stats.tracks)) p.stats.tracks = raw.stats.tracks.filter((t) => typeof t === 'string');

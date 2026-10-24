@@ -169,19 +169,11 @@ function ridgeGeo(cx, cz, radius, base, amp, seed, seg, mask) {
   return g;
 }
 
-function buildWorld(scene, track, quality) {
-  const T = THEMES[track.def.theme];
-  const theme = T.decor || track.def.theme; // famille de décor
-  const group = new THREE.Group();
-  scene.add(group);
-  const disposables = [];
-  const keep = (o) => { disposables.push(o); return o; };
-  const animated = []; // matériaux à uniform « time »
-
-  // --- ciel
+// ciel peint (dégradé, soleil, calque de nuages ou d'étoiles) : partagé par les pistes et l'île
+function makeSky(T, theme, keep) {
   const skyTex = keep(skyLayer(T.sky || theme));
   skyTex.minFilter = THREE.LinearFilter; skyTex.generateMipmaps = false; // pas de couture au raccord atan
-  const skyMat = keep(new THREE.ShaderMaterial({
+  const mat = keep(new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: {
       top: { value: new THREE.Color(T.skyTop) }, hor: { value: new THREE.Color(T.skyHorizon) }, bot: { value: new THREE.Color(T.skyBottom) },
@@ -196,9 +188,52 @@ function buildWorld(scene, track, quality) {
         vec4 l = texture2D(layer, uv); c = mix(c, l.rgb * (0.75 + 0.35 * pow(max(s, 0.0), 4.0)), l.a * smoothstep(0.0, 0.04, h)); }
       gl_FragColor = vec4(c, 1.0); }`,
   }));
+  const mesh = new THREE.Mesh(keep(new THREE.SphereGeometry(1600, 32, 16)), mat);
+  mesh.renderOrder = -1;
+  return { mesh, mat };
+}
+
+// eau animée (port la nuit, océan le jour) : plan horizontal à y = −0,05
+function makeWater(T, keep, w, d, x, z, deep, shallow, sparkle) {
+  const mat = keep(new THREE.ShaderMaterial({
+    fog: true,
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { time: { value: 0 }, deep: { value: new THREE.Color(deep) }, shallow: { value: new THREE.Color(shallow) }, spark: { value: sparkle }, sunDir: { value: new THREE.Vector3(...T.sun).normalize() }, sunCol: { value: new THREE.Color(T.sunColor) } }]),
+    vertexShader: `varying vec3 vW; varying vec2 vUv;
+      #include <fog_pars_vertex>
+      void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;
+      #include <fog_vertex>
+      }`,
+    fragmentShader: `uniform float time, spark; uniform vec3 deep, shallow, sunDir, sunCol; varying vec3 vW; varying vec2 vUv;
+      #include <fog_pars_fragment>
+      void main(){
+        float w1 = sin(vW.x * 0.09 + time * 0.9) * cos(vW.z * 0.07 - time * 0.7);
+        float w2 = sin(vW.x * 0.31 - vW.z * 0.23 + time * 1.7) * 0.5;
+        float wave = w1 + w2;
+        vec3 c = mix(deep, shallow, clamp(0.5 + wave * 0.25, 0.0, 1.0) * smoothstep(1.0, 0.0, vUv.y));
+        float glint = pow(max(0.0, sin(vW.x * 0.6 + time * 2.3) * sin(vW.z * 0.53 - time * 1.9) * (0.6 + 0.4 * wave)), 12.0);
+        c += sunCol * glint * spark;
+        gl_FragColor = vec4(c, 1.0);
+        #include <fog_fragment>
+      }`,
+  }));
+  const mesh = new THREE.Mesh(keep(new THREE.PlaneGeometry(w, d)), mat);
+  mesh.rotation.x = -Math.PI / 2; mesh.position.set(x, -0.05, z);
+  return { mesh, mat };
+}
+
+function buildWorld(scene, track, quality) {
+  const T = THEMES[track.def.theme];
+  const theme = T.decor || track.def.theme; // famille de décor
+  const group = new THREE.Group();
+  scene.add(group);
+  const disposables = [];
+  const keep = (o) => { disposables.push(o); return o; };
+  const animated = []; // matériaux à uniform « time »
+
+  // --- ciel
+  const { mesh: sky, mat: skyMat } = makeSky(T, theme, keep);
   animated.push(skyMat);
-  const sky = new THREE.Mesh(keep(new THREE.SphereGeometry(1600, 32, 16)), skyMat);
-  sky.renderOrder = -1; sky.userData.fixed = true;
+  sky.userData.fixed = true;
   group.add(sky);
   scene.fog = new THREE.Fog(T.fog, T.fogNear, T.fogFar);
   scene.background = new THREE.Color(T.fog);
@@ -630,33 +665,11 @@ function buildWorld(scene, track, quality) {
 
   // eau animée (port la nuit, océan le jour)
   function water(w, d, x, z, deep, shallow, sparkle) {
-    const mat = keep(new THREE.ShaderMaterial({
-      fog: true,
-      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { time: { value: 0 }, deep: { value: new THREE.Color(deep) }, shallow: { value: new THREE.Color(shallow) }, spark: { value: sparkle }, sunDir: { value: new THREE.Vector3(...T.sun).normalize() }, sunCol: { value: new THREE.Color(T.sunColor) } }]),
-      vertexShader: `varying vec3 vW; varying vec2 vUv;
-        #include <fog_pars_vertex>
-        void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vec4 mvPosition = viewMatrix * w; gl_Position = projectionMatrix * mvPosition;
-        #include <fog_vertex>
-        }`,
-      fragmentShader: `uniform float time, spark; uniform vec3 deep, shallow, sunDir, sunCol; varying vec3 vW; varying vec2 vUv;
-        #include <fog_pars_fragment>
-        void main(){
-          float w1 = sin(vW.x * 0.09 + time * 0.9) * cos(vW.z * 0.07 - time * 0.7);
-          float w2 = sin(vW.x * 0.31 - vW.z * 0.23 + time * 1.7) * 0.5;
-          float wave = w1 + w2;
-          vec3 c = mix(deep, shallow, clamp(0.5 + wave * 0.25, 0.0, 1.0) * smoothstep(1.0, 0.0, vUv.y));
-          float glint = pow(max(0.0, sin(vW.x * 0.6 + time * 2.3) * sin(vW.z * 0.53 - time * 1.9) * (0.6 + 0.4 * wave)), 12.0);
-          c += sunCol * glint * spark;
-          gl_FragColor = vec4(c, 1.0);
-          #include <fog_fragment>
-        }`,
-    }));
+    const { mesh, mat } = makeWater(T, keep, w, d, x, z, deep, shallow, sparkle);
     animated.push(mat);
-    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(w, d)), mat);
-    m.rotation.x = -Math.PI / 2; m.position.set(x, -0.05, z);
-    m.userData.fixed = true;
-    group.add(m);
-    return m;
+    mesh.userData.fixed = true;
+    group.add(mesh);
+    return mesh;
   }
 
   if (theme === 'night') {
