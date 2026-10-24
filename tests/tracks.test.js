@@ -75,3 +75,39 @@ test('défi « toutes les pistes » : seuil aligné sur le nombre de pistes', ()
   p.stats.tracks.push(TRACKS[0].id);
   assert.equal(c.test({}, p), true);
 });
+
+// Relief : pentes praticables, sol raccordé à la route, chaque lieu a du dénivelé.
+for (const def of TRACKS) {
+  test(`${def.name} : relief praticable et sol raccordé à la route`, () => {
+    const t = buildTrackData(def);
+    let gmax = 0, hmin = Infinity, hmax = -Infinity, err = 0;
+    for (let i = 0; i < t.count; i++) {
+      gmax = Math.max(gmax, Math.abs(t.py[(i + 1) % t.count] - t.py[i]) / t.step);
+      hmin = Math.min(hmin, t.py[i]); hmax = Math.max(hmax, t.py[i]);
+      for (const o of [-t.half, 0, t.half]) err = Math.max(err, Math.abs(t.terrain.at(t.px[i] - t.tz[i] * o, t.pz[i] + t.tx[i] * o) - t.py[i]));
+    }
+    assert.ok(gmax < 0.13, `pente max ${(gmax * 100).toFixed(1)} %`);
+    assert.ok(hmax - hmin >= 5, `dénivelé ${(hmax - hmin).toFixed(1)} m`);
+    assert.ok(err < 0.3, `sol à ${err.toFixed(2)} m de la route`);
+    assert.equal(t.terrain.at(1e5, 1e5), 0, 'sol lointain au niveau 0');
+  });
+}
+
+// Silhouettes : deux pistes ne doivent pas se ressembler (proportions, densité de virages, remplissage de la boîte).
+// Les six anciens tracés « en patate » tombaient à 0,22 sur deux paires.
+test('tracés aux silhouettes distinctes', () => {
+  const sig = TRACKS.map((def) => {
+    const t = buildTrackData(def);
+    let a = Infinity, b = -Infinity, c = Infinity, d = -Infinity;
+    for (let i = 0; i < t.count; i++) { a = Math.min(a, t.px[i]); b = Math.max(b, t.px[i]); c = Math.min(c, t.pz[i]); d = Math.max(d, t.pz[i]); }
+    const w = Math.max(b - a, d - c), h = Math.min(b - a, d - c);
+    let area = 0;
+    for (let i = 0; i < t.count; i++) { const k = (i + 1) % t.count; area += t.px[i] * t.pz[k] - t.px[k] * t.pz[i]; }
+    return { id: def.id, aspect: w / h, density: t.turns.length / (t.length / 1000), fill: Math.abs(area) / 2 / (w * h) };
+  });
+  for (let i = 0; i < sig.length; i++) for (let j = i + 1; j < sig.length; j++) {
+    const A = sig[i], B = sig[j];
+    const diff = Math.abs(Math.log(A.aspect / B.aspect)) + Math.abs(Math.log(A.density / B.density)) + Math.abs(Math.log(A.fill / B.fill));
+    assert.ok(diff > 0.3, `${A.id} et ${B.id} trop proches (écart ${diff.toFixed(2)})`);
+  }
+});

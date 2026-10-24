@@ -198,7 +198,7 @@ function buildWorld(scene, track, quality) {
   }));
   animated.push(skyMat);
   const sky = new THREE.Mesh(keep(new THREE.SphereGeometry(1600, 32, 16)), skyMat);
-  sky.renderOrder = -1;
+  sky.renderOrder = -1; sky.userData.fixed = true;
   group.add(sky);
   scene.fog = new THREE.Fog(T.fog, T.fogNear, T.fogFar);
   scene.background = new THREE.Color(T.fog);
@@ -227,11 +227,36 @@ function buildWorld(scene, track, quality) {
     else if (theme === 'sunset') blotches(g, w, h, ['#6b7a38', '#3d4a24', '#7a6a42', '#556b2f'], 46, 30, 110, 0.45, 22);
     else blotches(g, w, h, ['#3f5a2c', '#4f6b32', '#1f1c1b', '#3a3230'], 46, 30, 120, 0.5, 23);
   }, true));
-  groundTex.repeat.set(110, 110);
-  const ground = new THREE.Mesh(keep(new THREE.PlaneGeometry(3200, 3200)), keep(new THREE.MeshLambertMaterial({ map: groundTex, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 })));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.12;
-  ground.receiveShadow = !!quality.shadows;
-  group.add(ground);
+  // relief : grille du terrain (track.terrain) autour de la piste, sol plat au-delà ; UV en mètres (une tuile ≈ 29 m)
+  const ter = track.terrain;
+  const groundMat = keep(new THREE.MeshLambertMaterial({ map: groundTex, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 }));
+  {
+    const { nx, nz, x0, z0, cell, h, dist } = ter;
+    const pos = new Float32Array(nx * nz * 3), uv = new Float32Array(nx * nz * 2), idx = [];
+    const ssw = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+    for (let gz = 0; gz < nz; gz++) for (let gx = 0; gx < nx; gx++) {
+      const k = gz * nx + gx, x = x0 + gx * cell, z = z0 + gz * cell;
+      // sous la route et les bas-côtés, le sol s'efface un peu plus bas : jamais de terre qui perce le bitume
+      const drop = 0.28 * (1 - ssw(track.wall, track.wall + 10, dist[k]));
+      const edge = gx === 0 || gz === 0 || gx === nx - 1 || gz === nz - 1;
+      pos.set([x, edge ? -0.6 : h[k] - 0.12 - drop, z], k * 3);
+      uv.set([x / 29, -z / 29], k * 2);
+      if (gx < nx - 1 && gz < nz - 1) idx.push(k, k + nx, k + 1, k + 1, k + nx, k + nx + 1);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    g.setIndex(idx); g.computeVertexNormals();
+    const relief = new THREE.Mesh(keep(g), groundMat);
+    relief.receiveShadow = !!quality.shadows; relief.userData.fixed = true;
+    group.add(relief);
+    const fg = new THREE.PlaneGeometry(3200, 3200);
+    const fuv = fg.attributes.uv; for (let k = 0; k < fuv.count; k++) fuv.setXY(k, fuv.getX(k) * 110, fuv.getY(k) * 110);
+    const ground = new THREE.Mesh(keep(fg), groundMat);
+    ground.rotation.x = -Math.PI / 2; ground.position.y = -0.62;
+    ground.userData.fixed = true;
+    group.add(ground);
+  }
 
   // --- route : bitume à granulats, usure, fissures, rapiéçages, marquage selon le lieu
   const roadTex = keep(canvasTex(512, 1024, (g, w, h) => {
@@ -595,7 +620,7 @@ function buildWorld(scene, track, quality) {
     const pool = new THREE.InstancedMesh(keep(new THREE.PlaneGeometry(16, 16)), keep(new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })), lamps.length);
     lamps.forEach(([i, side], n) => {
       const nx = -tz[i] * side, nz = tx[i] * side;
-      dummy.position.set(px[i] + nx * (wall - 2.2), 0.04, pz[i] + nz * (wall - 2.2));
+      dummy.position.set(px[i] + nx * (wall - 2.2), 0.12, pz[i] + nz * (wall - 2.2));
       dummy.rotation.set(-Math.PI / 2, 0, 0); dummy.scale.set(1, 1, 1);
       dummy.updateMatrix(); pool.setMatrixAt(n, dummy.matrix);
     });
@@ -629,6 +654,7 @@ function buildWorld(scene, track, quality) {
     animated.push(mat);
     const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(w, d)), mat);
     m.rotation.x = -Math.PI / 2; m.position.set(x, -0.05, z);
+    m.userData.fixed = true;
     group.add(m);
     return m;
   }
@@ -708,6 +734,7 @@ function buildWorld(scene, track, quality) {
       towers.push(gb);
     }
     const sky = new THREE.Mesh(keep(mergeGeos(towers)), keep(new THREE.MeshBasicMaterial({ map: winTex, fog: false, color: 0x9a92bc })));
+    sky.userData.fixed = true;
     group.add(sky);
   } else if (theme === 'sunset') {
     // --- col d'Akane : pins, érables rouges, torii, lanternes, distributeurs, poteaux électriques
@@ -813,6 +840,7 @@ function buildWorld(scene, track, quality) {
     // plage + océan
     const beach = new THREE.Mesh(keep(new THREE.PlaneGeometry(4000, 70)), keep(new THREE.MeshLambertMaterial({ color: 0x3a3532 })));
     beach.rotation.x = -Math.PI / 2; beach.position.set(cxW, -0.08, maxZ + 100);
+    beach.userData.fixed = true;
     group.add(beach);
     water(4000, 1600, cxW, maxZ + 935, 0x0c4f7a, 0x2fa3c4, 1.6);
     // volcan bouclier fumant
@@ -828,13 +856,16 @@ function buildWorld(scene, track, quality) {
       vg.setAttribute('color', new THREE.BufferAttribute(col, 3));
       const volc = new THREE.Mesh(keep(vg), keep(new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })));
       volc.position.set(cxW - 300, -20, czW - 1050);
+      volc.userData.fixed = true;
       group.add(volc);
       // panache
       const puffTex = keep(canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
       const pts = [];
       for (let k = 0; k < 14; k++) pts.push(volc.position.x + k * 9 + (R() - 0.5) * 30, 360 + k * 26, volc.position.z + (R() - 0.5) * 30);
       const pgm = new THREE.BufferGeometry(); pgm.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-      group.add(new THREE.Points(keep(pgm), keep(new THREE.PointsMaterial({ map: puffTex, size: 140, color: 0xe8e6e2, transparent: true, opacity: 0.55, depthWrite: false, fog: false }))));
+      const plume = new THREE.Points(keep(pgm), keep(new THREE.PointsMaterial({ map: puffTex, size: 140, color: 0xe8e6e2, transparent: true, opacity: 0.55, depthWrite: false, fog: false })));
+      plume.userData.fixed = true;
+      group.add(plume);
     }
   }
 
@@ -847,8 +878,36 @@ function buildWorld(scene, track, quality) {
       fragmentShader: 'uniform vec3 a, b, hor; varying float vW; varying float vY; void main(){ vec3 c = mix(a, b, vW); c = mix(hor, c, smoothstep(-10.0, 60.0, vY) * 0.85 + 0.15); gl_FragColor = vec4(c, 1.0); }',
     }));
     const sea = theme === 'day' ? (a) => Math.sin(a) > 0.3 : null; // pas de montagne côté océan
-    group.add(new THREE.Mesh(keep(ridgeGeo(cxW, czW, 1250, 90, 260, track.def.id.length * 7 + 1, 160, sea)), ridgeMat(T.ridge[0], T.ridgeTop[0])));
-    group.add(new THREE.Mesh(keep(ridgeGeo(cxW, czW, 980, 30, theme === 'night' ? 90 : 170, track.def.id.length * 7 + 2, 140, sea)), ridgeMat(T.ridge[1], T.ridgeTop[1])));
+    for (const [r, base, amp, seed, seg, k] of [[1250, 90, 260, 1, 160, 0], [980, 30, theme === 'night' ? 90 : 170, 2, 140, 1]]) {
+      const m = new THREE.Mesh(keep(ridgeGeo(cxW, czW, r, base, amp, track.def.id.length * 7 + seed, seg, sea)), ridgeMat(T.ridge[k], T.ridgeTop[k]));
+      m.userData.fixed = true;
+      group.add(m);
+    }
+  }
+
+  // --- relief : tout ce qui n'est pas fixe (ciel, eau, lointain, sol) se pose sur le terrain.
+  // Groupes (tribune, portique, torii) : déplacés d'un bloc. Maillages simples : chaque sommet suit le sol
+  // (route, murs, vibreurs, zones, câbles épousent la pente). Instances : chacune à la hauteur de son pied.
+  {
+    const _m = new THREE.Matrix4();
+    const done = new Set();
+    for (const o of group.children) {
+      if (o.userData.fixed || o.isLight || o === sun.target) continue;
+      if (o.isInstancedMesh) {
+        for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, _m); const e = _m.elements; e[13] += ter.at(e[12], e[14]); o.setMatrixAt(i, _m); }
+        o.instanceMatrix.needsUpdate = true;
+      } else if (o.isMesh || o.isLineSegments) {
+        if (done.has(o.geometry)) continue;
+        done.add(o.geometry);
+        o.updateMatrix();
+        o.geometry.applyMatrix4(o.matrix);
+        o.position.set(0, 0, 0); o.rotation.set(0, 0, 0); o.scale.set(1, 1, 1);
+        const p = o.geometry.attributes.position;
+        for (let v = 0; v < p.count; v++) p.setY(v, p.getY(v) + ter.at(p.getX(v), p.getZ(v)));
+        p.needsUpdate = true;
+        o.geometry.computeBoundingSphere();
+      } else o.position.y += ter.at(o.position.x, o.position.z);
+    }
   }
 
   function update(t) {
@@ -863,5 +922,5 @@ function buildWorld(scene, track, quality) {
     scene.remove(group);
     for (const d of disposables) d.dispose && d.dispose();
   }
-  return { group, sun, theme: T, update, dispose, skyMat };
+  return { group, sun, theme: T, update, dispose, skyMat, heightAt: ter.at };
 }

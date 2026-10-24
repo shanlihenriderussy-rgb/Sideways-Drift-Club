@@ -80,3 +80,21 @@ test('arcade : aucun réglage extrême ne fait partir la voiture en tête-à-que
     assert.equal(spun, false, JSON.stringify(o));
   }
 });
+
+// Relief : le poids projeté freine en montée, pousse en descente ; à plat, rien ne change.
+test('relief : pente montante, descendante et plat', () => {
+  const s = spec({});
+  const coast = (gx) => {
+    const c = createCarState(s, 0, 0, 0);
+    c.vx = 20; c.gx = gx;
+    for (let t = 0; t < 2; t += DT) stepCar(c, { steer: 0, throttle: 0, brake: 0, handbrake: 0 }, DT, 1);
+    return c.vx;
+  };
+  const flat = coast(0), up = coast(0.08), down = coast(-0.08);
+  assert.ok(up < flat - 1, `montée ${up.toFixed(2)} contre ${flat.toFixed(2)}`);
+  assert.ok(down > flat + 1, `descente ${down.toFixed(2)} contre ${flat.toFixed(2)}`);
+  // à l'arrêt sur une pente de 8 %, la voiture recule
+  const c = createCarState(s, 0, 0, 0); c.gx = 0.08;
+  for (let t = 0; t < 1; t += DT) stepCar(c, { steer: 0, throttle: 0, brake: 0, handbrake: 0 }, DT, 1);
+  assert.ok(c.x < -0.1, `recule de ${(-c.x).toFixed(2)} m`);
+});
