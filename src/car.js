@@ -780,7 +780,7 @@ function buildCar(kind, look) {
     trim: keep(new THREE.MeshStandardMaterial({ color: 0x0e0e10, metalness: 0.15, roughness: 0.7, envMapIntensity: 0.45, side: THREE.DoubleSide })),
     cage: keep(new THREE.MeshStandardMaterial({ color: 0xd6dadf, metalness: 0.92, roughness: 0.22 })),
     head: keep(new THREE.MeshStandardMaterial({ color: look.lights === 'yellow' ? 0xffd27a : 0xffffff, emissive: look.lights === 'yellow' ? 0xffb020 : 0xfff3d0, emissiveIntensity: look.night ? 2.4 : 0.7 })),
-    tow: keep(new THREE.MeshStandardMaterial({ color: 0xa3121b, roughness: 0.8, metalness: 0, envMapIntensity: 0.3 })),
+    tow: keep(new THREE.MeshStandardMaterial({ color: 0x7c0810, roughness: 0.85, metalness: 0, envMapIntensity: 0.1 })), // rouge sangle : sombre, sinon le ciel le rend rose
     seat: keep(new THREE.MeshStandardMaterial({ color: 0xb81f2a, roughness: 0.92, metalness: 0 })),
     tail: keep(new THREE.MeshStandardMaterial({ color: 0x5a0000, emissive: 0xff1a1a, emissiveIntensity: 0.7 })),
   };
