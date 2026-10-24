@@ -981,6 +981,27 @@ const CHALLENGES = [
   { id: 'tourAll', label: 'Un run sur chacune des 6 pistes', reward: 6000, test: (r, p) => p.stats.tracks.length >= 6 }, // = TRACKS.length (vérifié par les tests)
   { id: 'firstPart', label: 'Achète ta première pièce', reward: 500, event: 'buy' },
   { id: 'secondCar', label: 'Achète une deuxième voiture', reward: 2000, event: 'car' },
+  // paliers faciles : de l'argent dès les premières sessions
+  { id: 'pts5', label: '5 000 pts en un run', reward: 600, test: (r) => r.mode !== 'free' && r.score >= 5000 },
+  { id: 'gradeB', label: 'Décroche la note B', reward: 800, test: (r) => r.mode !== 'free' && ['B', 'A', 'S'].includes(r.grade) },
+  { id: 'clips3', label: '3 clips en un run', reward: 600, test: (r) => r.clips >= 3 },
+  { id: 'angle45', label: 'Glisse à 45° ou plus', reward: 500, test: (r) => r.maxAngle >= 45 },
+  { id: 'combo3k', label: 'Combo de 3 000 pts', reward: 700, test: (r) => r.bestCombo >= 3000 },
+  { id: 'tandem1', label: 'Termine un run en tandem', reward: 800, test: (r) => r.mode === 'tandem' },
+  { id: 'free1', label: 'Fais une session libre', reward: 300, test: (r) => r.mode === 'free' },
+  // assiduité
+  { id: 'runs5', label: '5 runs terminés', reward: 1500, test: (r, p) => p.stats.runs >= 5 },
+  { id: 'runs20', label: '20 runs terminés', reward: 4000, test: (r, p) => p.stats.runs >= 20 },
+  { id: 'runs50', label: '50 runs terminés', reward: 10000, test: (r, p) => p.stats.runs >= 50 },
+  { id: 'earn50k', label: '¥50 000 gagnés au total', reward: 5000, test: (r, p) => p.stats.earned >= 50000 },
+  // exploits
+  { id: 'pts70', label: '70 000 pts en un run', reward: 10000, test: (r) => r.score >= 70000 },
+  { id: 'angle75', label: 'Glisse à 75° ou plus', reward: 3000, test: (r) => r.maxAngle >= 75 },
+  { id: 'combo15k', label: 'Combo de 15 000 pts', reward: 4000, test: (r) => r.bestCombo >= 15000 },
+  { id: 'tandemS', label: 'Note S en tandem', reward: 6000, test: (r) => r.mode === 'tandem' && r.grade === 'S' },
+  // une note A ou S sur chaque piste (identifiants alignés sur TRACKS, vérifié par les tests)
+  ...[['minato', 'les Docks de Minato'], ['akane', 'le Col d’Akane'], ['piton', 'le Piton Volcan'], ['shiohama', 'le Quai de Shiohama'], ['yukimi', 'le Col de Yukimi'], ['kaigan', 'la Corniche de Kaigan']]
+    .map(([id, name]) => ({ id: 'trackA:' + id, label: `Note A ou S sur ${name}`, reward: 2500, test: (r) => r.mode !== 'free' && r.trackId === id && (r.grade === 'A' || r.grade === 'S') })),
 ];
 
 const DEFAULT_LOOK = {
@@ -1052,6 +1073,7 @@ function loadProfile(raw, legacy) {
   if (raw.stats && typeof raw.stats === 'object') {
     for (const k of ['runs', 'earned', 'spent', 'bestPayout']) if (Number.isFinite(raw.stats[k])) p.stats[k] = raw.stats[k];
     if (Array.isArray(raw.stats.tracks)) p.stats.tracks = raw.stats.tracks.filter((t) => typeof t === 'string');
+    if (typeof raw.stats.lastDay === 'string') p.stats.lastDay = raw.stats.lastDay;
   }
   return p;
 }
@@ -1168,26 +1190,32 @@ function carStats(base, perf) {
   };
 }
 
-const GRADE_BONUS = { S: 1500, A: 800, B: 400, C: 150, D: 0 };
+const GRADE_BONUS = { S: 2500, A: 1400, B: 700, C: 300, D: 100 };
+const FIRST_RUN_BONUS = 1500; // premier run noté de la journée
 // run : { trackId, mode, score, grade, clips, zones, maxAngle, bestCombo, driftPct, record }
-function computePayout(r) {
+// firstToday : premier run noté du jour (prime en plus)
+function computePayout(r, firstToday) {
   const lines = [];
   const add = (label, amount) => { amount = Math.round(amount); if (amount > 0) lines.push({ label, amount }); };
   if (r.mode === 'free') {
-    add('Session libre', Math.min(2500, r.score * 0.02));
+    add('Session libre', Math.min(3500, r.score * 0.03));
   } else {
-    add(r.mode === 'tandem' ? 'Points (tandem ×1,25)' : 'Points', r.score * 0.05 * (r.mode === 'tandem' ? 1.25 : 1));
+    add(r.mode === 'tandem' ? 'Points (tandem ×1,25)' : 'Points', r.score * 0.07 * (r.mode === 'tandem' ? 1.25 : 1));
     if (r.score > 0) add('Note ' + r.grade, GRADE_BONUS[r.grade] || 0);
-    add(`Clips (${r.clips})`, r.clips * 50);
-    if (r.zones > 0 && r.clips >= r.zones) add('Tous les clips', 1000);
-    if (r.bestCombo >= 10000) add('Gros combo', 500); else if (r.bestCombo >= 5000) add('Beau combo', 250);
-    if (r.record) add('Nouveau record', 750);
+    add(`Clips (${r.clips})`, r.clips * 100);
+    if (r.zones > 0 && r.clips >= r.zones) add('Tous les clips', 1800);
+    if (r.bestCombo >= 10000) add('Gros combo', 900); else if (r.bestCombo >= 5000) add('Beau combo', 450); else if (r.bestCombo >= 2000) add('Combo', 200);
+    if (r.record) add('Nouveau record', 1200);
+    if (firstToday && r.score > 0) add('Premier run du jour', FIRST_RUN_BONUS);
   }
   return { lines, total: lines.reduce((a, l) => a + l.amount, 0) };
 }
 
+// r.day (AAAA-MM-JJ, facultatif) : déclenche la prime du premier run noté de la journée
 function applyRun(p, r) {
-  const payout = computePayout(r);
+  const firstToday = !!r.day && r.mode !== 'free' && r.score > 0 && p.stats.lastDay !== r.day;
+  const payout = computePayout(r, firstToday);
+  if (firstToday) p.stats.lastDay = r.day;
   if (payout.total > 0) credit(p, r.mode === 'free' ? 'Session libre' : 'Run · ' + (r.trackName || r.trackId), payout.total);
   p.stats.runs++;
   p.stats.bestPayout = Math.max(p.stats.bestPayout, payout.total);
@@ -1197,8 +1225,8 @@ function applyRun(p, r) {
   return { payout, challenges, balance: p.money };
 }
 
-// bonus quotidien : 500 ¥ le premier jour, +250 ¥ par jour de série, plafond au 7e jour
-const dailyAmount = (streak) => 500 + 250 * Math.min(Math.max(streak, 1) - 1, 6);
+// bonus quotidien : 1 000 ¥ le premier jour, +500 ¥ par jour de série, plafond au 7e jour (4 000 ¥)
+const dailyAmount = (streak) => 1000 + 500 * Math.min(Math.max(streak, 1) - 1, 6);
 function dayNum(s) { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / 86400000; }
 function dailyPreview(p, today) {
   if (p.daily.last === today) return null;
@@ -4914,7 +4942,7 @@ function createShop(api) {
     $('resEyebrow').textContent = `${mode === 'run' ? 'Run noté' : mode === 'tandem' ? 'Tandem' : 'Libre'} · ${track.def.name}`;
     $('resHeadline').textContent = mode === 'free' ? '« Séance libre : rien n’est noté, tout est permis. »' : record && grade !== 'D' ? `« Record battu sur ${track.def.name}. »` : HEADLINES[grade].replace('%', track.def.name);
     // gains en yens + défis
-    const res = Economy.applyRun(profile, { trackId: track.def.id, trackName: track.def.name, mode, score: total, grade: mode === 'free' ? null : grade, clips: score.clips, zones: track.zones.length, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), record: record && mode !== 'free' });
+    const res = Economy.applyRun(profile, { day: today(), trackId: track.def.id, trackName: track.def.name, mode, score: total, grade: mode === 'free' ? null : grade, clips: score.clips, zones: track.zones.length, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct: Math.round(score.driftT / Math.max(score.runT, 1) * 100), record: record && mode !== 'free' });
     saveProfile(); refreshWallet();
     $('payLines').innerHTML = res.payout.lines.map((l) => `<div><span>${l.label}</span><b>+${Economy.fmt(l.amount)}</b></div>`).join('') || '<div><span>Aucun gain sur ce run.</span></div>';
     $('payChal').innerHTML = res.challenges.map((c) => `<div>Défi réussi : ${c.label} · +${Economy.fmt(c.reward)}</div>`).join('');
