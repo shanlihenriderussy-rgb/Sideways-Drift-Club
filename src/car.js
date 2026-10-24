@@ -336,6 +336,7 @@ function buildCar(kind, look) {
   const d = BODY_DEFS[kind];
   const lod = look.lod == null ? 1 : look.lod;
   const root = new THREE.Group();
+  root.rotation.order = 'YZX'; // cap, puis tangage, puis dévers (relief)
   const body = new THREE.Group();
   root.add(body);
   const disposables = [];
@@ -437,18 +438,31 @@ function buildCar(kind, look) {
   }
 
   // ---------- habitacle vitré ----------
+  const roofY = (x) => {
+    if (x >= ws1) { const t = (ws0 - x) / (ws0 - ws1); return 1 - Math.pow(1 - t, 1.7); }
+    if (x >= d.roofEnd) return 1;
+    const t = (x - gStart) / (d.roofEnd - gStart);
+    return d.hatch ? Math.pow(t, 0.75) : 1 - Math.pow(1 - t, 2.2);
+  };
+  // hauteur de la surface extérieure (caisse ou vitrage) en (x, z) : pour poser une pièce sans flotter ni s'enfoncer
+  const surfY = (x, z) => {
+    let y = topAt(x, z);
+    if (x > gStart && x < ws0) {
+      const s = section(x), wb = s.wT - 0.035, yb = s.yS - 0.004, k = roofY(x);
+      const yt = yb + (d.roof - yb) * k, wt = wb - d.tumble * (0.4 + 0.6 * k);
+      const prof = [[0, yt + 0.018 * k], [wt - 0.06, yt], [wt + 0.03, yt - 0.055 * k], [wb, yb]];
+      const a = Math.abs(z);
+      for (let i = 0; i < 3; i++) if (a <= prof[i + 1][0]) { const t = (a - prof[i][0]) / (prof[i + 1][0] - prof[i][0]); y = Math.max(y, prof[i][1] + (prof[i + 1][1] - prof[i][1]) * t); break; }
+    }
+    return y;
+  };
+  const plainUV = (g) => { const uv = g.attributes.uv; for (let k = 0; k < uv.count; k++) uv.setXY(k, ATLAS.plain[0], ATLAS.plain[1]); return g; };
   {
     const gx = [];
     const n = lod ? 30 : 16;
     for (let i = 0; i <= n; i++) gx.push(gStart + (ws0 - gStart) * (i / n));
     for (const k of [ws1 + 0.02, ws1 - 0.02, d.roofEnd + 0.02, d.roofEnd - 0.02, d.bpil - 0.05, d.bpil + 0.05, d.cpil]) if (k > gStart && k < ws0) gx.push(k);
     gx.sort((a, b) => a - b);
-    const roofY = (x) => {
-      if (x >= ws1) { const t = (ws0 - x) / (ws0 - ws1); return 1 - Math.pow(1 - t, 1.7); }
-      if (x >= d.roofEnd) return 1;
-      const t = (x - gStart) / (d.roofEnd - gStart);
-      return d.hatch ? Math.pow(t, 0.75) : 1 - Math.pow(1 - t, 2.2);
-    };
     const gRings = gx.map((x) => {
       const s = section(x), u = U(x);
       const wb = s.wT - 0.035, yb = s.yS - 0.004;
@@ -481,13 +495,25 @@ function buildCar(kind, look) {
 
   // ---------- intérieur : baquets, tableau de bord, volant à droite (JDM) ----------
   if (lod) {
+    const race = look.seat === 'bucket' || look.seat === 'harness';
+    const sm = race ? 'seat' : 'trim';
     for (const sz of [-1, 1]) {
       const z = sz * 0.36, x = ws0 - 1.0;
-      add('trim', bake(new THREE.BoxGeometry(0.46, 0.1, 0.44), x, floorY + 0.12, z));
-      add('trim', bake(new THREE.BoxGeometry(0.1, 0.62, 0.46), x - 0.26, floorY + 0.45, z, 0, 0, 0.22));
+      add(sm, bake(new THREE.BoxGeometry(0.46, 0.1, 0.44), x, floorY + 0.12, z));
+      if (race) {
+        // baquet enveloppant : dossier haut, joues latérales, passages de harnais
+        add(sm, bake(new THREE.BoxGeometry(0.08, 0.78, 0.44), x - 0.27, floorY + 0.52, z, 0, 0, 0.18));
+        for (const k of [-1, 1]) add(sm, bake(new THREE.BoxGeometry(0.3, 0.42, 0.05), x - 0.17, floorY + 0.42, z + k * 0.22, 0, 0, 0.18));
+        if (look.seat === 'harness') for (const k of [-1, 1]) add('tow', bake(new THREE.BoxGeometry(0.02, 0.62, 0.05), x - 0.2, floorY + 0.5, z + k * 0.1, 0, 0, 0.32));
+      } else add(sm, bake(new THREE.BoxGeometry(0.1, 0.62, 0.46), x - 0.26, floorY + 0.45, z, 0, 0, 0.22));
     }
     add('trim', bake(new THREE.BoxGeometry(0.34, 0.16, (wT0 - 0.1) * 2), ws0 - 0.2, d.cowl - 0.12, 0));
-    add('trim', bake(new THREE.TorusGeometry(0.16, 0.022, 6, 16), ws0 - 0.48, d.cowl - 0.06, 0.36, 0, Math.PI / 2 - 0.35, 0));
+    if (look.wheelS === 'deep') {
+      // volant deep dish : jante épaisse, branches creusées, repère jaune à midi
+      add('trim', bake(new THREE.TorusGeometry(0.17, 0.03, 8, 20), ws0 - 0.52, d.cowl - 0.05, 0.36, 0, Math.PI / 2 - 0.35, 0));
+      add('trim', bake(new THREE.ConeGeometry(0.15, 0.1, 10, 1, true), ws0 - 0.47, d.cowl - 0.07, 0.36, 0, 0, Math.PI / 2 + 0.35));
+      add('tow', bake(new THREE.BoxGeometry(0.03, 0.06, 0.035), ws0 - 0.52 - Math.sin(0.35) * 0.0, d.cowl + 0.12, 0.36, 0, 0, -0.35));
+    } else add('trim', bake(new THREE.TorusGeometry(0.16, 0.022, 6, 16), ws0 - 0.48, d.cowl - 0.06, 0.36, 0, Math.PI / 2 - 0.35, 0));
   }
   // arceau
   if (look.cage === 'cage') {
@@ -501,9 +527,23 @@ function buildCar(kind, look) {
 
   // ---------- rétroviseurs ----------
   for (const sz of [-1, 1]) {
+    if (look.mirror === 'fender') {
+      // rétros d'aile JDM : petit miroir noir sur tige fine, au-dessus de la roue avant
+      const x = fa + 0.18, z = sz * section(x).wT * 0.9, y = topAt(x, z);
+      add('trim', bake(new THREE.CylinderGeometry(0.008, 0.01, 0.16, 5), x, y + 0.08, z, 0, 0, -0.25));
+      add('trim', bake(new THREE.BoxGeometry(0.05, 0.06, 0.09), x - 0.02, y + 0.17, z + sz * 0.015, 0, sz * 0.2, 0));
+      continue;
+    }
     const s = section(ws0 - 0.08);
-    add('paint', bake(new THREE.BoxGeometry(0.14, 0.08, 0.11), ws0 - 0.12, s.yS + 0.075, sz * (s.wT + 0.1), 0, sz * 0.15, 0));
-    add('trim', bake(new THREE.BoxGeometry(0.06, 0.025, 0.1), ws0 - 0.1, s.yS + 0.03, sz * (s.wT + 0.03)));
+    if (look.mirror === 'aero') {
+      // rétro aéro : coque en goutte sur un bras fin
+      const g = new THREE.SphereGeometry(1, 10, 6); g.scale(0.09, 0.04, 0.055);
+      add('paint', plainUV(bake(g, ws0 - 0.14, s.yS + 0.09, sz * (s.wT + 0.14))));
+      add('trim', bake(new THREE.BoxGeometry(0.08, 0.012, 0.13), ws0 - 0.1, s.yS + 0.06, sz * (s.wT + 0.07), sz * 0.35, 0, 0));
+    } else {
+      add('paint', bake(new THREE.BoxGeometry(0.14, 0.08, 0.11), ws0 - 0.12, s.yS + 0.075, sz * (s.wT + 0.1), 0, sz * 0.15, 0));
+      add('trim', bake(new THREE.BoxGeometry(0.06, 0.025, 0.1), ws0 - 0.1, s.yS + 0.03, sz * (s.wT + 0.03)));
+    }
   }
 
   // ---------- face avant ----------
@@ -542,7 +582,14 @@ function buildCar(kind, look) {
     }
   }
   // pare-chocs avant : lame / bouclier aéro
-  if (look.front === 'lip' || look.front === 'aero') {
+  if (look.front === 'canard') {
+    // canards : deux ailettes carbone par coin de bouclier, sous les phares, inclinées vers l'avant
+    for (const sz of [-1, 1]) for (const [dy, dx] of [[0.05, 0.1], [0.12, 0.16]]) {
+      const x = X1 - dx, s = section(x);
+      add('carbon', bake(new THREE.BoxGeometry(0.15, 0.01, 0.09), x, s.yBot + dy, sz * (s.wB + 0.02), 0, sz * 0.35, -0.22));
+    }
+  }
+  if (look.front === 'lip' || look.front === 'aero' || look.front === 'canard') {
     const depth = look.front === 'aero' ? 0.32 : 0.22;
     add('carbon', bake(new THREE.BoxGeometry(depth, 0.025, sF.wL * 2 * 0.98), X1 - depth / 2 + 0.07, sF.yBot - 0.025, 0));
   }
@@ -551,6 +598,17 @@ function buildCar(kind, look) {
       add('carbon', bake(new THREE.BoxGeometry(0.2, 0.012, 0.12), X1 - 0.06, sF.yBot + 0.09, sz * (sF.wB - 0.02), 0, 0, 0.2));
       const s = section((fa + ra) / 2);
       add('carbon', bake(new THREE.BoxGeometry(fa - ra - AR * 2 - 0.1, 0.05, 0.07), (fa + ra) / 2, d.sill - 0.01, sz * (s.wL + 0.01)));
+    }
+  }
+
+  // jupes latérales entre les passages de roue
+  if (look.skirt === 'skirt' || look.skirt === 'carbon') {
+    const x0 = ra + AR + 0.04, x1 = fa - AR - 0.04, xm = (x0 + x1) / 2;
+    for (const sz of [-1, 1]) {
+      const s = section(xm);
+      const g = new THREE.BoxGeometry(x1 - x0, 0.09, 0.06);
+      add(look.skirt === 'carbon' ? 'carbon' : 'paint', look.skirt === 'carbon' ? bake(g, xm, d.sill - 0.005, sz * (s.wL + 0.015)) : plainUV(bake(g, xm, d.sill - 0.005, sz * (s.wL + 0.015))));
+      add('trim', bake(new THREE.BoxGeometry(x1 - x0, 0.012, 0.08), xm, d.sill - 0.05, sz * (s.wL + 0.02)));
     }
   }
 
@@ -580,7 +638,17 @@ function buildCar(kind, look) {
   }
   add('paint', quadGeo([rz - 0.002, sR.yBot + 0.1, -0.2], [rz - 0.002, sR.yBot + 0.1, 0.2], [rz - 0.002, sR.yBot + 0.23, 0.2], [rz - 0.002, sR.yBot + 0.23, -0.2], atlasUV(ATLAS.plate)));
   add('trim', bake(new THREE.BoxGeometry(0.3, 0.06, sR.wL * 1.7), X0 + 0.12, sR.yBot - 0.015, 0));
-  for (let k = -2; k <= 2; k++) add('trim', bake(new THREE.BoxGeometry(0.28, 0.07, 0.012), X0 + 0.12, sR.yBot - 0.05, k * 0.16));
+  if (look.diffuser === 'fins') {
+    // diffuseur carbone relevé vers l'arrière, ailettes hautes
+    add('carbon', bake(new THREE.BoxGeometry(0.5, 0.02, sR.wL * 1.75), X0 + 0.2, sR.yBot - 0.03, 0, 0, 0, -0.16));
+    for (let k = -3; k <= 3; k++) add('carbon', bake(new THREE.BoxGeometry(0.48, 0.13, 0.014), X0 + 0.2, sR.yBot - 0.07, k * 0.13, 0, 0, -0.16));
+  } else for (let k = -2; k <= 2; k++) add('trim', bake(new THREE.BoxGeometry(0.28, 0.07, 0.012), X0 + 0.12, sR.yBot - 0.05, k * 0.16));
+  // sangles de remorquage rouges (avant droit, arrière gauche)
+  if (look.tow === 'tow') {
+    const strap = (x, y, z, rz) => { const g = new THREE.TorusGeometry(0.07, 0.012, 4, 14, Math.PI * 1.2); g.scale(1, 1, 2.2); add('tow', bake(g, x, y, z, Math.PI / 2, 0, rz)); };
+    strap(X1 + 0.05, sF.yBot + 0.02, sF.wB * 0.45, Math.PI);
+    strap(X0 - 0.05, sR.yBot + 0.02, -sR.wB * 0.42, 0);
+  }
 
   // ---------- échappement + flammes ----------
   const flameM = keep(new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -605,6 +673,27 @@ function buildCar(kind, look) {
   }
   body.add(flame);
 
+  // ---------- toit : écope, pare-soleil, galerie ----------
+  {
+    const xr = (ws1 + d.roofEnd) / 2, yr = surfY(xr, 0);
+    if (look.roof === 'scoop') {
+      const sh = new THREE.Shape(); sh.moveTo(0.36, 0); sh.lineTo(-0.1, 0); sh.lineTo(-0.1, 0.07); sh.lineTo(0.02, 0.075); sh.closePath();
+      const g = new THREE.ExtrudeGeometry(sh, { depth: 0.3, bevelEnabled: false });
+      add('paint', plainUV(g.translate(ws1 - 0.32, surfY(ws1 - 0.1, 0) - 0.01, -0.15)));
+      add('trim', bake(new THREE.BoxGeometry(0.01, 0.055, 0.26), ws1 + 0.04 - 0.32 + 0.08, surfY(ws1 - 0.1, 0) + 0.03, 0));
+    } else if (look.roof === 'visor') {
+      const x = ws1 + 0.06, s = section(x);
+      add('trim', bake(new THREE.BoxGeometry(0.2, 0.012, (s.wT - d.tumble) * 1.9), x + 0.05, surfY(x, 0) + 0.004, 0, 0, 0, -0.32));
+    } else if (look.roof === 'rack') {
+      // galerie tubulaire et pneu de rechange couché (assistance de drift)
+      const zr = (section(xr).wT - d.tumble) * 0.82, len = (ws1 - d.roofEnd) * 0.85;
+      for (const sz of [-1, 1]) { add('cage', bake(new THREE.BoxGeometry(len, 0.025, 0.025), xr, yr + 0.07, sz * zr)); for (const k of [-1, 1]) add('trim', bake(new THREE.BoxGeometry(0.04, 0.07, 0.04), xr + k * len * 0.42, yr + 0.035, sz * zr)); }
+      for (const k of [-1, 1]) add('cage', bake(new THREE.BoxGeometry(0.025, 0.025, zr * 2), xr + k * len * 0.3, yr + 0.085, 0));
+      const tire = new THREE.TorusGeometry(0.24, 0.09, 8, 18); tire.rotateX(Math.PI / 2);
+      add('trim', bake(tire, xr, yr + 0.18, 0));
+    }
+  }
+
   // ---------- aileron ----------
   const wing = look.wing === 'stock' || !look.wing ? d.wing : look.wing;
   const deckAt = (x) => topY(x);
@@ -617,18 +706,67 @@ function buildCar(kind, look) {
     const g = new THREE.ExtrudeGeometry(sh, { depth: s.wT * 1.9, bevelEnabled: false });
     add('paint', g.translate(x, deckAt(x) - 0.01, -s.wT * 0.95));
   } else if (wing === 'gt' || wing === 'hoop' || wing === 'swan') {
-    const x = X0 + (wing === 'swan' ? 0.26 : 0.32), y = d.deck + (wing === 'swan' ? 0.42 : wing === 'hoop' ? 0.24 : 0.3);
-    const span = wing === 'hoop' ? W * 2 - 0.08 : W * 2 - (wing === 'swan' ? 0.1 : 0.25);
-    const bladeMat = wing === 'hoop' ? 'paint' : wing === 'swan' ? 'carbon' : 'trim';
-    add(bladeMat, bake(new THREE.BoxGeometry(0.36, 0.035, span), x, y, 0, 0, 0, 0.1));
-    add(bladeMat, bake(new THREE.BoxGeometry(0.1, 0.02, span), x - 0.17, y + 0.025, 0, 0, 0, 0.6));
+    const swan = wing === 'swan', hoop = wing === 'hoop';
+    const chord = swan ? 0.36 : 0.32, aoa = -0.12; // incidence : bord de fuite relevé (appui)
+    const x = X0 + (swan ? 0.22 : 0.3), y = d.deck + (swan ? 0.36 : hoop ? 0.24 : 0.3);
+    const span = hoop ? W * 2 - 0.08 : W * 2 - (swan ? 0.04 : 0.25);
+    const bladeMat = hoop ? 'paint' : swan ? 'carbon' : 'trim';
+    const put = (g) => (bladeMat === 'paint' ? plainUV(g) : g);
+    // profil d'aile inversé : extrados plat en haut, ventre bombé en dessous ; bord d'attaque vers l'avant (+x)
+    const foil = (c, t) => {
+      const sh = new THREE.Shape();
+      sh.moveTo(c / 2, 0);
+      for (let i = 1; i <= 12; i++) { const u = i / 12; sh.lineTo(c / 2 - u * c, 0.004 * Math.sin(Math.PI * u)); }
+      for (let i = 11; i >= 1; i--) { const u = i / 12; sh.lineTo(c / 2 - u * c, -t * Math.sin(Math.PI * Math.pow(u, 0.6))); }
+      sh.closePath();
+      return new THREE.ExtrudeGeometry(sh, { depth: span, bevelEnabled: false, curveSegments: 4 }).translate(0, 0, -span / 2);
+    };
+    add(bladeMat, put(bake(foil(chord, 0.035), x, y, 0, 0, 0, aoa)));
+    // volet (deuxième élément) au-dessus du bord de fuite, plus incliné
+    const fx = x - chord / 2 + 0.03, fy = y + 0.055;
+    add(bladeMat, put(bake(foil(0.13, 0.016), fx, fy, 0, 0, 0, -0.55)));
+    // dérives : plaques fines qui ferment les extrémités de la lame et du volet
+    const ep = new THREE.Shape();
+    ep.moveTo(chord / 2 + 0.02, -0.045); ep.lineTo(-chord / 2 - 0.02, -0.06); ep.lineTo(-chord / 2 - 0.04, 0.1); ep.lineTo(-chord / 2 + 0.08, 0.1); ep.lineTo(chord / 2 + 0.03, 0.012); ep.closePath();
+    const epMat = hoop ? 'paint' : swan ? 'carbon' : 'trim';
     for (const sz of [-1, 1]) {
-      const zs = sz * (span / 2 - (wing === 'hoop' ? 0.02 : 0.2));
-      if (wing === 'swan') {
-        add('carbon', bake(new THREE.BoxGeometry(0.06, 0.26, 0.02), x + 0.16, y + 0.06, zs, 0, 0, -0.5));
-        add('carbon', bake(new THREE.BoxGeometry(0.05, 0.3, 0.02), x + 0.3, deckAt(x + 0.3) + 0.12, zs, 0, 0, 0.35));
-      } else add(bladeMat, bake(new THREE.BoxGeometry(0.12, y - deckAt(x) + 0.02, 0.035), x + 0.02, (y + deckAt(x)) / 2, zs, 0, 0, wing === 'hoop' ? -0.15 : 0));
-      add(wing === 'hoop' ? 'paint' : 'trim', bake(new THREE.BoxGeometry(0.42, wing === 'swan' ? 0.22 : 0.15, 0.025), x - 0.01, y + 0.03, sz * span / 2));
+      const g = new THREE.ExtrudeGeometry(ep, { depth: 0.012, bevelEnabled: false }).translate(0, 0, sz > 0 ? 0 : -0.012);
+      add(epMat, epMat === 'paint' ? plainUV(bake(g, x, y, sz * span / 2)) : bake(g, x, y, sz * span / 2));
+    }
+    for (const sz of [-1, 1]) {
+      const zs = sz * (span / 2 - (hoop ? 0.02 : swan ? 0.24 : 0.2));
+      if (swan) {
+        // col de cygne : plaque qui part du coffre devant la lame, monte au-dessus et redescend
+        // s'accrocher sur l'extrados (la lame pend sous ses supports)
+        const xb = x + 0.26, yb = surfY(xb, zs) - 0.01;
+        const P0 = [xb, yb], P1 = [xb + 0.02, y + 0.16], P2 = [x + 0.14, y + 0.2], P3 = [x - 0.02, y + 0.012];
+        const bez = (t) => { const u = 1 - t; return [0, 1].map((k) => u * u * u * P0[k] + 3 * u * u * t * P1[k] + 3 * u * t * t * P2[k] + t * t * t * P3[k]); };
+        const L = [], Rr = [], n = 14;
+        for (let i = 0; i <= n; i++) {
+          const t = i / n, p = bez(t), q = bez(Math.min(1, t + 0.01)), o = bez(Math.max(0, t - 0.01));
+          let tx = q[0] - o[0], ty = q[1] - o[1]; const l = Math.hypot(tx, ty) || 1; tx /= l; ty /= l;
+          const w = 0.026 + 0.022 * (1 - t) * (1 - t); // plus large au pied
+          L.push([p[0] - ty * w, p[1] + tx * w]); Rr.push([p[0] + ty * w, p[1] - tx * w]);
+        }
+        const sh = new THREE.Shape();
+        sh.moveTo(...L[0]); for (const q of L.slice(1)) sh.lineTo(...q); for (const q of Rr.reverse()) sh.lineTo(...q); sh.closePath();
+        add('carbon', new THREE.ExtrudeGeometry(sh, { depth: 0.016, bevelEnabled: false, curveSegments: 2 }).translate(0, 0, zs - 0.008));
+        // platine de fixation sur le coffre
+        add('trim', bake(new THREE.BoxGeometry(0.12, 0.012, 0.06), xb, yb + 0.006, zs));
+      } else {
+        const base = surfY(x + 0.02, zs) - 0.01;
+        add(bladeMat, put(bake(new THREE.BoxGeometry(0.12, y - base, 0.035), x + 0.02, (y + base) / 2, zs, 0, 0, hoop ? -0.15 : 0)));
+      }
+    }
+  }
+
+  // bavettes derrière chaque roue
+  if (look.flaps === 'flaps') {
+    for (const wx of [fa, ra]) for (const sz of [-1, 1]) {
+      const s = section(wx);
+      const z = sz * (s.wB - d.tw / 2 - 0.01), x = wx - AR + 0.02;
+      add('trim', bake(new THREE.BoxGeometry(0.012, R * 0.95, d.tw + 0.02), x, R * 0.5 + 0.02, z));
+      add('tow', bake(new THREE.BoxGeometry(0.014, 0.05, d.tw + 0.02), x, R * 0.9, z));
     }
   }
 
@@ -638,10 +776,12 @@ function buildCar(kind, look) {
   const liv = keep(paintLivery(look, d, X0, L, wT0));
   const mats = {
     paint: keep(new THREE.MeshStandardMaterial({ map: liv, metalness: met, roughness: rough, envMapIntensity: envI })),
-    glass: keep(new THREE.MeshStandardMaterial({ color: 0x0b1018, metalness: 0.85, roughness: 0.06, transparent: true, opacity: 0.8, envMapIntensity: 1.3 })),
+    glass: keep(new THREE.MeshStandardMaterial({ color: look.tint === 'dark' ? 0x020305 : 0x0b1018, metalness: 0.85, roughness: 0.06, transparent: true, opacity: look.tint === 'dark' ? 0.97 : look.tint === 'smoke' ? 0.9 : 0.8, envMapIntensity: 1.3 })),
     trim: keep(new THREE.MeshStandardMaterial({ color: 0x0e0e10, metalness: 0.15, roughness: 0.7, envMapIntensity: 0.45, side: THREE.DoubleSide })),
     cage: keep(new THREE.MeshStandardMaterial({ color: 0xd6dadf, metalness: 0.92, roughness: 0.22 })),
-    head: keep(new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff3d0, emissiveIntensity: look.night ? 2.4 : 0.7 })),
+    head: keep(new THREE.MeshStandardMaterial({ color: look.lights === 'yellow' ? 0xffd27a : 0xffffff, emissive: look.lights === 'yellow' ? 0xffb020 : 0xfff3d0, emissiveIntensity: look.night ? 2.4 : 0.7 })),
+    tow: keep(new THREE.MeshStandardMaterial({ color: 0xa3121b, roughness: 0.8, metalness: 0, envMapIntensity: 0.3 })),
+    seat: keep(new THREE.MeshStandardMaterial({ color: 0xb81f2a, roughness: 0.92, metalness: 0 })),
     tail: keep(new THREE.MeshStandardMaterial({ color: 0x5a0000, emissive: 0xff1a1a, emissiveIntensity: 0.7 })),
   };
   if (parts.has('carbon')) { if (!_carbonTex) _carbonTex = carbonTexture(); mats.carbon = keep(new THREE.MeshStandardMaterial({ map: _carbonTex, metalness: 0.35, roughness: 0.32, envMapIntensity: 1.1 })); }
@@ -713,9 +853,19 @@ function buildCar(kind, look) {
     root, body, wheels, flame, tailM: mats.tail, headM: mats.head, paint: mats.paint,
     rearX: ra, frontX: fa, halfW: W, length: L, headLamps,
     exhaust: new THREE.Vector3(tips[0].p[0], tips[0].p[1], tips[0].p[2]),
+    ground: null, // hauteur du sol (x, z) → m ; posée par le jeu (relief)
     update(state, dt, braking) {
-      root.position.set(state.x, 0, state.z);
-      root.rotation.y = -state.heading;
+      // relief : la caisse se pose sur 4 points du sol (tangage et dévers suivent la pente)
+      let y = 0, pitchG = 0, rollG = 0;
+      const H = this.ground;
+      if (H) {
+        const c = Math.cos(state.heading), s = Math.sin(state.heading), hl = (fa - ra) / 2, hw = W * 0.9;
+        const xm = state.x + c * (fa + ra) / 2, zm = state.z + s * (fa + ra) / 2;
+        const f = H(xm + c * hl, zm + s * hl), r = H(xm - c * hl, zm - s * hl), rt = H(xm - s * hw, zm + c * hw), lt = H(xm + s * hw, zm - c * hw);
+        y = (f + r + rt + lt) / 4; pitchG = Math.atan2(f - r, hl * 2); rollG = -Math.atan2(rt - lt, hw * 2);
+      }
+      root.position.set(state.x, y, state.z);
+      root.rotation.set(rollG, -state.heading, pitchG);
       body.rotation.set(state.rollAngle * 0.9, 0, state.pitchAngle);
       body.position.y = rideY + Math.abs(state.rollAngle) * 0.1;
       for (const w of wheels) {

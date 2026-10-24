@@ -24,6 +24,7 @@ function createCarState(spec, x, z, heading) {
     steer: 0, // entrée lissée -1..1
     throttle: 0, brake: 0, handbrake: 0,
     surface: 1, // 1 = bitume, <1 = herbe / gravier
+    gx: 0, gz: 0, // pente du sol (relief), mise à jour par le jeu avant chaque pas
     grip: 1, // adhérence de la piste (neige < 1)
     // sorties utiles au rendu / son / score
     speed: 0, fwd: 0, lat: 0, slip: 0, rearSlip: 0, frontSlip: 0,
@@ -136,6 +137,12 @@ function stepCar(c, input, dt, assist) {
   if (speed > 0.05) {
     Fx -= (vx / speed) * (bTot + drag);
     Fy -= (vy / speed) * (bTot * 0.4 + drag);
+  }
+
+  // relief : pente du sol (gx, gz = dh/dx, dh/dz, posées par le jeu) → poids projeté dans le repère voiture
+  if (c.gx || c.gz) {
+    Fx -= mg * (c.gx * cos + c.gz * sin);
+    Fy -= mg * (-c.gx * sin + c.gz * cos);
   }
 
   // --- couple de lacet

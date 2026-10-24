@@ -4,7 +4,7 @@
 function createShop(api) {
   const $ = (id) => document.getElementById(id);
   const E = Economy;
-  const TABS = [['car', 'Voiture'], ['body', 'Carrosserie'], ['paint', 'Peinture'], ['wheels', 'Roues'], ['perf', 'Perfs'], ['tune', 'Réglages']];
+  const TABS = [['car', 'Voiture'], ['body', 'Carrosserie'], ['paint', 'Peinture'], ['wheels', 'Roues'], ['chassis', 'Châssis'], ['perf', 'Perfs'], ['tune', 'Réglages']];
   const clone = (o) => JSON.parse(JSON.stringify(o));
   const hex = (n) => '#' + n.toString(16).padStart(6, '0');
   const SW = { paint: E.PAINTS, accent: E.PAINTS, rim: E.RIMS, smoke: E.SMOKES, neon: E.NEONS };

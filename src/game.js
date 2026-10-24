@@ -58,6 +58,9 @@
   let shake = 0, timeScale = 1;
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   const _camT = new THREE.Vector3(), _camL = new THREE.Vector3(); // tampons : aucune allocation par image
+  // relief : hauteur du sol (terrain de la piste) et pente, sans allocation
+  const gy = (x, z) => track.terrain.at(x, z);
+  const _grad = [0, 0];
   const showroom = { x: 0, z: 0, heading: 0, wheelRot: 0, steerAngle: 0, rollAngle: 0, pitchAngle: 0 };
 
   // ---------- environnement de reflets (ciel) ----------
@@ -124,6 +127,7 @@
     return {
       paint, accent, finish: cfg.finish, livery: cfg.livery, number: cfg.number, rimStyle: cfg.rimStyle, rim: hexOf(Economy.RIMS, cfg.rim, 0xb07a3a),
       front: cfg.front, wide: cfg.wide, wing: cfg.wing, hood: cfg.hood, exhaust: cfg.exhaust, cage: cfg.cage,
+      skirt: cfg.skirt, diffuser: cfg.diffuser, mirror: cfg.mirror, roof: cfg.roof, lights: cfg.lights, tint: cfg.tint, seat: cfg.seat, wheelS: cfg.wheelS, tow: cfg.tow, flaps: cfg.flaps,
       neon: cfg.neon === 'none' ? null : hexOf(Economy.NEONS, cfg.neon, null), tune: cfg.tune, brakes: cfg.perf.brakes, night, lod: qLevel === 'low' ? 0 : 1,
     };
   }
@@ -147,12 +151,14 @@
     const kind = showKind || profile.current;
     const cfg = showCfg || profile.cars[kind];
     playerModel = buildCar(kind, lookOf(cfg, night));
+    playerModel.ground = track.terrain.at;
     scene.add(playerModel.root);
     setSmoke('P', cfg);
     if (!playerOnly) {
       const lk = profile.current === 'raijin' ? 'kouki' : 'raijin';
       const lc = leaderCfg(lk);
       leaderModel = buildCar(lk, lookOf(lc, night));
+      leaderModel.ground = track.terrain.at;
       setSmoke('L', lc);
       scene.add(leaderModel.root);
     }
@@ -573,7 +579,7 @@
           Sound.impact(vn); vibrate(Math.min(120, vn * 12));
           if (!settings.reduce) shake = Math.min(1, shake + vn * 0.08);
           const [cx, cz] = carPoint(st, cornerX, side * playerModel.halfW);
-          for (let k = 0; k < Math.min(30, vn * 4); k++) sparks.emit(cx, 0.5, cz, (Math.random() - 0.5) * 6 + st.vx * 0.3, 2 + Math.random() * 4, (Math.random() - 0.5) * 6 + st.vz * 0.3, 0.4 + Math.random() * 0.3, 0.25, 0.08, 1);
+          for (let k = 0; k < Math.min(30, vn * 4); k++) sparks.emit(cx, gy(cx, cz) + 0.5, cz, (Math.random() - 0.5) * 6 + st.vx * 0.3, 2 + Math.random() * 4, (Math.random() - 0.5) * 6 + st.vz * 0.3, 0.4 + Math.random() * 0.3, 0.25, 0.08, 1);
         }
         if (vn > 3 && phase === 'play') lose('Contact mur');
       }
@@ -626,13 +632,15 @@
       const r = V.r * (portrait ? 1.3 : 1);
       const hx = Math.cos(st.heading), hz = Math.sin(st.heading);
       const cx = st.x + hx * (V.fwd || 0), cz = st.z + hz * (V.fwd || 0);
-      _camT.set(cx + Math.cos(st.heading + a) * r, V.h * (portrait ? 1.15 : 1), cz + Math.sin(st.heading + a) * r);
-      if (snapCam) { camPos.copy(_camT); camLook.set(cx, 0.5, cz); snapCam = false; }
+      const g0 = gy(cx, cz);
+      _camT.set(cx + Math.cos(st.heading + a) * r, 0, cz + Math.sin(st.heading + a) * r);
+      _camT.y = Math.max(g0, gy(_camT.x, _camT.z)) + V.h * (portrait ? 1.15 : 1);
+      if (snapCam) { camPos.copy(_camT); camLook.set(cx, g0 + 0.5, cz); snapCam = false; }
       camPos.lerp(_camT, 1 - Math.exp(-dt * 3.2));
       // la voiture se cadre à gauche (le panneau occupe la droite) ou en haut en portrait
       let rx = camPos.x - cx, rz = camPos.z - cz; const rl = Math.hypot(rx, rz) || 1; rx /= rl; rz /= rl;
       const off = portrait || V.noOff ? 0 : 2.3 * V.r / 7;
-      _camL.set(cx + rz * off, portrait ? 0.45 - 0.3 * r : (V.look || 0.6), cz - rx * off); // portrait : voiture dans le tiers haut, au-dessus du panneau
+      _camL.set(cx + rz * off, g0 + (portrait ? 0.45 - 0.3 * r : (V.look || 0.6)), cz - rx * off); // portrait : voiture dans le tiers haut, au-dessus du panneau
       camLook.lerp(_camL, 1 - Math.exp(-dt * 6));
       camera.fov += ((portrait ? 64 : 46) - camera.fov) * 0.1;
     } else if (attract) {
@@ -640,8 +648,9 @@
       const a = t * 0.18;
       const r = portrait ? 11 : 8.5;
       const tx = st.x + Math.cos(a) * r, tz = st.z + Math.sin(a) * r;
-      camPos.lerp(_camT.set(tx, 2.2, tz), 1 - Math.exp(-dt * 2));
-      camLook.lerp(_camL.set(st.x, 0.8, st.z), 1 - Math.exp(-dt * 6));
+      const g0 = gy(st.x, st.z);
+      camPos.lerp(_camT.set(tx, Math.max(g0, gy(tx, tz)) + 2.2, tz), 1 - Math.exp(-dt * 2));
+      camLook.lerp(_camL.set(st.x, g0 + 0.8, st.z), 1 - Math.exp(-dt * 6));
       camera.fov += ((portrait ? 70 : 50) - camera.fov) * 0.1;
     } else {
       const C = CAMS[camMode];
@@ -650,8 +659,10 @@
       let dx = hx, dz = hz;
       if (sp > 4) { const w = 0.6; dx = hx * (1 - w) + (st.vx / sp) * w; dz = hz * (1 - w) + (st.vz / sp) * w; const l = Math.hypot(dx, dz); dx /= l; dz /= l; }
       const dist = (C.dist + Math.min(sp, 30) * 0.03) * (portrait ? 1.25 : 1);
-      camPos.lerp(_camT.set(st.x - dx * dist, C.h * (portrait ? 1.25 : 1), st.z - dz * dist), 1 - Math.exp(-dt * (camMode === 2 ? 9 : 5.5)));
-      camLook.lerp(_camL.set(st.x + hx * 2.2, C.look + (portrait ? 0.3 : 0), st.z + hz * 2.2), 1 - Math.exp(-dt * 10));
+      // relief : la caméra suit la hauteur de la voiture et ne passe jamais sous le sol derrière elle
+      const g0 = gy(st.x, st.z), cxp = st.x - dx * dist, czp = st.z - dz * dist;
+      camPos.lerp(_camT.set(cxp, Math.max(g0, gy(cxp, czp) + 0.6) + C.h * (portrait ? 1.25 : 1), czp), 1 - Math.exp(-dt * (camMode === 2 ? 9 : 5.5)));
+      camLook.lerp(_camL.set(st.x + hx * 2.2, gy(st.x + hx * 2.2, st.z + hz * 2.2) + C.look + (portrait ? 0.3 : 0), st.z + hz * 2.2), 1 - Math.exp(-dt * 10));
       const fov = (portrait ? 70 : 54) + (settings.reduce ? 0 : Math.min(sp, 40) * 0.26);
       camera.fov += (fov - camera.fov) * Math.min(1, dt * 3);
     }
@@ -674,12 +685,13 @@
     const intensity = Math.max(k, spin * 0.8);
     for (const sz of [-1, 1]) {
       const [x, z] = carPoint(st, model.rearX, sz * (model.halfW - 0.08));
-      skids.mark(id + sz, x, z, intensity, 0.28 + Math.min(Math.abs(st.slip), 0.8) * 0.25);
+      const y = gy(x, z);
+      skids.mark(id + sz, x, z, intensity, 0.28 + Math.min(Math.abs(st.slip), 0.8) * 0.25, y);
       const n = intensity * dt * (quality.smoke > 900 ? 46 : 26);
       let emit = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
       while (emit-- > 0) {
         const j = () => (Math.random() - 0.5);
-        smoke.emit(x + j() * 0.4, 0.35, z + j() * 0.4, st.vx * 0.25 + j() * 2.4, 0.4 + Math.random() * 0.9, st.vz * 0.25 + j() * 2.4, 1.6 + Math.random() * 1.4, 1.0, 4.6 + intensity * 2.6, 0.26 * (0.45 + intensity * 0.6), col);
+        smoke.emit(x + j() * 0.4, y + 0.35, z + j() * 0.4, st.vx * 0.25 + j() * 2.4, 0.4 + Math.random() * 0.9, st.vz * 0.25 + j() * 2.4, 1.6 + Math.random() * 1.4, 1.0, 4.6 + intensity * 2.6, 0.26 * (0.45 + intensity * 0.6), col);
       }
     }
   }
@@ -723,6 +735,7 @@
         acc += dt;
         while (acc >= STEP) {
           player.x0 = player.x; player.z0 = player.z; player.h0 = player.heading;
+          track.terrain.grad(player.x, player.z, _grad); player.gx = _grad[0]; player.gz = _grad[1];
           stepCar(player, input, STEP, settings.assist);
           collide(player, STEP);
           acc -= STEP;
@@ -765,9 +778,10 @@
     // ombre qui suit la voiture visible
     const focus = phase === 'play' || phase === 'count' || phase === 'pause' ? player : leader.state;
     if (focus) {
-      world.sun.target.position.set(focus.x, 0, focus.z);
+      const fy = gy(focus.x, focus.z);
+      world.sun.target.position.set(focus.x, fy, focus.z);
       const sd = world.theme.sun;
-      world.sun.position.set(focus.x + sd[0] * 60, Math.max(sd[1], 0.35) * 60, focus.z + sd[2] * 60);
+      world.sun.position.set(focus.x + sd[0] * 60, fy + Math.max(sd[1], 0.35) * 60, focus.z + sd[2] * 60);
     }
     if (dbgTrace && phase === 'play') { const o = playerModel.root.position; dbgTrace.push(now, o.x, o.z, player.speed); }
     const tB = performance.now();
@@ -948,8 +962,8 @@
     $('hudMode').textContent = mode === 'run' ? 'RUN NOTÉ' : mode === 'tandem' ? 'TANDEM' : 'LIBRE';
     const b = bests[track.def.id + ':' + mode];
     $('hudBest').textContent = b ? 'RECORD ' + b.toLocaleString('fr-FR') : 'RECORD —';
-    camPos.set(player.x - Math.cos(player.heading) * 8, 3, player.z - Math.sin(player.heading) * 8);
-    camLook.set(player.x, 1, player.z);
+    camPos.set(player.x - Math.cos(player.heading) * 8, gy(player.x, player.z) + 3, player.z - Math.sin(player.heading) * 8);
+    camLook.set(player.x, gy(player.x, player.z) + 1, player.z);
     countdown();
     requestWake();
     announce(`Départ : ${track.def.name}, mode ${$('hudMode').textContent.toLowerCase()}.`);
@@ -1105,7 +1119,7 @@
   }
 
   // ---------- atelier ----------
-  const SHOP_VIEWS = { car: { a: null, r: 7, h: 1.7 }, body: { a: 0.75, r: 6.4, h: 1.5 }, paint: { a: 1.57, r: 6.6, h: 1.35 }, wheels: { a: 0.62, r: 3.3, h: 0.55, look: 0.35, fwd: 1.2 }, perf: { a: 2.5, r: 5.6, h: 1.25 }, tune: { a: 1.2, r: 5.4, h: 0.45, look: 0.4 } };
+  const SHOP_VIEWS = { car: { a: null, r: 7, h: 1.7 }, body: { a: 0.75, r: 6.4, h: 1.5 }, paint: { a: 1.57, r: 6.6, h: 1.35 }, wheels: { a: 0.62, r: 3.3, h: 0.55, look: 0.35, fwd: 1.2 }, chassis: { a: 1.15, r: 4.4, h: 2.1, look: 0.75 }, perf: { a: 2.5, r: 5.6, h: 1.25 }, tune: { a: 1.2, r: 5.4, h: 0.45, look: 0.4 } };
   let shopView = SHOP_VIEWS.car, garageYaw = 0;
   const shop = createShop({
     profile,
@@ -1182,8 +1196,8 @@
     loadTrack(trackIdx);
     resize();
     addEventListener('resize', resize);
-    camPos.set(leader.state.x + 8, 3, leader.state.z + 8);
-    camLook.set(leader.state.x, 1, leader.state.z);
+    camPos.set(leader.state.x + 8, gy(leader.state.x, leader.state.z) + 3, leader.state.z + 8);
+    camLook.set(leader.state.x, gy(leader.state.x, leader.state.z) + 1, leader.state.z);
     // quelques secondes de simulation pour que la fumée soit déjà là
     for (let i = 0; i < 90; i++) { leader.update(1 / 60, 1); carFx(leader.state, playerModel, 1 / 60, 'L', 'P'); smoke.update(1 / 60); }
     $('loading').remove();

@@ -10,6 +10,7 @@ function puffTexture() {
 
 function createParticles(max, opts) {
   const pos = new Float32Array(max * 3), size = new Float32Array(max), alpha = new Float32Array(max);
+  const fl = new Float32Array(max); // sol sous chaque particule (relief)
   const vel = new Float32Array(max * 3), age = new Float32Array(max).fill(1e9), life = new Float32Array(max).fill(1), s0 = new Float32Array(max), s1 = new Float32Array(max), a0 = new Float32Array(max);
   const colors = opts.colored ? new Float32Array(max * 3).fill(1) : null; // couleur par particule (fumée de pneus colorée)
   const geo = new THREE.BufferGeometry();
@@ -52,7 +53,7 @@ function createParticles(max, opts) {
       const i = head; head = (head + 1) % max;
       if (i + 1 > used) { used = i + 1; geo.setDrawRange(0, used); }
       if (colors && c) { colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b; }
-      pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z;
+      pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; fl[i] = y - 0.45;
       vel[i * 3] = vx; vel[i * 3 + 1] = vy; vel[i * 3 + 2] = vz;
       age[i] = 0; life[i] = l; s0[i] = sa; s1[i] = sb; a0[i] = al;
     },
@@ -66,7 +67,7 @@ function createParticles(max, opts) {
         vel[i * 3] *= drag; vel[i * 3 + 2] *= drag;
         vel[i * 3 + 1] = vel[i * 3 + 1] * drag + opts.gravity * dt;
         pos[i * 3] += vel[i * 3] * dt; pos[i * 3 + 1] += vel[i * 3 + 1] * dt; pos[i * 3 + 2] += vel[i * 3 + 2] * dt;
-        if (opts.floor && pos[i * 3 + 1] < 0.05) { pos[i * 3 + 1] = 0.05; vel[i * 3 + 1] *= -0.3; }
+        if (opts.floor && pos[i * 3 + 1] < fl[i]) { pos[i * 3 + 1] = fl[i]; vel[i * 3 + 1] *= -0.3; }
         size[i] = s0[i] + (s1[i] - s0[i]) * Math.sqrt(k);
         const fadeIn = Math.min(age[i] / 0.08, 1);
         alpha[i] = a0[i] * fadeIn * Math.pow(1 - k, 1.6);
@@ -102,10 +103,11 @@ function createSkids(maxQuads) {
   const trackers = new Map();
   return {
     mesh,
-    // id : identifiant de roue ; intensity 0..1
-    mark(id, x, z, intensity, width) {
+    // id : identifiant de roue ; intensity 0..1 ; y : hauteur du sol (relief)
+    mark(id, x, z, intensity, width, y) {
+      const gy = (y || 0) + 0.022;
       let t = trackers.get(id);
-      if (!t) { t = { x, z, on: false, lx: 0, lz: 0, rx: 0, rz: 0, a: 0 }; trackers.set(id, t); }
+      if (!t) { t = { x, z, on: false, lx: 0, lz: 0, rx: 0, rz: 0, y: gy, a: 0 }; trackers.set(id, t); }
       if (intensity < 0.08) { t.on = false; t.x = x; t.z = z; return; }
       const dx = x - t.x, dz = z - t.z;
       const d = Math.hypot(dx, dz);
@@ -115,12 +117,12 @@ function createSkids(maxQuads) {
       if (t.on && d < 3) {
         const q = head; head = (head + 1) % maxQuads;
         const o = q * 12;
-        pos[o] = t.lx; pos[o + 1] = 0.022; pos[o + 2] = t.lz; pos[o + 3] = t.rx; pos[o + 4] = 0.022; pos[o + 5] = t.rz;
-        pos[o + 6] = x + nx; pos[o + 7] = 0.022; pos[o + 8] = z + nz; pos[o + 9] = x - nx; pos[o + 10] = 0.022; pos[o + 11] = z - nz;
+        pos[o] = t.lx; pos[o + 1] = t.y; pos[o + 2] = t.lz; pos[o + 3] = t.rx; pos[o + 4] = t.y; pos[o + 5] = t.rz;
+        pos[o + 6] = x + nx; pos[o + 7] = gy; pos[o + 8] = z + nz; pos[o + 9] = x - nx; pos[o + 10] = gy; pos[o + 11] = z - nz;
         alpha[q * 4] = alpha[q * 4 + 1] = t.a; alpha[q * 4 + 2] = alpha[q * 4 + 3] = a;
         dMin = Math.min(dMin, q); dMax = Math.max(dMax, q);
       }
-      t.on = true; t.x = x; t.z = z; t.lx = x + nx; t.lz = z + nz; t.rx = x - nx; t.rz = z - nz; t.a = a;
+      t.on = true; t.x = x; t.z = z; t.y = gy; t.lx = x + nx; t.lz = z + nz; t.rx = x - nx; t.rz = z - nz; t.a = a;
     },
     // une seule mise à jour GPU par image, limitée aux quads écrits (au lieu de tout le tampon à chaque trace)
     flush() {
