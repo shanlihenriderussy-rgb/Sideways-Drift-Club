@@ -22,6 +22,19 @@
   <div class="speedo"><div class="kmh" id="hudSpeed">0</div><div class="unit">KM/H</div><div class="rpm" id="rpmBar"><i id="rpmFill"></i></div><div class="gear" id="hudGear">1</div></div>
 </div>
 <div id="count" hidden></div>
+<div class="hud-goal" id="hudGoal" hidden aria-live="polite"></div>
+
+<!-- dialogues de l'aventure : une ligne à la fois, toucher ou Entrée pour continuer -->
+<div class="dialog" id="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="dlgName" aria-describedby="dlgText">
+  <div class="dlg-card">
+    <div class="dlg-face" id="dlgFace" aria-hidden="true"></div>
+    <div class="dlg-body">
+      <div class="dlg-who"><b id="dlgName"></b><span id="dlgRole"></span></div>
+      <p id="dlgText"></p>
+      <div class="dlg-foot"><button class="btn ghost" id="dlgSkip"><span>Passer</span></button><button class="btn primary" id="dlgNext"><span>Suite</span></button></div>
+    </div>
+  </div>
+</div>
 
 <!-- commandes tactiles : cinq boutons indépendants, placés par le code (voir game.js, « disposition ») -->
 <div id="touch" aria-hidden="true">
@@ -45,10 +58,11 @@
   <div class="title-block">
     <nav class="menu-btns" aria-label="Menu principal">
       <button class="btn primary" id="playBtn"><span>Rouler<em class="dek">six pistes, une ligne</em></span></button>
-      <button class="btn" id="garageBtn"><span><i class="no">01</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
-      <button class="btn" id="careerBtn"><span><i class="no">02</i>Carrière<em class="dek">défis et palmarès</em></span></button>
-      <button class="btn" id="settingsBtn"><span><i class="no">03</i>Réglages<em class="dek">pilotage et confort</em></span></button>
-      <button class="btn" id="helpBtn"><span><i class="no">04</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
+      <button class="btn" id="advBtn"><span><i class="no">01</i>Aventure<em class="dek">le Tour de l’Île, six chapitres</em></span></button>
+      <button class="btn" id="garageBtn"><span><i class="no">02</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
+      <button class="btn" id="careerBtn"><span><i class="no">03</i>Carrière<em class="dek">défis et palmarès</em></span></button>
+      <button class="btn" id="settingsBtn"><span><i class="no">04</i>Réglages<em class="dek">pilotage et confort</em></span></button>
+      <button class="btn" id="helpBtn"><span><i class="no">05</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
     </nav>
     <div class="hint portrait-tip">Tourne ton téléphone à l'horizontale pour mieux voir la piste.</div>
     <div class="ticker" aria-hidden="true"><div class="tk" id="ticker"></div></div>
@@ -76,6 +90,22 @@
         <button class="btn ghost" data-back><span>Retour</span></button>
         <button class="btn primary" id="goBtn"><span>Départ</span></button>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- aventure : carte de l'île, chapitres, exploration (voir story.js) -->
+<section class="screen dim" id="adventure" hidden aria-labelledby="advTitle">
+  <div class="card adv">
+    <div class="adv-map">
+      <div class="eyebrow"><span>Aventure</span><span class="jp">島一周</span></div>
+      <h2 id="advTitle">Le Tour de l’Île</h2>
+      <svg id="advMap" viewBox="0 0 320 190" role="group" aria-label="Carte de l’île : choisis un lieu"></svg>
+      <div class="adv-prog" id="advProg"></div>
+    </div>
+    <div class="adv-side">
+      <div id="advPanel"></div>
+      <div class="row-end adv-back"><button class="btn ghost" data-back><span>Retour</span></button></div>
     </div>
   </div>
 </section>
@@ -177,6 +207,7 @@
     <div class="eyebrow" id="resEyebrow">Run noté · Docks de Minato</div>
     <div class="res-head"><div class="grade" id="resGrade">A</div><div><h2 id="resTitle">Note des juges <span class="jp">結果</span></h2><div class="res-total" id="resTotal">0</div><div id="resRecord"></div></div></div>
     <p class="headline" id="resHeadline"></p>
+    <div class="res-goal" id="resGoal" hidden></div>
     <div class="res-grid">
       <div>Meilleur combo<b id="resCombo">0</b></div>
       <div>Clips réussis<b id="resClips">0</b></div>

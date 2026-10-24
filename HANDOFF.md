@@ -9,7 +9,7 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **Réglages physiques** (2026-10-18) : freins (puissance, répartition, frein à main), suspension (raideurs AV/AR, amortisseurs, hauteur, carrossage). Fiche technique en direct dans l'onglet Réglages. Kit de freins en Perfs (disques plus grands, étriers dorés). Disques qui rougeoient selon `brakeTemp`.
 - **Voitures** : caisse lissée (loft) avec passages de roue et ailes galbées, habitacle vitré avec intérieur (baquets, volant à droite), livrée peinte sur la caisse, phares et feux propres à chaque modèle, 5 dessins de jantes, freins visibles.
 - **Décors** : ciel peint (nuages, étoiles, halo de ville), deux crêtes de montagnes, route et murs par lieu, décor détaillé par thème, tribune, piles de pneus, chevrons de virage, eau animée.
-- **Économie** (`src/economy.js`) : portefeuille en ¥ (monnaie fictive), gains de fin de run détaillés, bonus quotidien en série, 14 défis, historique, migration de l'ancienne clé `sdc:garage`.
+- **Économie** (`src/economy.js`) : portefeuille en ¥ (monnaie fictive), gains de fin de run détaillés, bonus quotidien en série (¥1 000 à ¥4 000), prime du premier run du jour, 36 défis, historique, migration de l'ancienne clé `sdc:garage`.
 - **Atelier** (`src/shop.js`) : voitures, carrosserie, peinture, roues, performances (impact physique), réglages visuels ; aperçu avant achat ; caméra par rayon ; rotation au doigt.
 - **Fluidité** : affichage interpolé entre pas physiques, envois GPU partiels, HUD en transform, shaders précompilés, résolution dynamique.
 - **Favicon** : SVG intégré, icônes d'application, manifeste ; en combo, l'onglet affiche le multiplicateur.
@@ -39,6 +39,7 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 | Bot expert, Col d'Akane, KOUKI | 21,3 k en moyenne contre 22,0 k pour la version d'origine (bruit d'un run à l'autre : 17 à 27 k) |
 
 ## Décisions actives
+- **Aventure** (`src/story.js`) : logique pure (pas de DOM), testée (`tests/story.test.js`). `adv` dans game.js : `{ ci, k }` mission, `{ explore, ci }` exploration. Le mode global est restauré depuis le stockage en quittant. Nouveau kanji dans un dialogue ou un titre → l’ajouter à l’URL Noto Sans JP. Joueur jamais genré dans les textes.
 - **Fichier unique** : `build.mjs` concatène `src/*` → `index.html`. Ordre : physics, economy, track, world, car, fx, audio, ai, shop, game. Le favicon SVG est intégré en data URI ; icônes PNG et manifeste ne sont liés qu'en production (pas dans `test.html`).
 - **Économie pure** : `economy.js` ne touche ni au DOM ni à Three.js ; tout passe par le profil et renvoie `{ ok, reason, … }`. Les pièces à 0 ¥ sont toujours possédées. Une pièce équipée mais non payée revient à l'origine au chargement.
 - **Fiche tunée** : `tunedSpec(base, perf, tune)` copie la fiche de base. Sans amélioration et avec les réglages neutres (`TUNE[].def`), la physique est strictement identique (test `réglages par défaut`, banc `tools/tune.js`). Chaque effet est écrit en écart au neutre (`v − def`) pour que le neutre soit exact en flottant.

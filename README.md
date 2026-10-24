@@ -23,6 +23,7 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 | `src/fx.js` | Fumée colorée (points), traces de gomme (envoi GPU partiel), étincelles |
 | `src/audio.js` | Moteur, turbo, crissement synthétisés (Web Audio) |
 | `src/ai.js` | Leader tandem sur trajectoire précalculée |
+| `src/story.js` | Aventure « Le Tour de l’Île » : 6 chapitres × 3 missions, dialogues, objectifs, exploration (archives, défis de rue, rencontres). Logique pure, testée |
 | `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
 | `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |
 | `assets/favicon.svg`, `icons/`, `manifest.webmanifest` | Favicon (intégré au build), icônes d'application, manifeste PWA |
@@ -31,7 +32,7 @@ node build.mjs --local    # test.html avec vendor/three.min.js pour les tests ho
 
 ## Économie et atelier
 - Monnaie fictive (¥), sans achat réel. Départ : HACHI offerte + ¥3 000. KOUKI ¥18 000, RAIJIN ¥45 000.
-- Gains : 5 % des points (×1,25 en tandem), bonus de note, clips, combo, record ; mode libre : 2 % plafonné. Bonus quotidien de ¥500 à ¥2 000 selon la série. 15 défis à récompense unique.
+- Gains : 7 % des points (×1,25 en tandem), bonus de note (¥100 à ¥2 500), ¥100 par clip, combo, record, prime de ¥1 500 au premier run noté du jour ; mode libre : 3 % plafonné à ¥3 500. Bonus quotidien de ¥1 000 à ¥4 000 selon la série. 36 défis à récompense unique (paliers faciles, assiduité, exploits, une note A par piste).
 - Atelier : carrosserie (pare-chocs, ailes, aileron, capot, échappement, arceau, néon), peinture (12 couleurs, 5 finitions, 6 livrées, numéro), roues (5 jantes, 8 couleurs, fumée colorée), performances (6 pièces × 3 niveaux, dont kit de freins visible sur les roues), réglages gratuits avec fiche technique en direct.
 - Réglages : freins (puissance, répartition avant/arrière, frein à main), suspension (raideur avant, raideur arrière, amortisseurs, hauteur, carrossage), style (déport). Valeur neutre = physique d'origine ; aux extrêmes : arrêt ±20 %, équilibre sous-vireur ↔ survireur, sans tête-à-queue au banc.
 - Pistes : Docks de Minato, Col d'Akane, Piton Volcan, Quai de Shiohama (aube), Col de Yukimi (neige, adhérence ×0,88), Corniche de Kaigan (crépuscule, lampadaires).
@@ -48,3 +49,9 @@ Jeu conçu et codé avec l'assistance d'une IA (mention dans l'écran d'aide).
 
 ## Commandes tactiles
 Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + taille par bouton, transparence, miroir, réinitialisation. Disposition enregistrée par orientation (`localStorage`, clé `sdc:touchLayout`). Un doigt peut glisser d'un bouton à l'autre sans lâcher (hit-test + hystérésis de 28 px). Zoom : bloqué sur la surface de jeu (`touch-action: none`, garde `touchend`, `gesture*`), autorisé dans les menus (`pan-y pinch-zoom`) ; le viewport ne l’interdit pas (WCAG 1.4.4).
+
+## Aventure : « Le Tour de l’Île »
+- Le garage du club, aux docks de Minato, va être rasé par Kaneshiro Holdings. Le règlement du port le protège si le club gagne le Tour de l’Île. Six chapitres, un par lieu, dans l’ordre du Tour : Minato, Shiohama, Akane, Kaigan, Piton, Yukimi.
+- Personnages : Kenji (mécano, un secret de 2006), Lou (reporter du Journal de la glisse), Mika (cheffe des Kuro Kumo), Ryo Kaneshiro (promoteur), Mamie Zélie (gardienne du volcan), Daruma (juge masqué), Sayo (fondatrice, par sa lettre).
+- Missions : run ou tandem avec objectifs (score, note, clips, angle, combo, % en glisse, aucun contact mur). Récompense payée à la première réussite. Le chapitre suivant s’ouvre quand le précédent est fini.
+- Exploration libre de chaque lieu ouvert : 5 archives (l’histoire du club, à relire dans le carnet), 2 bornes de défi de rue, 1 rencontre. Progression dans `sdc:profile.story`.
