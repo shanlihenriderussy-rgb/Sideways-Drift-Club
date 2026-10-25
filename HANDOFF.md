@@ -1,6 +1,6 @@
 # Handoff — Sideways Drift Club
 
-Date : 2026-10-18 · Branche : `claude/affectionate-cerf-wzgah4` (précédente : `claude/optimistic-fermi-xni0xz`) (dépôt `shanlihenriderussy-rgb/Sideways-Drift-Club`)
+Date : 2026-10-25 · Branche : `claude/fervent-goldberg-dpmk48` (île vivante, multijoueur) · précédente : `claude/affectionate-cerf-wzgah4` (précédente : `claude/optimistic-fermi-xni0xz`) (dépôt `shanlihenriderussy-rgb/Sideways-Drift-Club`)
 En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `main`, commit `d02ae0d`) · Artifact privé : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL (v3, même build)
 
 ## État
@@ -34,14 +34,18 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 | JS / image | 0,4–0,5 ms ; 1,9–2,8 ms avec CPU ralenti ×6 |
 | Saccade d'affichage 60/90/120/144 Hz | 0,1 % (avant : 0,4 % à 60 Hz, 14–60 % au-delà) |
 | Chargement d'une piste, CPU ×6 | 0,38–0,52 s (avant : ≤ 0,35 s, décor bien plus pauvre) |
-| Tests | 39/39 (`node --test tests/*.test.js`) : économie, réglages physiques, tracés |
+| Tests | 98/98 (`node --test tests/*.test.js`) : économie, réglages physiques, tracés, île, vie de l'île, multijoueur, aventure |
 | Banc physique sans amélioration | identique à l'origine (`tools/tune.js`, `tools/tune2.js hold`) |
 | Bot expert, Col d'Akane, KOUKI | 21,3 k en moyenne contre 22,0 k pour la version d'origine (bruit d'un run à l'autre : 17 à 27 k) |
 
 ## Décisions actives
 - **Île (monde ouvert)** (`src/island.js`) : partie pure `buildIsland` (routes échantillonnées à 1,5 m, grille de recherche 24 m, terrain 10 m) testée par `tests/island.test.js` ; `buildIslandWorld` a la même interface que `buildWorld`. Dans game.js, `isle` non nul = on roule sur l’île : `curTer()` choisit le terrain, `isleCollide` remplace `collide` (pas de murs), pas de zones de clip. Quitter l’île recharge la piste courante (`leaveIsle`). Nouvelle route : pas de croisement hors carrefour, pente < 13 % (tests).
+- **Vie de l'île** (`src/isleai.js`, pur, `tests/isleai.test.js`) : agents `{ e, dir, s, lane }` sur les routes de l'île (dir +1 = de a vers b), roulage à gauche (`LANE` 3,2 m), profils de vitesse `civ`/`race` précalculés dans `I.life`. Suivi : distance d'arrêt `√(2·a·(gap − marge))`, klaxon après 2,2 s bloqué, dépassement après 3,2 s. Rivaux : axe de la route, angle de glisse anticipé sur 30 m (courbure × dir), ignorent ce qui vient en face. GPS : Dijkstra sur les 10 nœuds avec départ/arrivée en milieu de route. Trafic trop loin (> 640 m) replacé à 260–560 m du joueur.
+- **Rendu de la vie** (`island.js`, bas du fichier) : `createTrafficLayer` = 3 `InstancedMesh` par modèle (peinte, sombre, feux) → ~15 appels de dessin pour tout le trafic ; `makeTag` (sprite canvas, `dispose()`) ; `buildIsleSpots` (habitants, belvédères, portiques radar, arches de zone). Rivaux et joueurs distants = `buildCar` complets, cachés au-delà de 300 m.
+- **Interactions île** (`game.js`, section « l'île ») : `scanInteract` à 10 Hz choisit le repère le plus proche (porte 14 m, rival 28 m, habitant 11 m, belvédère 8 m) → bouton `#prompt` (E). `chat()` met en pause pendant un dialogue. `talk(lines, done, choices)` : choix après la dernière ligne, `done(act)` ; touches 1–9, Échap = dernier choix. Les portes ne s'ouvrent plus seules au passage.
+- **Multijoueur** (`src/net.js`, `tests/net.test.js`) : étoile, l'hôte relaie (`createSession`, liens abstraits `{ send, close, onmessage, onclose }`). Canal `fast` non fiable pour l'état (15 Hz, `encodeState`), `rel` fiable pour le reste. Tout ce qui arrive est filtré (`decodeState`, `sanitizePeer`, `cleanEvent`, 8 Ko max). Invitation : SDP sans trickle, compressée `deflate-raw` + base64url, préfixe `SDC1z.` ; lien `#sdc=` ouvert au démarrage. Évènements de groupe : course (`race` + grille autour de l'hôte), battle (90 s), arrivée, score. Trafic et rivaux restent locaux à chaque appareil.
 - **Aventure** (`src/story.js`) : logique pure (pas de DOM), testée (`tests/story.test.js`). `adv` dans game.js : `{ ci, k }` mission, `{ explore, ci }` exploration. Le mode global est restauré depuis le stockage en quittant. Nouveau kanji dans un dialogue ou un titre → l’ajouter à l’URL Noto Sans JP. Joueur jamais genré dans les textes.
-- **Fichier unique** : `build.mjs` concatène `src/*` → `index.html`. Ordre : physics, economy, track, world, car, fx, audio, ai, shop, game. Le favicon SVG est intégré en data URI ; icônes PNG et manifeste ne sont liés qu'en production (pas dans `test.html`).
+- **Fichier unique** : `build.mjs` concatène `src/*` → `index.html`. Ordre : physics, economy, track, world, car, fx, audio, ai, shop, story, isleai, net, island, game. Le favicon SVG est intégré en data URI ; icônes PNG et manifeste ne sont liés qu'en production (pas dans `test.html`).
 - **Économie pure** : `economy.js` ne touche ni au DOM ni à Three.js ; tout passe par le profil et renvoie `{ ok, reason, … }`. Les pièces à 0 ¥ sont toujours possédées. Une pièce équipée mais non payée revient à l'origine au chargement.
 - **Fiche tunée** : `tunedSpec(base, perf, tune)` copie la fiche de base. Sans amélioration et avec les réglages neutres (`TUNE[].def`), la physique est strictement identique (test `réglages par défaut`, banc `tools/tune.js`). Chaque effet est écrit en écart au neutre (`v − def`) pour que le neutre soit exact en flottant.
 - **Thèmes de piste** : `THEMES[x].decor` choisit la famille de décor (night/sunset/day), `sky` le calque de ciel. Nouvelle ambiance = nouvelle palette, pas de nouveau code de décor.
@@ -55,6 +59,9 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **Reflets** : cubemap peinte sur canvas. Pas de PMREM.
 - **Profondeur** : sol à y = −0,12 avec `polygonOffset`, caméra `near` = 0,5.
 
+## Données et conformité (multijoueur)
+- Hors session : rien ne quitte l'appareil. En session (action volontaire) : pseudo, voiture, position, aux seuls pairs, sans stockage. IP visible des pairs (WebRTC). Mode « même Wi-Fi » par défaut sans STUN ; mode Internet = `stun.l.google.com` (hors UE) : écran explicatif avant connexion. À faire valider par le DPO / conseil avant diffusion large.
+
 ## Pièges
 - **Nouveau tracé** : lancer `node --test tests/tracks.test.js` (pas de recoupement, ≥ 5 virages, 900–1 900 m, un seul type de clip par virage, initiation en zone). Rayon mini visé ≥ 15 m. Ajouter la vignette `.sw-<id>` dans `head.html`.
 - **Équilibre suspension** : coefficient 0,08 dans `stepCar` (`bal`). À 0,16 la voiture survireuse partait à 70° dans un virage doux : trop loin de l'arcade.
@@ -66,7 +73,10 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - **`touch-action`** : `none` sur `body` (pas de zoom en jeu), `pan-y pinch-zoom` sur `.card` (zoom autorisé dans les menus), `pan-x` sur les onglets de l'atelier. Le viewport n'interdit plus le zoom (`user-scalable=no` retiré : WCAG 1.4.4, audit axe).
 - **`tools/*.js`** : chemins écrits pour le conteneur d'origine (`__dirname + '/test.html'`). Remplacer par le chemin absolu de `test.html` avant de lancer.
 - **three.js local** : cdnjs peut être bloqué par le proxy ; `npm pack three@0.128.0` puis copier `package/build/three.min.js` dans `vendor/`.
-- **Points d'accès de test** : `window.__sdc`, `__sdcDbg` (dont `preview`, `view`, `trace`, `profile`), `lossLog`, `Sound._debug`. Sans effet sur le jeu.
+- **Points d'accès de test** : `window.__sdc`, `__sdcDbg` (dont `preview`, `view`, `trace`, `profile`, `life()`, `mp()`, `startDuel(id, kind)`, `mpLocal('host'|'guest')` = session par BroadcastChannel entre onglets), `lossLog`, `Sound._debug`. Sans effet sur le jeu.
+- **Noms globaux** : `build.mjs` concatène tout dans un seul script : un `const` de premier niveau ne doit exister qu'une fois (vérifier avec `node --check` sur le script extrait).
+- **Playwright + rendu logiciel** : le temps de jeu avance ~2× moins vite que le temps réel ; attendre des états (`waitForFunction`), pas des durées. Charger avec `waitUntil: 'domcontentloaded'` (les polices Google peuvent bloquer l'évènement `load`).
+- **Jauge tandem** : `updateHUD` la cache hors tandem, sauf pendant un duel `tandem` sur l'île (remplie par `duelTick`).
 
 ## Non vérifié (hors de portée de l'environnement)
 - Images par seconde réelles sur un Android milieu de gamme (rendu logiciel ici).
@@ -74,7 +84,12 @@ Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome,
 - Ergonomie de l'atelier sur petit écran tactile réel (vérifiée en émulation 844×390 et 390×844).
 - Écoute du son (nouveau jingle d'encaissement).
 
-## Prochaine tranche
+## Prochaine tranche (île vivante + multijoueur)
+1. Essai réel à deux téléphones sur le même Wi-Fi, puis en 4G (mode Internet) : temps de connexion, fluidité des voitures distantes, fps avec 3 voitures distantes.
+2. Mesurer les appels de dessin sur l'île avec trafic + 2 rivaux visibles (cible < 100) ; réduire le nombre d'agents si besoin (`createTraffic`, 16 sur tactile).
+3. Équilibrage : primes des rivaux, seuils d'étoiles, vitesse des rivaux (`skill`) après quelques parties.
+
+## Prochaine tranche (avant)
 1. Test sur téléphone : fps (`window.__sdc.fps`), lisibilité de l'atelier, temps de chargement d'une piste.
 2. Ajuster prix et gains après 10 parties réelles (`CAR_PRICES`, `SHOP`, `PERF`, `computePayout`).
 3. Pistes d'évolution : fantôme du meilleur tour, 4e piste, vente de pièces.

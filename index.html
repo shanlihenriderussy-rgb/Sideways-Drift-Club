@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- une seule famille variable (graisse + chasse) ; kanji en sous-ensemble limité aux caractères affichés -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Instrument+Serif:ital@0;1&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&text=%E6%A8%AA%E6%BB%91%E3%82%8A%E5%80%B6%E6%A5%BD%E9%83%A8%E8%B5%B0%E8%A1%8C%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%A8%98%E9%8C%B2%E8%A8%AD%E5%AE%9A%E8%AA%AC%E6%98%8E%E4%BC%91%E6%86%A9%E7%B5%90%E6%9E%9C%E6%BA%96%E5%82%99%E6%93%8D%E4%BD%9C%E5%B3%B6%E4%B8%80%E5%91%A8%E9%81%BA%E7%94%A3%E9%9D%A2%E9%BB%92%E9%9B%B2%E6%96%AD%E5%B4%96%E7%A7%98%E5%AF%86%E9%81%94&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&text=%E6%A8%AA%E6%BB%91%E3%82%8A%E5%80%B6%E6%A5%BD%E9%83%A8%E8%B5%B0%E8%A1%8C%E3%82%AB%E3%82%B9%E3%82%BF%E3%83%A0%E8%A8%98%E9%8C%B2%E8%A8%AD%E5%AE%9A%E8%AA%AC%E6%98%8E%E4%BC%91%E6%86%A9%E7%B5%90%E6%9E%9C%E6%BA%96%E5%82%99%E6%93%8D%E4%BD%9C%E5%B3%B6%E4%B8%80%E5%91%A8%E9%81%BA%E7%94%A3%E9%9D%A2%E9%BB%92%E9%9B%B2%E6%96%AD%E5%B4%96%E7%A7%98%E5%AF%86%E9%81%94%E5%9C%B0%E5%9B%B3%E7%B7%92&display=swap">
 <style>
 /* DA « Télémétrie de nuit » : surfaces sombres profondes, filets fins, une seule couleur d'accent (le jaune de l'emblème),
    une seule famille de caractères. La scène 3D reste le sujet ; l'interface s'efface et hiérarchise. */
@@ -506,6 +506,73 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
 .res-goal .r { display: flex; gap: 8px; align-items: center; }
 .res-goal .r i { font-style: normal; font-weight: 800; width: 16px; text-align: center; }
 .res-goal .r.ko { opacity: .6; }
+
+/* ---------- île vivante : interaction, GPS, multijoueur, carte ---------- */
+#menu .menu-btns .btn:nth-child(6) { animation-delay: .25s; } #menu .menu-btns .btn:nth-child(7) { animation-delay: .3s; } #menu .menu-btns .btn:nth-child(8) { animation-delay: .35s; }
+.prompt { position: fixed; z-index: 13; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 92px); transform: translateX(-50%); display: inline-flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 18px 8px 8px; border-radius: 999px; border: 1px solid rgba(247,209,84,.45); background: rgba(10,11,14,.88); color: var(--fg); cursor: pointer; box-shadow: 0 12px 34px rgba(0,0,0,.5); animation: promptIn .28s var(--ease) both; text-align: left; font: inherit; max-width: calc(100% - 32px); }
+.prompt .pk { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-weight: 900; font-size: 16px; font-stretch: 110%; }
+.prompt b { display: block; font-stretch: 112%; font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prompt small { display: block; color: var(--fg-2); font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prompt.off { border-color: var(--hair-2); cursor: default; } .prompt.off .pk { background: var(--s4); color: var(--fg-3); }
+.prompt:not(.off):hover { border-color: var(--accent); }
+@keyframes promptIn { from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(.96); } to { opacity: 1; transform: translateX(-50%); } }
+@media (pointer: coarse) { .prompt .pk { font-size: 0; } .prompt .pk::before { content: "●"; font-size: 14px; } }
+@media (orientation: portrait) and (max-width: 700px) { .prompt { bottom: calc(max(14px, env(safe-area-inset-bottom)) + var(--btn) * 2.2 + 96px); } }
+#flash { position: fixed; inset: 0; z-index: 30; pointer-events: none; background: #fff; animation: flash .6s ease-out forwards; }
+@keyframes flash { from { opacity: .95; } to { opacity: 0; } }
+#flash.soft { animation-name: flashSoft; } @keyframes flashSoft { from { opacity: .32; } to { opacity: 0; } }
+.gps { position: absolute; right: max(14px, env(safe-area-inset-right)); top: calc(max(12px, env(safe-area-inset-top)) + 56px); display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 14px; background: rgba(7,8,10,.72); border: 1px solid rgba(123,140,255,.4); max-width: 46vw; }
+.gps svg { width: 30px; height: 30px; flex: none; fill: var(--accent-2); filter: drop-shadow(0 0 6px rgba(123,140,255,.6)); }
+.gps #gpsArrow { transform-origin: 12px 12px; transition: transform .2s linear; }
+.gps b { display: block; font-size: 13px; font-weight: 800; font-stretch: 110%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gps small { display: block; font-size: 11px; color: var(--fg-2); font-weight: 600; }
+.gps.race { border-color: var(--accent); } .gps.race svg { fill: var(--accent); filter: drop-shadow(0 0 6px rgba(247,209,84,.6)); }
+.mp-hud { position: absolute; right: max(14px, env(safe-area-inset-right)); top: calc(max(12px, env(safe-area-inset-top)) + 112px); display: grid; gap: 6px; justify-items: end; pointer-events: auto; }
+.mp-list { display: grid; gap: 4px; justify-items: end; pointer-events: none; }
+.mp-list span { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: rgba(7,8,10,.66); border: 1px solid var(--hair); }
+.mp-list span i { width: 8px; height: 8px; border-radius: 50%; }
+.emotes { display: flex; gap: 4px; }
+.emotes button { width: 38px; height: 38px; border-radius: 50%; border: 0; background: rgba(7,8,10,.6); box-shadow: 0 0 0 1px var(--hair-2) inset; color: var(--fg); font-size: 15px; font-weight: 800; cursor: pointer; padding: 0; }
+.emotes button:active { transform: scale(.92); }
+.dlg-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px; margin: 0 0 4px; }
+.dlg-choices .btn { min-height: 42px; justify-content: flex-start; font-size: 14px; padding: 0 14px; text-align: left; }
+.dlg-choices .btn i { font-style: normal; color: var(--accent-2); font-size: 12px; width: 14px; }
+.dlg-choices .btn.primary { justify-content: flex-start; }
+.mp-pause { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mp-pause .btn { font-size: 13.5px; padding: 0 10px; }
+.imap { width: min(1100px, 100%); display: grid; gap: 12px; }
+.imap-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.imap-head h2 { margin: 6px 0 0; }
+.imap-body { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; min-height: 0; }
+.imap-cv { position: relative; }
+#mapCv { width: 100%; height: auto; display: block; border-radius: 14px; background: #0b2733; border: 1px solid var(--hair); cursor: crosshair; touch-action: manipulation; }
+.imap-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 11px; color: var(--fg-2); }
+.imap-legend span { display: inline-flex; align-items: center; gap: 5px; } .imap-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.imap-side { display: grid; gap: 12px; align-content: start; overflow: auto; max-height: min(62vh, 520px); padding-right: 4px; touch-action: pan-y; scrollbar-width: thin; scrollbar-color: var(--s4) transparent; }
+.imap-side h3 { margin: 0; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent-2); font-weight: 700; }
+.imap-side ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.imap-side li button { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--hair); background: var(--s2); color: var(--fg); cursor: pointer; font: inherit; font-size: 13px; }
+.imap-side li button:hover, .imap-side li button[aria-pressed="true"] { border-color: var(--accent-2); background: var(--accent-2-soft); }
+.imap-side li small { color: var(--fg-2); font-size: 11.5px; display: block; }
+.imap-side li em { font-style: normal; color: var(--accent); font-weight: 800; letter-spacing: .05em; white-space: nowrap; }
+.imap-side li.lock button { opacity: .5; } .imap-side li em .st0 { color: var(--fg-3); }
+@media (max-width: 760px), (orientation: landscape) and (max-height: 560px) { .imap-body { grid-template-columns: 1fr; } .imap-side { max-height: none; } .imap { overflow: auto; } }
+.mp { width: min(640px, 100%); display: grid; gap: 14px; }
+.mp h2 { margin: 6px 0 0; }
+.mp label.f { display: grid; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-2); }
+.mp input[type=text], .mp textarea { font: inherit; font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--fg); background: var(--s1); border: 1px solid var(--hair-2); border-radius: 10px; padding: 10px 12px; width: 100%; box-sizing: border-box; user-select: text; -webkit-user-select: text; touch-action: auto; }
+.mp textarea { min-height: 84px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; word-break: break-all; }
+.mp .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.mp .note { font-size: 12.5px; line-height: 1.5; color: var(--fg-2); background: var(--s1); border: 1px solid var(--hair); border-radius: 12px; padding: 10px 12px; }
+.mp .note b { color: var(--fg); }
+.mp .status { font-size: 13px; font-weight: 700; color: var(--accent-2); display: flex; align-items: center; gap: 8px; }
+.mp .status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.mp .status.ok { color: var(--ok); } .mp .status.ko { color: var(--red); }
+.mp .players { display: grid; gap: 6px; }
+.mp .players div { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: var(--s2); border: 1px solid var(--hair); font-weight: 700; }
+.mp .players i { width: 10px; height: 10px; border-radius: 50%; } .mp .players small { margin-left: auto; color: var(--fg-2); font-weight: 600; }
+.mp .step { display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px dashed var(--hair-2); }
+.mp .step h3 { margin: 0; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
 </style>
 
 </head>
@@ -531,10 +598,15 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
     <div class="combo idle" id="combo"><div class="tag" id="comboTag">DRIFT</div><div class="pts" id="comboPts">0</div><div class="mult" id="comboMult">x1.0</div><div class="anglebar"><i id="angleFill"></i></div></div>
   <div id="popups"></div>
   <div class="banner" id="banner">SENS INTERDIT</div>
+  <div class="gps" id="gps" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path id="gpsArrow" d="M12 3 19 20 12 15.5 5 20z"/></svg><span><b id="gpsName"></b><small id="gpsDist"></small></span></div>
+  <div class="mp-hud" id="mpHud" hidden><div class="mp-list" id="mpList"></div><div class="emotes" id="emotes" role="group" aria-label="Messages rapides"><button data-emote="horn" aria-label="Klaxon (H)">📯</button><button data-emote="wave" aria-label="Salut (1)">👋</button><button data-emote="gg" aria-label="GG (2)">GG</button><button data-emote="follow" aria-label="Suis-moi (3)">➜</button><button data-emote="fire" aria-label="En feu (4)">🔥</button></div></div>
   <div class="speedo"><div class="kmh" id="hudSpeed">0</div><div class="unit">KM/H</div><div class="rpm" id="rpmBar"><i id="rpmFill"></i></div><div class="gear" id="hudGear">1</div></div>
 </div>
 <div id="count" hidden></div>
 <div class="hud-goal" id="hudGoal" hidden aria-live="polite"></div>
+<!-- interaction contextuelle sur l'île : E au clavier, ou toucher le bouton -->
+<button class="prompt" id="prompt" hidden><span class="pk" aria-hidden="true">E</span><span><b id="promptText"></b><small id="promptSub"></small></span></button>
+<div id="flash" hidden></div>
 
 <!-- dialogues de l'aventure : une ligne à la fois, toucher ou Entrée pour continuer -->
 <div class="dialog" id="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="dlgName" aria-describedby="dlgText">
@@ -543,7 +615,8 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
     <div class="dlg-body">
       <div class="dlg-who"><b id="dlgName"></b><span id="dlgRole"></span></div>
       <p id="dlgText"></p>
-      <div class="dlg-foot"><button class="btn ghost" id="dlgSkip"><span>Passer</span></button><button class="btn primary" id="dlgNext"><span>Suite</span></button></div>
+      <div class="dlg-choices" id="dlgChoices" hidden role="group" aria-label="Réponses"></div>
+      <div class="dlg-foot" id="dlgFoot"><button class="btn ghost" id="dlgSkip"><span>Passer</span></button><button class="btn primary" id="dlgNext"><span>Suite</span></button></div>
     </div>
   </div>
 </div>
@@ -572,10 +645,11 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
       <button class="btn primary" id="playBtn"><span>Rouler<em class="dek">six pistes, une ligne</em></span></button>
       <button class="btn" id="isleBtn"><span><i class="no">01</i>L’île<em class="dek">monde ouvert, roule où tu veux</em></span></button>
       <button class="btn" id="advBtn"><span><i class="no">02</i>Aventure<em class="dek">le Tour de l’Île, six chapitres</em></span></button>
-      <button class="btn" id="garageBtn"><span><i class="no">03</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
-      <button class="btn" id="careerBtn"><span><i class="no">04</i>Carrière<em class="dek">défis et palmarès</em></span></button>
-      <button class="btn" id="settingsBtn"><span><i class="no">05</i>Réglages<em class="dek">pilotage et confort</em></span></button>
-      <button class="btn" id="helpBtn"><span><i class="no">06</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
+      <button class="btn" id="multiBtn"><span><i class="no">03</i>Multijoueur<em class="dek">l’île à plusieurs, sans compte</em></span></button>
+      <button class="btn" id="garageBtn"><span><i class="no">04</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
+      <button class="btn" id="careerBtn"><span><i class="no">05</i>Carrière<em class="dek">défis et palmarès</em></span></button>
+      <button class="btn" id="settingsBtn"><span><i class="no">06</i>Réglages<em class="dek">pilotage et confort</em></span></button>
+      <button class="btn" id="helpBtn"><span><i class="no">07</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
     </nav>
     <div class="hint portrait-tip">Tourne ton téléphone à l'horizontale pour mieux voir la piste.</div>
     <div class="ticker" aria-hidden="true"><div class="tk" id="ticker"></div></div>
@@ -620,6 +694,27 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
       <div id="advPanel"></div>
       <div class="row-end adv-back"><button class="btn ghost" data-back><span>Retour</span></button></div>
     </div>
+  </div>
+</section>
+
+<!-- carte de l'île : lieux, rivaux, activités, habitants ; choisir une destination pour le GPS -->
+<section class="screen dim" id="isleMap" hidden aria-labelledby="mapTitle">
+  <div class="card imap">
+    <div class="imap-head"><div><div class="eyebrow"><span>Carte</span><span class="jp">地図</span></div><h2 id="mapTitle">L’île de Sideways</h2></div><button class="btn ghost" data-back><span>Retour à la route</span></button></div>
+    <div class="imap-body">
+      <div class="imap-cv"><canvas id="mapCv" width="720" height="500" role="img" aria-label="Carte de l’île : touche un repère pour y régler le GPS"></canvas><div class="imap-legend" id="mapLegend"></div></div>
+      <div class="imap-side" id="mapSide"></div>
+    </div>
+  </div>
+</section>
+
+<!-- multijoueur : session pair à pair (voir net.js) -->
+<section class="screen dim" id="multi" hidden aria-labelledby="mpTitle">
+  <div class="card mp">
+    <div class="eyebrow"><span>Multijoueur</span><span class="jp">一緒</span></div>
+    <h2 id="mpTitle">Rouler à plusieurs</h2>
+    <div id="mpBody"></div>
+    <div class="row-end"><button class="btn ghost" data-back><span>Retour</span></button></div>
   </div>
 </section>
 
@@ -694,6 +789,7 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
       <div><b>4 · Encaisser</b>Ton combo est encaissé quand tu cesses de glisser. Un choc, un tête-à-queue ou une sortie de piste le fait perdre.</div>
     </div>
     <p class="sub">Clavier : flèches ou ZQSD/WASD, Espace pour le frein à main, C pour la caméra, R pour te replacer. Manette compatible.</p>
+    <p class="sub">Sur l’île : approche-toi d’un habitant, d’un rival, d’une porte ou d’un belvédère, puis E (ou touche le bouton qui apparaît). M ouvre la carte et règle le GPS, H klaxonne. En session multijoueur, 1 à 4 envoient un message rapide.</p>
     <div class="row-end"><span class="hint">Jeu conçu et codé avec l'assistance d'une IA (Claude). Logo et visuels créés avec des outils d'IA.</span><button class="btn primary" data-back><span>Compris</span></button></div>
   </div>
 </section>
@@ -705,6 +801,8 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
     <h2 id="pauseTitle">On souffle</h2>
     <div style="display:grid;gap:10px;margin-top:14px">
       <button class="btn primary" id="resumeBtn"><span>Reprendre</span></button>
+      <button class="btn" id="mapBtn" hidden><span>Carte de l’île et GPS</span></button>
+      <div class="mp-pause" id="mpPause" hidden><button class="btn" id="mpRaceBtn"><span>Lancer une course</span></button><button class="btn" id="mpBattleBtn"><span>Battle de drift · 90 s</span></button></div>
       <button class="btn" id="resetBtn"><span>Se replacer sur la piste</span></button>
       <button class="btn" id="restartBtn"><span>Recommencer</span></button>
       <button class="btn" id="pSettingsBtn"><span>Réglages</span></button>
@@ -1352,7 +1450,7 @@ const fmt = (n) => '¥' + Math.round(n).toLocaleString('fr-FR');
 
 const Economy = {
   defaultTune, START_MONEY, LOG_MAX, CAR_PRICES, PAINTS, RIMS, SMOKES, NEONS, SHOP, PERF, TUNE, CHALLENGES,
-  defaultCar, loadProfile, itemPrice, owns, equip, buyItem, perfPrice, buyPerf, buyCar, setTune,
+  defaultCar, sanitizeCar, loadProfile, itemPrice, owns, equip, buyItem, perfPrice, buyPerf, buyCar, setTune,
   tunedSpec, carStats, computePayout, applyRun, dailyAmount, dailyPreview, claimDaily, credit, fmt,
 };
 
@@ -3720,6 +3818,10 @@ const Sound = (() => {
     lost() { tone(330, 0.3, 0.16, 'sawtooth', 0, 140); },
     count(go) { tone(go ? 1046 : 523, go ? 0.45 : 0.18, 0.2, 'square'); },
     ui() { tone(660, 0.05, 0.08, 'triangle'); },
+    // klaxon : deux notes désaccordées ; vol 0..1 (distance), pitch (petite voiture aiguë, bus grave)
+    horn(vol, pitch) { const v = 0.11 * (vol == null ? 1 : vol), f = 420 * (pitch || 1); if (v < 0.006) return; tone(f, 0.34, v, 'square'); tone(f * 1.26, 0.34, v * 0.8, 'square'); tone(f * 0.5, 0.3, v * 0.5, 'sawtooth'); },
+    shutter() { burst(0.05, 3200, 0.8, 0.3, 'highpass'); burst(0.07, 1800, 1.2, 0.22, 'bandpass'); tone(2400, 0.04, 0.05, 'triangle', 0.09); },
+    ping() { tone(988, 0.1, 0.1, 'triangle'); tone(1480, 0.14, 0.08, 'triangle', 0.06); },
     cash() { tone(1318, 0.09, 0.12, 'square'); tone(1760, 0.16, 0.12, 'square', 0.07); tone(2637, 0.22, 0.07, 'triangle', 0.13); },
   };
 })();
@@ -4432,6 +4534,669 @@ const Story = {
 };
 
 
+// --- isleai.js
+// ===== Vie de l'île : GPS, circulation, pilotes rivaux, activités, habitants =====
+// Logique pure (aucun DOM, aucun Three.js) testée sous Node (tests/isleai.test.js) ; rendu et entrées dans island.js / game.js.
+// I = buildIsland(ISLE). On roule à gauche (voitures à volant à droite, comme au Japon).
+// Un « agent » (voiture de la circulation ou rival) avance sur une route e, dans le sens dir (+1 de a vers b), à la distance s.
+
+const LIFE_LANE = 3.2; // décalage de la voie depuis l'axe (m)
+const lifeWrap = (a) => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+const lifeClamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const EcoL = () => (typeof Economy !== 'undefined' ? Economy : require('./economy.js'));
+
+// ---------- réseau : graphe, courbure, profils de vitesse (calculés une fois, rangés dans I.life) ----------
+function lifeOf(I) {
+  if (I.life) return I.life;
+  const adj = {};
+  for (const k of Object.keys(I.def.nodes)) adj[k] = [];
+  I.roads.forEach((r, e) => { adj[r.a].push({ e, dir: 1, to: r.b }); adj[r.b].push({ e, dir: -1, to: r.a }); });
+  const prof = I.roads.map((r) => {
+    const n = r.count, raw = new Float32Array(n), k = new Float32Array(n);
+    for (let i = 1; i < n - 1; i++) raw[i] = lifeWrap(Math.atan2(r.tz[i + 1], r.tx[i + 1]) - Math.atan2(r.tz[i - 1], r.tx[i - 1])) / (2 * r.step);
+    raw[0] = raw[1]; raw[n - 1] = raw[n - 2];
+    for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let q = -6; q <= 6; q++) { const j = i + q; if (j >= 0 && j < n) { s += raw[j]; c++; } } k[i] = s / c; }
+    // vitesse possible : accélération latérale limitée, freinage limité dans les deux sens de parcours
+    const speeds = (aLat, vMin, vMax, dec) => {
+      const v = new Float32Array(n);
+      for (let i = 0; i < n; i++) v[i] = lifeClamp(Math.sqrt(aLat / Math.max(Math.abs(k[i]), 1e-4)), vMin, vMax);
+      for (let i = n - 2; i >= 0; i--) v[i] = Math.min(v[i], Math.sqrt(v[i + 1] * v[i + 1] + 2 * dec * r.step));
+      for (let i = 1; i < n; i++) v[i] = Math.min(v[i], Math.sqrt(v[i - 1] * v[i - 1] + 2 * dec * r.step));
+      return v;
+    };
+    return { k, civ: speeds(2.6, 6, 16.5, 3), race: speeds(7.5, 10, 31, 6) };
+  });
+  I.life = { adj, prof };
+  return I.life;
+}
+
+// point sur une route : position et tangente dans le sens de parcours, décalage latéral (positif = à droite du sens)
+function roadPose(I, e, dir, s, lat, out) {
+  const r = I.roads[e], u = lifeClamp(dir > 0 ? s : r.length - s, 0, r.length) / r.step;
+  const i = Math.min(r.count - 2, Math.floor(u)), t = u - i;
+  let tx = r.tx[i] + (r.tx[i + 1] - r.tx[i]) * t, tz = r.tz[i] + (r.tz[i + 1] - r.tz[i]) * t;
+  const l = Math.hypot(tx, tz) || 1; tx = tx / l * dir; tz = tz / l * dir;
+  const o = out || {};
+  o.x = r.px[i] + (r.px[i + 1] - r.px[i]) * t - tz * lat;
+  o.z = r.pz[i] + (r.pz[i + 1] - r.pz[i]) * t + tx * lat;
+  o.tx = tx; o.tz = tz; o.i = i;
+  return o;
+}
+const roadEnd = (I, e, dir) => (dir > 0 ? I.roads[e].b : I.roads[e].a);
+
+// ---------- GPS : plus court chemin d'un point à un autre sur le réseau ----------
+// renvoie { len, segs: [{ e, i0, i1 }] } (indices locaux de chaque route, i0 → i1 dans le sens du trajet) ou null
+function lifeRoute(I, x0, z0, x1, z1) {
+  const q0 = I.nearestRoad(x0, z0, {}), q1 = I.nearestRoad(x1, z1, {});
+  if (q0.i < 0 || q1.i < 0) return null;
+  const { adj } = lifeOf(I);
+  const e0 = I.E[q0.i], i0 = q0.i - I.roads[e0].off, e1 = I.E[q1.i], i1 = q1.i - I.roads[e1].off;
+  const r0 = I.roads[e0], r1 = I.roads[e1];
+  const direct = e0 === e1 ? Math.abs(i1 - i0) * r0.step : Infinity;
+  // départ : on rejoint un bout de la route e0 ; plusieurs sources dans Dijkstra
+  const dist = {}, prev = {}, done = {};
+  for (const k of Object.keys(adj)) dist[k] = Infinity;
+  const seed = (node, d, seg) => { if (d < dist[node]) { dist[node] = d; prev[node] = { start: seg }; } };
+  seed(r0.a, i0 * r0.step, { e: e0, i0, i1: 0 });
+  seed(r0.b, (r0.count - 1 - i0) * r0.step, { e: e0, i0, i1: r0.count - 1 });
+  for (;;) {
+    let u = null;
+    for (const k of Object.keys(dist)) if (!done[k] && dist[k] < Infinity && (u === null || dist[k] < dist[u])) u = k;
+    if (u === null) break;
+    done[u] = true;
+    for (const { e, dir, to } of adj[u]) {
+      const d = dist[u] + I.roads[e].length;
+      if (d < dist[to]) { dist[to] = d; prev[to] = { from: u, e, dir }; }
+    }
+  }
+  const viaA = dist[r1.a] + i1 * r1.step, viaB = dist[r1.b] + (r1.count - 1 - i1) * r1.step;
+  const len = Math.min(direct, viaA, viaB);
+  if (!isFinite(len)) return null;
+  if (len === direct) return { len, segs: [{ e: e0, i0, i1 }] };
+  const endNode = viaA <= viaB ? r1.a : r1.b;
+  const segs = [{ e: e1, i0: endNode === r1.a ? 0 : r1.count - 1, i1 }];
+  let n = endNode;
+  while (prev[n] && !prev[n].start) { const p = prev[n], r = I.roads[p.e]; segs.unshift({ e: p.e, i0: p.dir > 0 ? 0 : r.count - 1, i1: p.dir > 0 ? r.count - 1 : 0 }); n = p.from; }
+  segs.unshift(prev[n].start);
+  return { len, segs };
+}
+// point situé à `ahead` mètres le long du trajet (pour la flèche du GPS) ; parcourt aussi le tracé pour la carte
+function routeWalk(I, route, ahead, each) {
+  let d = 0, last = null;
+  for (const sg of route.segs) {
+    const r = I.roads[sg.e], st = sg.i1 >= sg.i0 ? 1 : -1;
+    for (let i = sg.i0; st > 0 ? i <= sg.i1 : i >= sg.i1; i += st) {
+      if (last && i === sg.i0) continue; // point de raccord déjà compté
+      if (last) d += r.step;
+      last = [r.px[i], r.pz[i]];
+      if (each) each(last[0], last[1], d);
+      if (ahead != null && d >= ahead) return last;
+    }
+  }
+  return last;
+}
+
+// ---------- circulation et rivaux ----------
+const TRAFFIC_KINDS = [
+  // len, w, h (m), couleurs possibles, part
+  { id: 'kei', len: 3.4, w: 1.48, h: 1.62, cols: [0xf1efe9, 0xe8c547, 0x9ad0c2, 0xd8d2c4, 0x7fa6d9], w8: 4 },
+  { id: 'sedan', len: 4.6, w: 1.72, h: 1.42, cols: [0x2b2d33, 0xb8bcc4, 0x7a1f24, 0x1f3c66, 0xf4f1e6], w8: 4 },
+  { id: 'van', len: 4.7, w: 1.75, h: 1.95, cols: [0xf4f1e6, 0xdcdad3, 0x3b5f8a], w8: 2 },
+  { id: 'truck', len: 4.4, w: 1.6, h: 1.8, cols: [0xf4f1e6, 0x2e8b57, 0x5d7fa8], w8: 2 },
+  { id: 'bus', len: 9.5, w: 2.3, h: 2.9, cols: [0xf7d154, 0x2fa3c4], w8: 1 },
+];
+
+function makeAgent(I, opt) {
+  const A = Object.assign({ e: 0, dir: 1, s: 0, speed: 0, lane: -LIFE_LANE, laneT: -LIFE_LANE, k: 1, waitT: 0, hitT: 0, honkT: 0, beta: 0, x: 0, z: 0, heading: 0, route: null, arrived: false, hold: false }, opt);
+  const p = roadPose(I, A.e, A.dir, A.s, A.lane, {});
+  A.x = p.x; A.z = p.z; A.heading = Math.atan2(p.tz, p.tx);
+  return A;
+}
+
+// circulation : n voitures réparties sur le réseau (graine fixe)
+function createTraffic(I, n, seed) {
+  let s0 = seed || 7;
+  const rand = () => { s0 = (s0 * 16807) % 2147483647; return (s0 - 1) / 2147483646; };
+  const total = TRAFFIC_KINDS.reduce((a, k) => a + k.w8, 0);
+  const pick = () => { let x = rand() * total; for (const k of TRAFFIC_KINDS) { x -= k.w8; if (x <= 0) return k; } return TRAFFIC_KINDS[0]; };
+  const agents = [];
+  for (let q = 0; q < n; q++) {
+    const kind = pick(), e = Math.floor(rand() * I.roads.length), dir = rand() < 0.5 ? 1 : -1;
+    agents.push(makeAgent(I, { id: 't' + q, kind, color: kind.cols[Math.floor(rand() * kind.cols.length)], e, dir, s: rand() * I.roads[e].length, k: 0.85 + rand() * 0.25, speed: 8 }));
+  }
+  return { agents, rand };
+}
+
+// au bout d'une route : route suivante (trajet prévu, sinon au hasard, demi-tour seulement en impasse)
+function nextRoad(I, A, rand) {
+  const node = roadEnd(I, A.e, A.dir), { adj } = lifeOf(I);
+  if (A.route) {
+    if (!A.route.length) { A.arrived = true; return false; }
+    const n = A.route.shift(); A.e = n.e; A.dir = n.dir; return true;
+  }
+  let opts = adj[node].filter((o) => o.e !== A.e);
+  if (!opts.length) opts = adj[node];
+  const o = opts[Math.floor(rand() * opts.length) % opts.length];
+  A.e = o.e; A.dir = o.dir;
+  return true;
+}
+
+// obstacles : { x, z, r? } — joueur, joueurs distants, autres agents. Renvoie la distance libre devant (m) dans la voie de A.
+// oncoming : ignorer ce qui vient en face (un rival au milieu de la route ne pile pas pour les voitures qui croisent)
+function gapAhead(A, obstacles, lateral, oncoming) {
+  const fx = Math.cos(A.heading), fz = Math.sin(A.heading);
+  let gap = Infinity, who = null;
+  for (const o of obstacles) {
+    if (o === A) continue;
+    if (oncoming && (o.vx || 0) * fx + (o.vz || 0) * fz < -2) continue;
+    const dx = o.x - A.x, dz = o.z - A.z, along = dx * fx + dz * fz;
+    if (along <= 0 || along > 48) continue;
+    const lat = -dx * fz + dz * fx;
+    if (Math.abs(lat) < lateral && along < gap) { gap = along; who = o; }
+  }
+  return { gap, who };
+}
+
+// un pas d'un agent. rival = conduite de course en glisse sur l'axe de la route. Renvoie un évènement éventuel ('honk').
+const _pose = {};
+function stepAgent(I, A, dt, obstacles, rand, rival) {
+  const { prof } = lifeOf(I);
+  let ev = null;
+  if (A.hitT > 0) { A.hitT -= dt; if (A.hitT <= 0) ev = 'honk'; }
+  // vitesse visée : profil de la route un peu plus loin, puis voiture devant
+  const r = I.roads[A.e], pr = prof[A.e];
+  const look = (m) => { const u = lifeClamp(A.dir > 0 ? A.s + m : r.length - A.s - m, 0, r.length); return Math.round(u / r.step); };
+  const vArr = rival ? pr.race : pr.civ;
+  let target = Math.min(vArr[look(0)], vArr[look(12)], vArr[look(24)]) * A.k;
+  if (A.hold || A.arrived || A.hitT > 0) target = 0;
+  const { gap, who } = gapAhead(A, obstacles, rival ? 1.8 : 2.6, rival);
+  if (gap < Infinity && A.hitT <= 0) {
+    const safe = rival ? 6 : 8;
+    const vf = Math.sqrt(2 * (rival ? 7 : 4) * Math.max(0, gap - safe)); // vitesse à laquelle on s'arrête encore à temps
+    if (vf < target) {
+      target = vf;
+      // bloqué derrière quelqu'un d'arrêté : on klaxonne, puis on dépasse par l'autre voie
+      if (A.speed < 1.5) A.waitT += dt; else A.waitT = Math.max(0, A.waitT - dt);
+      if (A.waitT > 2.2 && A.honkT <= 0) { ev = 'honk'; A.honkT = 5; }
+      if (A.waitT > 3.2 && who && Math.hypot(who.vx || 0, who.vz || 0) < 2) { A.laneT = rival ? (A.laneT > 0 ? -2.6 : 2.6) : LIFE_LANE * 0.5; A.passS = 45; A.waitT = 0; }
+    }
+  } else A.waitT = Math.max(0, A.waitT - dt);
+  if (A.honkT > 0) A.honkT -= dt;
+  const acc = target > A.speed ? (rival ? 6 : 2.4) : (rival ? 9 : 6);
+  A.speed += lifeClamp(target - A.speed, -acc * dt, acc * dt);
+  A.s += A.speed * dt;
+  if (A.passS != null) { A.passS -= A.speed * dt; if (A.passS <= 0) { A.passS = null; A.laneT = rival ? 0 : -LIFE_LANE; } }
+  A.lane += lifeClamp(A.laneT - A.lane, -2.2 * dt, 2.2 * dt);
+  while (A.s > I.roads[A.e].length) {
+    const over = A.s - I.roads[A.e].length;
+    if (!nextRoad(I, A, rand)) { A.s = I.roads[A.e].length; A.speed = 0; break; }
+    A.s = over;
+  }
+  const p = roadPose(I, A.e, A.dir, A.s, A.lane, _pose);
+  const ox = A.x, oz = A.z;
+  // lissage de la position (les voies se raccordent mal au milieu des carrefours)
+  const kx = Math.min(1, dt * 9);
+  A.x += (p.x - A.x) * kx; A.z += (p.z - A.z) * kx;
+  A.vx = (A.x - ox) / Math.max(dt, 1e-4); A.vz = (A.z - oz) / Math.max(dt, 1e-4);
+  let path = Math.atan2(p.tz, p.tx);
+  if (rival) {
+    // angle de glisse : anticipe le virage le plus serré des 30 m à venir (la courbure change de signe en sens inverse)
+    let m = 0;
+    for (let q = 0; q < 30; q += 3) { const c = pr.k[look(q)] * A.dir; if (Math.abs(c) > Math.abs(m)) m = c; }
+    const b = A.speed > 9 ? Math.sign(m) * Math.min(0.8, Math.abs(m) * 28 + (Math.abs(m) > 1 / 90 ? 0.3 : 0)) : 0;
+    A.beta += (b - A.beta) * Math.min(1, dt * 3);
+    path += A.beta;
+  }
+  const dh = lifeWrap(path - A.heading);
+  A.heading = lifeWrap(A.heading + dh * Math.min(1, dt * 7));
+  A.yaw = dh;
+  return ev;
+}
+
+// voiture trop loin du joueur : on la replace sur une route à 260–560 m de lui (hors de vue, dans le brouillard)
+function respawnNear(I, A, x, z, rand, lane) {
+  for (let t = 0; t < 40; t++) {
+    const i = Math.floor(rand() * I.N), d = Math.hypot(I.X[i] - x, I.Z[i] - z);
+    if (d < 260 || d > 560) continue;
+    const e = I.E[i], r = I.roads[e], li = i - r.off, dir = rand() < 0.5 ? 1 : -1;
+    Object.assign(A, { e, dir, s: (dir > 0 ? li : r.count - 1 - li) * r.step, speed: 9, hitT: 0, waitT: 0, passS: null, route: null, arrived: false, hold: false, beta: 0 });
+    A.lane = A.laneT = lane == null ? -LIFE_LANE : lane;
+    const p = roadPose(I, e, dir, A.s, A.lane, {});
+    A.x = p.x; A.z = p.z; A.heading = Math.atan2(p.tz, p.tx);
+    return true;
+  }
+  return false;
+}
+// noms des carrefours (les lieux de l'aventure portent le nom de leur piste)
+const NODE_NAMES = { J1: 'Carrefour des quais', J2: 'Carrefour du plateau', J3: 'Carrefour des cannes', J4: 'Carrefour du sud' };
+
+// ---------- rivaux : pilotes de rue qui sillonnent l'île ----------
+// car : modèle, cfg : livrée (pièces gratuites ou réservées aux rivaux), unlock : chapitre de l'aventure ouvert
+const RIVALS = [
+  { id: 'kai', who: 'kai', name: 'Kai', car: 'kouki', crew: 'Kuro Kumo', skill: 0.92, reward: 2500, unlock: 1, e: 2, look: { paint: 'gris', livery: 'stripes', number: 9, rimStyle: 'mesh', rim: 'noir' },
+    hello: [['kai', 'Tiens, la recrue du Sideways. Tu roules seul la nuit, toi aussi ?']], win: [['kai', 'Bien joué. Mika va entendre parler de toi.']], lose: [['kai', 'Trop sage. Sur l’île, on ne t’attend pas.']] },
+  { id: 'nana', who: 'nana', name: 'Nana', car: 'hachi', crew: 'Livraisons de nuit', skill: 0.88, reward: 1800, unlock: 0, e: 7, look: { paint: 'rose', livery: 'club', number: 42, rimStyle: 'six', rim: 'blanc' },
+    hello: [['nana', 'Je livre des gâteaux patate au refuge avant l’aube. Toi, tu as l’air d’avoir du temps à perdre.']], win: [['nana', 'Les gâteaux sont arrivés cassés. C’est de ta faute. Bravo quand même.']], lose: [['nana', 'Livrée à l’heure, comme toujours. Reviens quand tu veux.']] },
+  { id: 'tetsu', who: 'tetsu', name: 'Tetsu', car: 'raijin', crew: 'Kuro Kumo', skill: 0.98, reward: 4000, unlock: 3, e: 14, look: { paint: 'bordeaux', livery: 'kanji', number: 3, rimStyle: 'dish', rim: 'gun' },
+    hello: [['tetsu', 'Tetsu. Vingt ans de col. Mika m’a dit de te tester. Je teste.']], win: [['tetsu', '… Le club a retrouvé un pilote. Sayo serait contente.']], lose: [['tetsu', 'Pas encore. Mais tu as de l’angle.']] },
+  { id: 'mika', who: 'mika', name: 'Mika', car: 'raijin', crew: 'Kuro Kumo', skill: 1.02, reward: 6000, unlock: 4, e: 6, look: { paint: 'panda', livery: 'kanji', number: 1, rimStyle: 'turbine', rim: 'or' },
+    hello: [['mika', 'Encore toi ? Mon col, ma route, ma règle : on se mesure ou tu dégages.']], win: [['mika', 'Tch. La prochaine fois, je ne retiens pas mes coups.']], lose: [['mika', 'Tu vois la différence, maintenant ?']] },
+];
+const RIVAL_CAST = {
+  nana: { name: 'Nana', role: 'Livreuse de nuit', ini: 'NA', col: '#ff8fb3' },
+  tetsu: { name: 'Tetsu', role: 'Doyen des Kuro Kumo', ini: 'TE', col: '#8a8f99' },
+};
+// chapitre c ouvert (0 = toujours) : les rivaux arrivent au fil de l'aventure
+function rivalOpen(p, def, StoryM) { return def.unlock <= 0 || !StoryM || StoryM.chapterOpen(p, Math.min(def.unlock, StoryM.CHAPTERS.length - 1)); }
+function isleBag(p) {
+  if (!p.isle || typeof p.isle !== 'object') p.isle = { found: {} };
+  for (const k of ['found', 'rivals', 'best', 'met', 'photo']) if (!p.isle[k] || typeof p.isle[k] !== 'object' || Array.isArray(p.isle[k])) p.isle[k] = {};
+  return p.isle;
+}
+// victoire sur un rival : récompense pleine la première fois, un cinquième ensuite
+function rivalWin(p, id, kind) {
+  const def = RIVALS.find((r) => r.id === id); if (!def) return 0;
+  const b = isleBag(p), n = Number.isInteger(b.rivals[id]) ? b.rivals[id] : 0;
+  const amount = n === 0 ? def.reward : Math.round(def.reward / 5 / 100) * 100;
+  b.rivals[id] = n + 1;
+  EcoL().credit(p, `${kind === 'tandem' ? 'Tandem de rue' : 'Touge'} contre ${def.name}`, amount);
+  return amount;
+}
+// destination d'un touge : un lieu de l'île à 700–1 800 m par la route, le plus proche de 1 200 m
+function tougeTarget(I, x, z, exclude) {
+  let best = null, bd = Infinity;
+  for (const [k, [nx, nz]] of Object.entries(I.def.nodes)) {
+    if (k === exclude) continue;
+    const r = lifeRoute(I, x, z, nx, nz); if (!r) continue;
+    const sc = r.len < 700 || r.len > 1800 ? 1e6 + Math.abs(r.len - 1200) : Math.abs(r.len - 1200);
+    if (sc < bd) { bd = sc; best = { node: k, x: nx, z: nz, route: r }; }
+  }
+  return best;
+}
+// itinéraire d'agent (liste de { e, dir }) à partir d'un trajet GPS calculé depuis la position de l'agent
+function agentPlan(I, route) {
+  return route.segs.slice(1).map((sg) => ({ e: sg.e, dir: sg.i1 >= sg.i0 ? 1 : -1 }));
+}
+
+// ---------- activités : radars de vitesse et zones de glisse ----------
+// e : route, at (radar) ou from/to (zone) en fraction de la longueur ; stars : seuils (km/h ou points)
+const ACTIVITIES = [
+  { id: 'radar-quais', type: 'radar', name: 'Radar des quais', e: 1, at: 0.5, stars: [90, 115, 140] },
+  { id: 'radar-corniche', type: 'radar', name: 'Radar de la corniche', e: 4, at: 0.55, stars: [100, 130, 160] },
+  { id: 'radar-ouest', type: 'radar', name: 'Radar de la plaine', e: 12, at: 0.45, stars: [95, 125, 150] },
+  { id: 'zone-falaise', type: 'zone', name: 'Lacets de la falaise', e: 3, from: 0.08, to: 0.92, stars: [4000, 9000, 16000] },
+  { id: 'zone-volcan', type: 'zone', name: 'Montée du volcan', e: 7, from: 0.15, to: 0.95, stars: [3500, 8000, 14000] },
+  { id: 'zone-epingles', type: 'zone', name: 'Épingles du sud', e: 14, from: 0.05, to: 0.95, stars: [3000, 7000, 12000] },
+  { id: 'zone-neige', type: 'zone', name: 'Descente de Yukimi', e: 6, from: 0.1, to: 0.9, stars: [3500, 8000, 14000] },
+];
+const STAR_REWARD = { radar: [400, 700, 1200], zone: [600, 1000, 1800] };
+const starsOf = (def, v) => def.stars.filter((t) => v >= t).length;
+// enregistre un passage : meilleure valeur, étoiles nouvelles payées une fois chacune
+function recordActivity(p, id, value) {
+  const def = ACTIVITIES.find((a) => a.id === id);
+  if (!def || !(value >= 0)) return null;
+  const b = isleBag(p), prev = typeof b.best[id] === 'number' ? b.best[id] : 0;
+  const s0 = starsOf(def, prev), s1 = starsOf(def, value);
+  let reward = 0;
+  for (let k = s0; k < s1; k++) reward += STAR_REWARD[def.type][k];
+  if (value > prev) b.best[id] = Math.round(value);
+  if (reward) EcoL().credit(p, `${def.name} · ${'★'.repeat(s1)}`, reward);
+  return { stars: s1, prev: s0, reward, best: Math.max(prev, Math.round(value)), record: value > prev };
+}
+
+// ---------- habitants et belvédères ----------
+// e, at, side : où ils se tiennent ; talk(p, S) → { lines, choices } ; les choix : 'daruma', 'rival', 'story', 'activity', 'bye'
+const ISLE_NPCS = [
+  { id: 'kenji', who: 'kenji', e: 0, at: 0.07, side: 1 },
+  { id: 'lou', who: 'lou', e: 1, at: 0.9, side: -1 },
+  { id: 'zelie', who: 'zelie', e: 7, at: 0.88, side: 1 },
+  { id: 'ume', who: 'ume', e: 4, at: 0.25, side: 1 },
+  { id: 'sora', who: 'sora', e: 5, at: 0.9, side: -1 },
+  { id: 'hoshi', who: 'hoshi', e: 12, at: 0.82, side: -1 },
+];
+const NPC_LINES = {
+  kenji: (p, S) => {
+    const ci = S ? S.currentChapter(p) : 0, done = S && S.chapterDone(p, S.CHAPTERS.length - 1);
+    if (done) return [['kenji', 'Le garage est sauvé, et tu traînes encore sur les quais ? Va donc voir si Mika a envie de perdre.']];
+    return [['kenji', ci === 0 ? 'Tu ne tiens pas en place, hein ? L’île est grande. Garde un œil sur le compte-tours et un autre sur les camions.' : `Prochaine étape : ${S.CHAPTERS[ci].title}. Je t’indique la route si tu veux.`]];
+  },
+  lou: () => [['lou', 'Il me faut des photos de l’île pour le supplément du dimanche. Les belvédères, au bord de la route : arrête-toi, et clic.']],
+  zelie: () => [['zelie', 'Ou lé là, marmay ! Les daruma dorés, c’est Sayo qui les a posés partout sur l’île. Elle aimait les chasses au trésor.']],
+  ume: () => [['ume', 'Le radar de la corniche, il flashe tout le monde. Moi, je compte les passages : le record, c’est 160.']],
+  sora: () => [['sora', 'Le thé est chaud. Les Kuro Kumo descendent par ici le soir. Fais attention à la neige, elle ne prévient pas.']],
+  hoshi: () => [['hoshi', 'Je connais toutes les routes ! Enfin presque. Tu veux que je te montre où il y a un daruma ?']],
+};
+const NPC_CHOICES = [
+  { act: 'story', label: 'Où va l’aventure ?' },
+  { act: 'daruma', label: 'Un daruma doré dans le coin ?' },
+  { act: 'rival', label: 'Où roulent les rivaux ?' },
+  { act: 'activity', label: 'Un défi à tenter ?' },
+  { act: 'bye', label: 'À plus tard' },
+];
+const NPC_REWARD = 300;
+function npcTalk(p, id, S) {
+  const n = ISLE_NPCS.find((x) => x.id === id); if (!n) return null;
+  const b = isleBag(p), first = !b.met[id];
+  return { lines: NPC_LINES[id](p, S), choices: NPC_CHOICES, first };
+}
+function npcMet(p, id) {
+  const b = isleBag(p);
+  if (b.met[id] || !ISLE_NPCS.some((x) => x.id === id)) return 0;
+  b.met[id] = true;
+  EcoL().credit(p, 'Rencontre sur l’île', NPC_REWARD);
+  return NPC_REWARD;
+}
+// belvédères : s'arrêter dans le cercle et prendre la photo
+const PHOTO_SPOTS = [
+  { id: 'phare', name: 'Le phare de Shiohama', e: 2, at: 0.12, side: -1, look: [120, -600], reward: 500, line: 'Le phare au premier plan, la mer derrière. Ça, c’est une une.' },
+  { id: 'cratere', name: 'Le cratère', e: 14, at: 0.12, side: 1, look: [90, 170], reward: 500, line: 'Le volcan qui fume au-dessus de ta voiture. Mes lecteurs vont adorer.' },
+  { id: 'falaise', name: 'La falaise est', e: 3, at: 0.5, side: 1, look: [1300, 0], reward: 500, line: 'L’océan à perte de vue. On sent le vent jusque dans le journal.' },
+  { id: 'col', name: 'Le col enneigé', e: 13, at: 0.8, side: -1, look: [-700, 360], reward: 500, line: 'La neige, les pins, le silence. On dirait une carte postale de 1996.' },
+];
+function photoTaken(p, id) {
+  const def = PHOTO_SPOTS.find((x) => x.id === id), b = isleBag(p);
+  if (!def || b.photo[id]) return 0;
+  b.photo[id] = true;
+  EcoL().credit(p, 'Photo : ' + def.name, def.reward);
+  return def.reward;
+}
+// position d'un repère posé sur une route (côté = −1 gauche / +1 droite du sens a → b)
+function spotPos(I, e, at, side, off) {
+  const r = I.roads[e];
+  return roadPose(I, e, 1, at * r.length, side * (I.half + (off == null ? 3.5 : off)), {});
+}
+
+const IsleLife = {
+  LANE: LIFE_LANE, TRAFFIC_KINDS, RIVALS, RIVAL_CAST, ACTIVITIES, STAR_REWARD, ISLE_NPCS, NPC_CHOICES, NPC_REWARD, PHOTO_SPOTS,
+  NODE_NAMES, lifeOf, roadPose, roadEnd, route: lifeRoute, respawnNear, routeWalk, makeAgent, createTraffic, stepAgent, gapAhead, nextRoad,
+  rivalOpen, rivalWin, tougeTarget, agentPlan, starsOf, recordActivity, npcTalk, npcMet, photoTaken, spotPos, isleBag,
+};
+
+
+// --- net.js
+// ===== Multijoueur : sessions pair à pair sur l'île (WebRTC, sans serveur de jeu) =====
+// Un hôte, jusqu'à 3 invités. L'hôte relaie tout (étoile). Chaque appareil simule sa voiture et envoie son état ~15 fois/s ;
+// les voitures des autres sont interpolées avec 120 ms de retard. Trafic et rivaux restent propres à chaque appareil.
+// Invitation sans serveur : l'hôte donne un code (offre), l'invité renvoie un code (réponse). Rien n'est stocké en ligne.
+// Données échangées : pseudo, voiture et livrée, position. Mode « même Wi-Fi » par défaut : aucun serveur tiers ;
+// mode « Internet » : serveur STUN public (il voit l'adresse IP de chaque joueur). Les joueurs voient l'IP les uns des autres.
+// Partie pure (protocole, relais, interpolation, codes) testée sous Node : tests/net.test.js.
+
+const NET_MAX = 4, NET_HZ = 15, NET_DELAY = 0.12, NET_MSG_MAX = 8192;
+const NET_KINDS = ['hachi', 'kouki', 'raijin'];
+const EMOTES = { horn: 'Klaxon', gg: 'GG !', wave: 'Salut !', fire: 'En feu !', follow: 'Suis-moi !' };
+const NET_COLORS = ['#f7d154', '#7b8cff', '#4be38a', '#ff8fb3'];
+
+// ---------- état compact d'une voiture ----------
+const ST_KEYS = ['x', 'z', 'heading', 'vx', 'vz', 'speed', 'slip', 'rearSlip', 'steerAngle', 'wheelRot', 'rollAngle', 'pitchAngle', 'rpm', 'throttle'];
+const r3 = (v) => Math.round(v * 1000) / 1000;
+function encodeState(t, st, combo, braking) {
+  const d = [Math.round(t)];
+  for (const k of ST_KEYS) d.push(r3(st[k] || 0));
+  d.push(Math.round(combo || 0), braking ? 1 : 0);
+  return d;
+}
+// tableau reçu → état, ou null s'il est invalide (nombres finis, position sur l'île)
+function decodeState(d) {
+  if (!Array.isArray(d) || d.length !== ST_KEYS.length + 3) return null;
+  for (const v of d) if (typeof v !== 'number' || !isFinite(v)) return null;
+  const o = { t: d[0] };
+  ST_KEYS.forEach((k, i) => { o[k] = d[i + 1]; });
+  if (Math.abs(o.x) > 6000 || Math.abs(o.z) > 6000 || Math.abs(o.speed) > 200) return null;
+  o.combo = Math.max(0, Math.min(1e7, d[ST_KEYS.length + 1])); o.brake = d[ST_KEYS.length + 2] === 1;
+  return o;
+}
+
+// ---------- pseudo et voiture d'un pair (tout ce qui vient du réseau est filtré) ----------
+function cleanName(s) {
+  const n = String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f<>&"']/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+  return n || 'Pilote';
+}
+function sanitizePeer(raw, Eco) {
+  if (!raw || typeof raw !== 'object') return null;
+  const kind = NET_KINDS.includes(raw.kind) ? raw.kind : 'hachi';
+  let cfg = raw.cfg && typeof raw.cfg === 'object' ? raw.cfg : {};
+  if (Array.isArray(cfg.owned)) cfg = Object.assign({}, cfg, { owned: cfg.owned.slice(0, 200) });
+  const E = Eco || (typeof Economy !== 'undefined' ? Economy : require('./economy.js'));
+  // pour l'affichage, une pièce déclarée possédée suffit : on garde la livrée de l'autre joueur telle quelle
+  return { name: cleanName(raw.name), kind, cfg: E.sanitizeCar(kind, cfg) };
+}
+
+// ---------- interpolation : instantanés horodatés par l'émetteur ----------
+function createInterp() {
+  const buf = [];
+  let off = null; // décalage d'horloge estimé (réception − émission), en ms
+  const out = {};
+  return {
+    push(s, recvMs) {
+      const o = recvMs - s.t;
+      off = off == null || o < off ? o : off + (o - off) * 0.02; // descend vite, remonte lentement (gigue)
+      if (buf.length && s.t <= buf[buf.length - 1].t) return;
+      buf.push(s); if (buf.length > 30) buf.shift();
+    },
+    // état affiché à l'instant local nowMs ; null tant qu'on n'a rien reçu
+    sample(nowMs) {
+      if (!buf.length) return null;
+      const t = nowMs - off - NET_DELAY * 1000;
+      let a = buf[0], b = buf[buf.length - 1];
+      if (t <= a.t) b = a;
+      else if (t >= b.t) a = b;
+      else for (let i = 1; i < buf.length; i++) if (buf[i].t >= t) { a = buf[i - 1]; b = buf[i]; break; }
+      const k = b.t > a.t ? (t - a.t) / (b.t - a.t) : 0;
+      for (const key of ST_KEYS) out[key] = a[key] + (b[key] - a[key]) * k;
+      let dh = b.heading - a.heading; while (dh > Math.PI) dh -= 2 * Math.PI; while (dh < -Math.PI) dh += 2 * Math.PI;
+      out.heading = a.heading + dh * k;
+      // extrapolation courte si les paquets tardent (max 0,4 s)
+      const ex = Math.min(0.4, Math.max(0, (t - b.t) / 1000));
+      if (ex > 0) { out.x += b.vx * ex; out.z += b.vz * ex; }
+      out.combo = b.combo; out.brake = b.brake; out.age = (nowMs - off - b.t) / 1000;
+      return out;
+    },
+    get size() { return buf.length; },
+  };
+}
+
+// ---------- session : hôte (relais) ou invité ; un lien = { send(msg, fast), close(), onmessage, onclose } ----------
+// me : { name, kind, cfg }. on(type, data) reçoit : 'peers' (liste), 'join'/'leave' (pair), 'state' (id, état),
+// 'emote' (id, e), 'ev' (id, évènement de groupe), 'welcome' (données de l'hôte), 'closed'.
+function createSession(me, on, Eco) {
+  const S = { role: null, id: null, peers: new Map(), links: new Map(), me, nextId: 1, hostAt: null };
+  const emit = (t, d) => { try { on(t, d); } catch (e) { /* l'interface ne doit pas casser le réseau */ } };
+  const peerList = () => [...S.peers.entries()].map(([id, p]) => ({ id, name: p.name, kind: p.kind, cfg: p.cfg }));
+  const bySize = (msg) => { try { const s = typeof msg === 'string' ? msg : JSON.stringify(msg); return s.length <= NET_MSG_MAX ? s : null; } catch (e) { return null; } };
+  function sendTo(link, msg, fast) { const s = bySize(msg); if (s) try { link.send(s, fast); } catch (e) { /* lien fermé */ } }
+  function broadcast(msg, except, fast) { for (const [id, l] of S.links) if (id !== except) sendTo(l, msg, fast); }
+  function parse(raw) { if (typeof raw !== 'string' || raw.length > NET_MSG_MAX) return null; try { const m = JSON.parse(raw); return m && typeof m === 'object' ? m : null; } catch (e) { return null; } }
+
+  // hôte : chaque invité reçoit un numéro à son arrivée
+  S.host = () => { S.role = 'host'; S.id = 0; S.peers.set(0, { name: cleanName(me.name), kind: me.kind, cfg: me.cfg, color: NET_COLORS[0] }); return S; };
+  S.addGuestLink = (link) => {
+    let id = null;
+    link.onmessage = (raw) => {
+      const m = parse(raw); if (!m) return;
+      if (id == null) {
+        if (m.t !== 'hello') return;
+        if (S.peers.size >= NET_MAX) { sendTo(link, { t: 'full' }); link.close(); return; }
+        const p = sanitizePeer(m, Eco); if (!p) return;
+        id = S.nextId++;
+        p.color = NET_COLORS[id % NET_COLORS.length];
+        S.peers.set(id, p); S.links.set(id, link);
+        sendTo(link, { t: 'welcome', id, peers: peerList(), at: S.hostAt });
+        broadcast({ t: 'join', id, name: p.name, kind: p.kind, cfg: p.cfg }, id);
+        emit('join', { id, ...p }); emit('peers', peerList());
+        return;
+      }
+      relay(id, m);
+    };
+    link.onclose = () => { if (id == null) return; S.links.delete(id); S.peers.delete(id); broadcast({ t: 'leave', id }); emit('leave', { id }); emit('peers', peerList()); };
+  };
+  function relay(id, m) {
+    if (m.t === 'st') { const s = decodeState(m.d); if (!s) return; emit('state', { id, s }); broadcast({ t: 'st', id, d: m.d }, id, true); }
+    else if (m.t === 'emote' && EMOTES[m.e]) { emit('emote', { id, e: m.e }); broadcast({ t: 'emote', id, e: m.e }, id); }
+    else if (m.t === 'ev' && m.ev && typeof m.ev === 'object') { const ev = cleanEvent(m.ev, false); if (ev) { emit('ev', { id, ev }); broadcast({ t: 'ev', id, ev }, id); } }
+  }
+
+  // invité : un seul lien, vers l'hôte
+  S.join = (link) => {
+    S.role = 'guest';
+    S.links.set(0, link);
+    link.onmessage = (raw) => {
+      const m = parse(raw); if (!m) return;
+      if (m.t === 'welcome' && Number.isInteger(m.id) && Array.isArray(m.peers)) {
+        S.id = m.id; S.peers.clear();
+        for (const q of m.peers.slice(0, NET_MAX)) { const p = sanitizePeer(q, Eco); if (p && Number.isInteger(q.id)) { p.color = NET_COLORS[q.id % NET_COLORS.length]; S.peers.set(q.id, p); } }
+        S.hostAt = m.at && isFinite(m.at.x) && isFinite(m.at.z) && isFinite(m.at.h) ? { x: +m.at.x, z: +m.at.z, h: +m.at.h } : null;
+        emit('welcome', { id: S.id, at: S.hostAt }); emit('peers', peerList());
+      } else if (m.t === 'join' && Number.isInteger(m.id)) { const p = sanitizePeer(m, Eco); if (p) { p.color = NET_COLORS[m.id % NET_COLORS.length]; S.peers.set(m.id, p); emit('join', { id: m.id, ...p }); emit('peers', peerList()); } }
+      else if (m.t === 'leave' && Number.isInteger(m.id)) { S.peers.delete(m.id); emit('leave', { id: m.id }); emit('peers', peerList()); }
+      else if (m.t === 'st' && Number.isInteger(m.id) && m.id !== S.id) { const s = decodeState(m.d); if (s) emit('state', { id: m.id, s }); }
+      else if (m.t === 'emote' && Number.isInteger(m.id) && EMOTES[m.e]) emit('emote', { id: m.id, e: m.e });
+      else if (m.t === 'ev' && Number.isInteger(m.id)) { const ev = cleanEvent(m.ev, m.id === 0); if (ev) emit('ev', { id: m.id, ev }); }
+      else if (m.t === 'full') emit('full', {});
+    };
+    link.onclose = () => { S.links.clear(); S.peers.clear(); emit('closed', {}); };
+    sendTo(link, { t: 'hello', name: cleanName(me.name), kind: me.kind, cfg: me.cfg });
+  };
+
+  // envois locaux
+  S.sendState = (d) => { if (S.role === 'host') broadcast({ t: 'st', id: 0, d }, null, true); else if (S.role === 'guest') sendTo(S.links.get(0), { t: 'st', d }, true); };
+  S.emote = (e) => { if (!EMOTES[e]) return; if (S.role === 'host') broadcast({ t: 'emote', id: 0, e }); else if (S.links.get(0)) sendTo(S.links.get(0), { t: 'emote', e }); };
+  S.event = (ev) => { const c = cleanEvent(ev, S.role === 'host'); if (!c) return; if (S.role === 'host') broadcast({ t: 'ev', id: 0, ev: c }); else if (S.links.get(0)) sendTo(S.links.get(0), { t: 'ev', ev: c }); };
+  S.setHostAt = (x, z, h) => { S.hostAt = { x, z, h }; };
+  S.close = () => { for (const l of S.links.values()) try { l.close(); } catch (e) { /* déjà fermé */ } S.links.clear(); S.peers.clear(); S.role = null; };
+  S.peerList = peerList;
+  return S;
+}
+// évènements de groupe : départ de course ou de battle (hôte seulement), arrivée, score
+const NODE_RE = /^[A-Z][A-Z0-9]{0,3}$/;
+function cleanEvent(ev, fromHost) {
+  if (!ev || typeof ev !== 'object') return null;
+  if (ev.k === 'race' && fromHost && NODE_RE.test(ev.node)) {
+    const o = { k: 'race', node: ev.node }, at = ev.at; // grille de départ autour de l'hôte
+    if (at && [at.x, at.z, at.h].every((v) => typeof v === 'number' && isFinite(v)) && Math.abs(at.x) < 6000 && Math.abs(at.z) < 6000) o.at = { x: at.x, z: at.z, h: at.h };
+    return o;
+  }
+  if (ev.k === 'battle' && fromHost) return { k: 'battle', dur: Math.max(30, Math.min(180, Math.round(+ev.dur) || 90)) };
+  if (ev.k === 'arrive' && isFinite(ev.time) && ev.time > 0 && ev.time < 3600) return { k: 'arrive', time: Math.round(ev.time * 10) / 10 };
+  if (ev.k === 'score' && isFinite(ev.pts) && ev.pts >= 0) return { k: 'score', pts: Math.min(1e7, Math.round(ev.pts)) };
+  if (ev.k === 'cancel' && fromHost) return { k: 'cancel' };
+  return null;
+}
+
+// ---------- codes d'invitation : description de session WebRTC compressée, base64url ----------
+const CODE_PREFIX = 'SDC1';
+const b64u = (bytes) => { let s = ''; for (const b of bytes) s += String.fromCharCode(b); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const unb64u = (s) => { const t = atob(s.replace(/-/g, '+').replace(/_/g, '/')); const u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; };
+async function streamBytes(bytes, Stream) {
+  const res = new Response(new Blob([bytes]).stream().pipeThrough(new Stream('deflate-raw')));
+  return new Uint8Array(await res.arrayBuffer());
+}
+async function packCode(obj) {
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream !== 'undefined') return CODE_PREFIX + 'z.' + b64u(await streamBytes(raw, CompressionStream));
+  return CODE_PREFIX + 'r.' + b64u(raw);
+}
+// accepte le code seul, ou un lien qui le contient (…#sdc=CODE) ; null si illisible
+async function unpackCode(text) {
+  try {
+    const m = String(text || '').replace(/\s+/g, '').match(/SDC1([zr])\.([A-Za-z0-9_-]+)/);
+    if (!m || m[2].length > 20000) return null;
+    let bytes = unb64u(m[2]);
+    if (m[1] === 'z') { if (typeof DecompressionStream === 'undefined') return null; bytes = await streamBytes(bytes, DecompressionStream); }
+    const o = JSON.parse(new TextDecoder().decode(bytes));
+    return o && typeof o === 'object' && (o.k === 'o' || o.k === 'a') && typeof o.sdp === 'string' && o.sdp.length < 12000 ? o : null;
+  } catch (e) { return null; }
+}
+
+// ---------- transport WebRTC (navigateur) : deux canaux, rapide (non fiable) pour l'état, fiable pour le reste ----------
+const ICE_PUBLIC = [{ urls: 'stun:stun.l.google.com:19302' }];
+function rtcLink(pc) {
+  const link = { onmessage: null, onclose: null, open: false };
+  let rel = null, fast = null, closed = false;
+  const wire = (ch) => {
+    ch.onmessage = (e) => link.onmessage && link.onmessage(e.data);
+    ch.onclose = () => fin();
+  };
+  const fin = () => { if (closed) return; closed = true; link.open = false; try { pc.close(); } catch (e) { /* déjà fermé */ } link.onclose && link.onclose(); };
+  link.attach = (r, f) => { rel = r; fast = f; wire(r); wire(f); };
+  link.send = (s, isFast) => { const ch = isFast && fast && fast.readyState === 'open' ? fast : rel; if (ch && ch.readyState === 'open') ch.send(s); };
+  link.close = () => fin();
+  pc.addEventListener('connectionstatechange', () => { if (['failed', 'closed'].includes(pc.connectionState)) fin(); });
+  return link;
+}
+const gathered = (pc, ms) => new Promise((res) => {
+  if (pc.iceGatheringState === 'complete') return res();
+  const done = () => { if (pc.iceGatheringState === 'complete') { pc.removeEventListener('icegatheringstatechange', done); res(); } };
+  pc.addEventListener('icegatheringstatechange', done);
+  setTimeout(res, ms || 2500);
+});
+// hôte : crée une offre ; accept(code de réponse) termine la poignée de main ; ready() résout à l'ouverture
+async function rtcOffer(internet) {
+  const pc = new RTCPeerConnection({ iceServers: internet ? ICE_PUBLIC : [] });
+  const link = rtcLink(pc);
+  const rel = pc.createDataChannel('rel', { ordered: true }), fast = pc.createDataChannel('fast', { ordered: false, maxRetransmits: 0 });
+  link.attach(rel, fast);
+  const ready = new Promise((res) => { rel.onopen = () => { link.open = true; res(link); }; });
+  await pc.setLocalDescription(await pc.createOffer());
+  await gathered(pc);
+  const code = await packCode({ k: 'o', sdp: pc.localDescription.sdp, net: internet ? 1 : 0 });
+  return {
+    code, link, ready,
+    async accept(text) { const o = await unpackCode(text); if (!o || o.k !== 'a') return false; await pc.setRemoteDescription({ type: 'answer', sdp: o.sdp }); return true; },
+    cancel() { link.close(); },
+  };
+}
+// invité : lit l'offre, renvoie le code de réponse
+async function rtcAnswer(text) {
+  const o = await unpackCode(text); if (!o || o.k !== 'o') return null;
+  const pc = new RTCPeerConnection({ iceServers: o.net ? ICE_PUBLIC : [] });
+  const link = rtcLink(pc);
+  let rel = null, fast = null, res = null;
+  const ready = new Promise((r) => { res = r; });
+  pc.ondatachannel = (e) => {
+    if (e.channel.label === 'rel') rel = e.channel; else fast = e.channel;
+    if (rel && fast) { link.attach(rel, fast); const go = () => { link.open = true; res(link); }; if (rel.readyState === 'open') go(); else rel.onopen = go; }
+  };
+  await pc.setRemoteDescription({ type: 'offer', sdp: o.sdp });
+  await pc.setLocalDescription(await pc.createAnswer());
+  await gathered(pc);
+  return { code: await packCode({ k: 'a', sdp: pc.localDescription.sdp }), link, ready, internet: !!o.net };
+}
+
+// ---------- transport local (onglets d'un même navigateur, pour les essais) ----------
+function localLinks(channelName) {
+  const bc = new BroadcastChannel(channelName || 'sdc-net');
+  const me = Math.random().toString(36).slice(2);
+  const links = new Map();
+  const mk = (other) => {
+    const l = { onmessage: null, onclose: null, open: true };
+    l.send = (s) => bc.postMessage({ from: me, to: other, s });
+    l.close = () => { bc.postMessage({ from: me, to: other, bye: 1 }); links.delete(other); };
+    links.set(other, l);
+    return l;
+  };
+  const api = { onguest: null, host: false };
+  bc.onmessage = (e) => {
+    const m = e.data; if (!m || m.from === me) return;
+    if (m.knock && api.host) { const l = mk(m.from); bc.postMessage({ from: me, to: m.from, ok: 1 }); api.onguest && api.onguest(l); return; }
+    if (m.to !== me) return;
+    if (m.ok && api.pending) { const l = mk(m.from); const p = api.pending; api.pending = null; p(l); return; }
+    const l = links.get(m.from); if (!l) return;
+    if (m.bye) { links.delete(m.from); l.onclose && l.onclose(); return; }
+    l.onmessage && l.onmessage(m.s);
+  };
+  api.listen = () => { api.host = true; };
+  api.knock = () => new Promise((res) => { api.pending = res; bc.postMessage({ from: me, knock: 1 }); });
+  return api;
+}
+
+const Net = {
+  MAX: NET_MAX, HZ: NET_HZ, DELAY: NET_DELAY, EMOTES, COLORS: NET_COLORS, ST_KEYS,
+  encodeState, decodeState, cleanName, sanitizePeer, createInterp, createSession, cleanEvent, packCode, unpackCode,
+  rtcOffer, rtcAnswer, localLinks,
+};
+
+
 // --- island.js
 // ===== L'île : monde ouvert continu (réseau routier, relief, mer, six lieux de l'aventure) =====
 // Partie pure (données, routes, terrain, recherche de route) testable sous Node ; buildIslandWorld (Three.js) plus bas.
@@ -4896,6 +5661,154 @@ function buildIslandWorld(scene, I, quality) {
   return { group, sun, theme: T, update, dispose, skyMat, heightAt: at, daruma, gates };
 }
 
+// ---------- vie de l'île : circulation instanciée, habitants, radars, zones, étiquettes (navigateur seulement) ----------
+// circulation : 3 maillages instanciés par modèle (carrosserie peinte, parties sombres, feux) → ~15 appels de dessin pour tout le trafic
+function createTrafficLayer(group, agents, ground) {
+  const box = (w, h, d, x, y, z) => { const g = new THREE.BoxGeometry(w, h, d); g.translate(x, y, z); return g; };
+  const wheel = (x, z, r) => { const g = new THREE.CylinderGeometry(r, r, 0.24, 10); g.rotateX(Math.PI / 2); g.translate(x, r, z); return g; };
+  // modèles : +x vers l'avant, longueur L, largeur W, hauteur H
+  const shapes = {
+    kei: (L, W, H) => ({ paint: [box(L, 0.78, W, 0, 0.62, 0), box(L * 0.62, 0.58, W * 0.94, -L * 0.06, 1.3, 0)], dark: [box(L * 0.64, 0.36, W * 0.96, -L * 0.06, 1.3, 0), box(0.2, 0.25, W, L / 2, 0.42, 0), box(0.2, 0.25, W, -L / 2, 0.42, 0)] }),
+    sedan: (L, W, H) => ({ paint: [box(L, 0.66, W, 0, 0.6, 0), box(L * 0.48, 0.5, W * 0.92, -L * 0.05, 1.17, 0)], dark: [box(L * 0.5, 0.34, W * 0.94, -L * 0.05, 1.16, 0), box(0.2, 0.22, W, L / 2, 0.42, 0), box(0.2, 0.22, W, -L / 2, 0.42, 0)] }),
+    van: (L, W, H) => ({ paint: [box(L, H - 0.35, W, 0, 0.35 + (H - 0.35) / 2, 0)], dark: [box(L * 0.22, 0.5, W * 1.01, L * 0.36, H - 0.62, 0), box(L * 0.7, 0.4, W * 1.01, -L * 0.12, H - 0.62, 0), box(0.2, 0.25, W, L / 2, 0.42, 0)] }),
+    truck: (L, W, H) => ({ paint: [box(L * 0.36, H - 0.35, W, L * 0.32, 0.35 + (H - 0.35) / 2, 0), box(L * 0.62, 0.3, W, -L * 0.18, 0.75, 0), box(L * 0.62, 0.4, 0.08, -L * 0.18, 1.1, W / 2), box(L * 0.62, 0.4, 0.08, -L * 0.18, 1.1, -W / 2), box(0.08, 0.4, W, -L / 2 + 0.04, 1.1, 0)], dark: [box(L * 0.37, 0.5, W * 1.01, L * 0.32, H - 0.55, 0)] }),
+    bus: (L, W, H) => ({ paint: [box(L, H - 0.4, W, 0, 0.4 + (H - 0.4) / 2, 0)], dark: [box(L * 0.96, 0.8, W * 1.01, 0, H - 0.9, 0), box(0.06, 1.2, W * 0.9, L / 2 + 0.01, H - 1.05, 0)] }),
+  };
+  const lights = (L, W, kind) => {
+    const y = kind === 'bus' ? 0.9 : 0.72, f = [box(0.06, 0.16, 0.3, L / 2 + 0.01, y, W / 2 - 0.28), box(0.06, 0.16, 0.3, L / 2 + 0.01, y, -W / 2 + 0.28)];
+    const r = [box(0.06, 0.2, 0.26, -L / 2 - 0.01, y, W / 2 - 0.24), box(0.06, 0.2, 0.26, -L / 2 - 0.01, y, -W / 2 + 0.24)];
+    const g = mergeGeos([...f, ...r]), n = g.attributes.position.count, col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) col.set(i < n / 2 ? [1, 0.96, 0.82] : [0.9, 0.06, 0.05], i * 3);
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    return g;
+  };
+  const disposables = [], meshes = [], byKind = {};
+  const pm = new THREE.MeshLambertMaterial({ color: 0xffffff }), dm = new THREE.MeshLambertMaterial({ color: 0x1a1c20 }), lm = new THREE.MeshBasicMaterial({ vertexColors: true });
+  disposables.push(pm, dm, lm);
+  for (const K of IsleLife.TRAFFIC_KINDS) {
+    const list = agents.filter((a) => a.kind.id === K.id);
+    if (!list.length) continue;
+    const sh = shapes[K.id](K.len, K.w, K.h), r = K.id === 'bus' ? 0.48 : 0.31, wx = K.len / 2 - (K.id === 'bus' ? 1.6 : 0.72), wz = K.w / 2 - 0.12;
+    const wheels = [wheel(wx, wz, r), wheel(wx, -wz, r), wheel(-wx, wz, r), wheel(-wx, -wz, r)];
+    const geos = [mergeGeos(sh.paint), mergeGeos([...sh.dark, ...wheels]), lights(K.len, K.w, K.id)];
+    const ms = geos.map((g, k) => { disposables.push(g); const m = new THREE.InstancedMesh(g, [pm, dm, lm][k], list.length); m.frustumCulled = false; m.castShadow = false; group.add(m); meshes.push(m); return m; });
+    const c = new THREE.Color();
+    list.forEach((a, i) => { ms[0].setColorAt(i, c.setHex(a.color).convertSRGBToLinear()); });
+    ms[0].instanceColor.needsUpdate = true;
+    byKind[K.id] = { list, ms };
+  }
+  const d = new THREE.Object3D(), far = 420 * 420;
+  function update(cx, cz) {
+    for (const k in byKind) {
+      const { list, ms } = byKind[k];
+      list.forEach((a, i) => {
+        const dx = a.x - cx, dz = a.z - cz;
+        if (dx * dx + dz * dz > far) d.scale.set(0, 0, 0);
+        else {
+          const c = Math.cos(a.heading), s = Math.sin(a.heading), hl = a.kind.len * 0.35;
+          const f = ground(a.x + c * hl, a.z + s * hl), b = ground(a.x - c * hl, a.z - s * hl);
+          d.position.set(a.x, (f + b) / 2, a.z);
+          d.rotation.set(0, -a.heading, Math.atan2(f - b, hl * 2) + (a.hitT > 0 ? Math.sin(a.hitT * 30) * 0.01 : 0));
+          d.scale.set(1, 1, 1);
+        }
+        d.updateMatrix();
+        for (const m of ms) m.setMatrixAt(i, d.matrix);
+      });
+      for (const m of ms) m.instanceMatrix.needsUpdate = true;
+    }
+  }
+  return { update, meshes, dispose() { for (const m of meshes) group.remove(m); for (const x of disposables) x.dispose(); } };
+}
+
+// étiquette flottante (sprite) : nom, sous-titre, pastille de couleur ; redessinée à la demande
+function makeTag(keep) {
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 160;
+  const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 4;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false });
+  const sp = new THREE.Sprite(mat); sp.scale.set(4.4, 1.375, 1); sp.renderOrder = 5;
+  if (keep) { keep(tex); keep(mat); }
+  let last = '';
+  function set(title, sub, col, chip) {
+    const key = [title, sub, col, chip].join('|'); if (key === last) return; last = key;
+    const g = cv.getContext('2d'); g.clearRect(0, 0, 512, 160);
+    g.font = '800 46px "Archivo", "Arial Black", sans-serif';
+    const tw = Math.min(460, Math.max(g.measureText(title).width, sub ? (g.font = '600 28px "Archivo", sans-serif', g.measureText(sub).width) : 0) + 92 + (chip ? 120 : 0));
+    const x0 = 256 - tw / 2, h = sub ? 112 : 76;
+    g.fillStyle = 'rgba(10,11,14,.82)'; g.beginPath(); g.moveTo(x0 + 24, 8); g.arcTo(x0 + tw, 8, x0 + tw, 8 + h, 24); g.arcTo(x0 + tw, 8 + h, x0, 8 + h, 24); g.arcTo(x0, 8 + h, x0, 8, 24); g.arcTo(x0, 8, x0 + tw, 8, 24); g.fill();
+    g.strokeStyle = col; g.lineWidth = 3; g.stroke();
+    g.fillStyle = col; g.beginPath(); g.arc(x0 + 34, 8 + h / 2, 11, 0, 7); g.fill();
+    g.textBaseline = 'middle'; g.textAlign = 'left'; g.fillStyle = '#f2f2ef'; g.font = '800 46px "Archivo", "Arial Black", sans-serif';
+    g.fillText(title, x0 + 58, sub ? 44 : 8 + h / 2, tw - 70 - (chip ? 120 : 0));
+    if (sub) { g.font = '600 28px "Archivo", sans-serif'; g.fillStyle = '#a4a8af'; g.fillText(sub, x0 + 58, 88, tw - 70 - (chip ? 120 : 0)); }
+    if (chip) { g.fillStyle = '#f7d154'; const cx = x0 + tw - 118; g.fillRect(cx, 8 + h / 2 - 22, 104, 44); g.fillStyle = '#15120a'; g.font = '900 28px "Archivo", sans-serif'; g.textAlign = 'center'; g.fillText(chip, cx + 52, 8 + h / 2 + 1); }
+    tex.needsUpdate = true;
+  }
+  return { sprite: sp, set, dispose() { tex.dispose(); mat.dispose(); } };
+}
+
+// repères de l'île : habitants, belvédères, radars, zones de glisse. Renvoie les objets animés et de quoi les nettoyer.
+function buildIsleSpots(group, I, castOf) {
+  const keepL = [], keep = (o) => { keepL.push(o); return o; }, at = I.terrain.at, L = IsleLife;
+  const out = { npcs: [], photos: [], acts: [] };
+  // habitants : silhouette simple à la couleur du personnage + étiquette
+  const bodyG = keep(new THREE.CylinderGeometry(0.32, 0.4, 1.25, 10)), headG = keep(new THREE.SphereGeometry(0.27, 12, 10));
+  bodyG.translate(0, 0.63, 0); headG.translate(0, 1.55, 0);
+  const skin = keep(new THREE.MeshLambertMaterial({ color: 0xd9a37a }));
+  for (const n of L.ISLE_NPCS) {
+    const c = castOf(n.who), p = L.spotPos(I, n.e, n.at, n.side, 2.6), g = new THREE.Group();
+    g.add(new THREE.Mesh(bodyG, keep(new THREE.MeshLambertMaterial({ color: new THREE.Color(c.col) }))), new THREE.Mesh(headG, skin));
+    const tag = makeTag(keep); tag.set(c.name, c.role, c.col, 'PARLER'); tag.sprite.position.y = 3.3; g.add(tag.sprite);
+    g.position.set(p.x, at(p.x, p.z), p.z); g.rotation.y = -Math.atan2(-p.tz, -p.tx) + Math.PI / 2;
+    group.add(g); out.npcs.push({ def: n, x: p.x, z: p.z, obj: g, tag });
+  }
+  // belvédères : cercle au sol + étiquette appareil photo
+  const ringG = keep(new THREE.RingGeometry(4.2, 5, 40)); ringG.rotateX(-Math.PI / 2);
+  const ringM = keep(new THREE.MeshBasicMaterial({ color: 0x7b8cff, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }));
+  for (const s of L.PHOTO_SPOTS) {
+    const p = L.spotPos(I, s.e, s.at, s.side, 4.5), g = new THREE.Group();
+    const ring = new THREE.Mesh(ringG, ringM); ring.position.y = 0.15; ring.renderOrder = 2; g.add(ring);
+    const tag = makeTag(keep); tag.set('Belvédère', s.name, '#7b8cff', 'PHOTO'); tag.sprite.position.y = 3.2; g.add(tag.sprite);
+    g.position.set(p.x, at(p.x, p.z), p.z); group.add(g); out.photos.push({ def: s, x: p.x, z: p.z, obj: g, tag });
+  }
+  // radars : portique au-dessus de la route ; zones : arches de départ et d'arrivée
+  const postM = keep(new THREE.MeshLambertMaterial({ color: 0x24272d })), postG = keep(new THREE.BoxGeometry(0.35, 6.4, 0.35)); postG.translate(0, 3.2, 0);
+  const span = (I.half + 1.6) * 2;
+  const beamG = keep(new THREE.BoxGeometry(0.5, 0.6, span + 0.4));
+  const banner = (text, sub, col) => keep(canvasTex(1024, 128, (c, w, h) => {
+    c.fillStyle = '#0d0f12'; c.fillRect(0, 0, w, h); c.fillStyle = col; c.fillRect(0, 0, w, 8); c.fillRect(0, h - 8, w, 8);
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = col; c.font = '900 50px "Archivo", "Arial Black", sans-serif';
+    c.fillText(text + (sub ? '  ·  ' + sub : ''), w / 2, h / 2 + 2);
+  }));
+  const gantry = (x, z, tx, tz, tex) => {
+    const g = new THREE.Group();
+    for (const sd of [-1, 1]) { const m = new THREE.Mesh(postG, postM); m.position.z = sd * span / 2; g.add(m); }
+    const b = new THREE.Mesh(beamG, postM); b.position.y = 6.4; g.add(b);
+    for (const sd of [-1, 1]) { const f = new THREE.Mesh(keep(new THREE.PlaneGeometry(span, 1.1)), keep(new THREE.MeshBasicMaterial({ map: tex }))); f.position.set(sd * 0.27, 6.4, 0); f.rotation.y = sd * Math.PI / 2; g.add(f); }
+    g.position.set(x, at(x, z), z); g.rotation.y = -Math.atan2(tz, tx);
+    group.add(g); return g;
+  };
+  for (const a of L.ACTIVITIES) {
+    const r = I.roads[a.e];
+    if (a.type === 'radar') {
+      const p = L.roadPose(I, a.e, 1, a.at * r.length, 0, {});
+      const g = gantry(p.x, p.z, p.tx, p.tz, banner('RADAR', a.name.replace('Radar ', '').toUpperCase(), '#7b8cff'));
+      const cam = new THREE.Mesh(keep(new THREE.BoxGeometry(0.6, 0.45, 0.5)), keep(new THREE.MeshBasicMaterial({ color: 0xe8e6e0 }))); cam.position.set(0, 5.75, 0); g.add(cam);
+      out.acts.push({ def: a, x: p.x, z: p.z, tx: p.tx, tz: p.tz, obj: g });
+    } else {
+      const p0 = L.roadPose(I, a.e, 1, a.from * r.length, 0, {}), p1 = L.roadPose(I, a.e, 1, a.to * r.length, 0, {});
+      gantry(p0.x, p0.z, p0.tx, p0.tz, banner('ZONE DE GLISSE', 'DÉPART', '#f7d154'));
+      gantry(p1.x, p1.z, p1.tx, p1.tz, banner('ZONE DE GLISSE', 'ARRIVÉE', '#f7d154'));
+      out.acts.push({ def: a, x: p0.x, z: p0.z, tx: p0.tx, tz: p0.tz, x1: p1.x, z1: p1.z });
+    }
+  }
+  out.update = (t) => {
+    for (const n of out.npcs) n.tag.sprite.position.y = 3.3 + Math.sin(t * 2 + n.x) * 0.08;
+    ringM.opacity = 0.4 + 0.25 * Math.sin(t * 2.6);
+  };
+  out.dispose = () => { for (const o of keepL) o.dispose && o.dispose(); };
+  return out;
+}
+
 
 
 // --- game.js
@@ -5111,7 +6024,8 @@ function buildIslandWorld(scene, I, quality) {
       else if (k === 'escape' && screenId === 'layout') closeLayoutEditor();
       else if (k === 'escape' && screenId === 'garage') closeShop();
       else if (k === 'escape' && screenId === 'adventure' && isle) { show(null); resumeGame(); }
-      else if (k === 'escape' && ['select', 'settings', 'help', 'career', 'adventure'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
+      else if (k === 'escape' && screenId === 'isleMap') closeIsleMap();
+      else if (k === 'escape' && ['select', 'settings', 'help', 'career', 'adventure', 'multi'].includes(screenId)) { helpThenSelect = false; show(screenId === 'settings' ? returnTo : 'menu'); }
     }
     if (k === 'c' && (phase === 'play' || phase === 'count')) cycleCam();
     if (k === 'r' && phase === 'play') respawn();
@@ -5623,6 +6537,10 @@ function buildIslandWorld(scene, I, quality) {
         showroom.wheelRot = 0; showroom.steerAngle = 0.32; showroom.rollAngle = 0; showroom.pitchAngle = 0;
         playerModel.update(showroom, dt, false);
         updateCamera(dt, showroom, 'garage');
+      } else if (isle && player) {
+        // sur l'île : ta voiture garée là où la balade s'arrête, la caméra tourne autour
+        playerModel.update(player, dt, false);
+        updateCamera(dt, player, true);
       } else {
         leader.update(dt, 1);
         playerModel.update(leader.state, dt, false);
@@ -5640,7 +6558,7 @@ function buildIslandWorld(scene, I, quality) {
           player.x0 = player.x; player.z0 = player.z; player.h0 = player.heading;
           curTer().grad(player.x, player.z, _grad); player.gx = _grad[0]; player.gz = _grad[1];
           stepCar(player, input, STEP, settings.assist);
-          if (isle) isleCollide(player); else collide(player, STEP);
+          if (isle) { isleCollide(player); if (life) lifeCollide(player); } else collide(player, STEP);
           acc -= STEP;
         }
         if (!isle) updateProgress(dt);
@@ -5676,6 +6594,11 @@ function buildIslandWorld(scene, I, quality) {
       updateCamera(0, player, false);
     }
 
+    if (isle && life && player) {
+      if (phase === 'play' || phase === 'count') lifeTick(dt);
+      lifeDraw(dt, t);
+      mpSendTick(dt);
+    }
     if (phase !== 'pause') { smoke.update(dt); sparks.update(dt); }
     skids.flush();
     updateFavicon(dt);
@@ -5803,6 +6726,8 @@ function buildIslandWorld(scene, I, quality) {
       const d = Math.hypot(st.x - leader.state.x, st.z - leader.state.z);
       if (hudCache.tmShow !== 'flex') { hudCache.tmShow = 'flex'; el('tandemMeter').style.display = 'flex'; }
       setBar('tandemFill', clamp(1 - (d - 3) / 22, 0, 1));
+    } else if (life && life.duel && life.duel.kind === 'tandem' && life.duel.state === 'run') {
+      if (hudCache.tmShow !== 'flex') { hudCache.tmShow = 'flex'; el('tandemMeter').style.display = 'flex'; } // jauge remplie par duelTick
     } else if (hudCache.tmShow !== 'none') { hudCache.tmShow = 'none'; el('tandemMeter').style.display = 'none'; }
     drawMinimap();
   }
@@ -5846,6 +6771,7 @@ function buildIslandWorld(scene, I, quality) {
   function show(id) {
     if (id === 'garage' && screenId !== 'garage') snapCam = true;
     screenId = id;
+    if (id) $('prompt').hidden = true;
     for (const s of document.querySelectorAll('.screen')) s.hidden = s.id !== id;
     const scr = id && $(id);
     if (scr) { const f = scr.querySelector('.btn.primary, button'); if (f && !isTouch) setTimeout(() => f.focus({ preventScroll: true }), 30); }
@@ -6102,10 +7028,11 @@ function buildIslandWorld(scene, I, quality) {
     return 'TANDEM · ' + (lead.name || 'LEADER').split(' ')[0].toUpperCase();
   }
 
-  // dialogues : une ligne à la fois ; toucher, Entrée ou Espace pour continuer, Échap pour passer
-  function talk(lines, done) {
+  // dialogues : une ligne à la fois ; toucher, Entrée ou Espace pour continuer, Échap pour passer.
+  // choices (facultatif) : [{ label, act }] proposés après la dernière ligne ; done(act) reçoit le choix (le dernier = refus).
+  function talk(lines, done, choices) {
     if (!lines || !lines.length) { if (done) done(); return; }
-    dlg = { lines, i: 0, done };
+    dlg = { lines, i: 0, done, choices: choices && choices.length ? choices : null };
     $('dialog').hidden = false;
     showLine();
     if (!isTouch) setTimeout(() => $('dlgNext').focus({ preventScroll: true }), 30);
@@ -6117,20 +7044,37 @@ function buildIslandWorld(scene, I, quality) {
     $('dlgName').textContent = c.name; $('dlgRole').textContent = who === 'narr' ? '' : c.role;
     $('dlgText').textContent = text;
     document.querySelector('.dlg-card').classList.toggle('narr', who === 'narr');
-    $('dlgNext').firstElementChild.textContent = dlg.i === dlg.lines.length - 1 ? 'Continuer' : 'Suite';
-    announce((c.name ? c.name + ' : ' : '') + text);
+    const last = dlg.i === dlg.lines.length - 1, ask = last && dlg.choices;
+    $('dlgNext').firstElementChild.textContent = last ? 'Continuer' : 'Suite';
+    $('dlgFoot').hidden = !!ask;
+    const ch = $('dlgChoices');
+    ch.hidden = !ask;
+    ch.innerHTML = ask ? dlg.choices.map((c, k) => `<button class="btn${k === 0 ? ' primary' : k === dlg.choices.length - 1 ? ' ghost' : ''}" data-choice="${k}"><i aria-hidden="true">${k + 1}</i><span>${esc(c.label)}</span></button>`).join('') : '';
+    if (ask && !isTouch) setTimeout(() => { const b = ch.querySelector('button'); if (b) b.focus({ preventScroll: true }); }, 30);
+    announce((c.name ? c.name + ' : ' : '') + text + (ask ? '. Choix : ' + dlg.choices.map((x) => x.label).join(', ') : ''));
   }
-  function dlgNext(all) {
+  function dlgNext(all, pick) {
     if (!dlg) return;
     Sound.ui();
     if (!all && dlg.i < dlg.lines.length - 1) { dlg.i++; showLine(); return; }
-    const done = dlg.done;
-    dlg = null; $('dialog').hidden = true;
-    if (done) done();
+    // une question attend sa réponse : passer saute jusqu'à elle, on ne la contourne pas
+    if (dlg.choices && pick == null) { if (dlg.i !== dlg.lines.length - 1) { dlg.i = dlg.lines.length - 1; showLine(); } return; }
+    const done = dlg.done, act = dlg.choices ? dlg.choices[pick].act : undefined;
+    dlg = null; $('dialog').hidden = true; $('dlgChoices').hidden = true; $('dlgFoot').hidden = false;
+    if (done) done(act);
   }
-  $('dialog').addEventListener('click', (e) => dlgNext(!!e.target.closest('#dlgSkip')));
+  $('dialog').addEventListener('click', (e) => {
+    const c = e.target.closest('[data-choice]');
+    if (c) { dlgNext(false, +c.dataset.choice); return; }
+    if (dlg && dlg.choices && dlg.i === dlg.lines.length - 1) return; // on attend un choix
+    dlgNext(!!e.target.closest('#dlgSkip'));
+  });
   addEventListener('keydown', (e) => {
     if (!dlg) return;
+    const asking = dlg.choices && dlg.i === dlg.lines.length - 1;
+    if (asking && /^[1-9]$/.test(e.key) && +e.key <= dlg.choices.length) { e.preventDefault(); e.stopImmediatePropagation(); dlgNext(false, +e.key - 1); return; }
+    if (asking && (e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.dataset.choice != null) { e.stopImmediatePropagation(); return; } // le bouton choisi reçoit son clic
+    if (asking && e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); dlgNext(false, dlg.choices.length - 1); return; }
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) dlgNext(false); }
     else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); dlgNext(true); }
   }, true);
@@ -6330,49 +7274,79 @@ function buildIslandWorld(scene, I, quality) {
   }
 
 
-  // ---------- l'île : monde ouvert continu (island.js) ----------
-  // isle : null hors de l'île | { I : routes + terrain (calculés une fois), gate : porte franchie, hub : lieu le plus proche }
-  let isle = null, isleData = null;
+  // ---------- l'île : monde ouvert continu (island.js) et sa vie (isleai.js) ----------
+  // isle : null hors de l'île | { I : routes + terrain (calculés une fois), hubName : lieu le plus proche affiché }
+  // life : circulation, rivaux, repères, GPS, duel, zone de glisse, radars, invite d'interaction (null hors de l'île)
+  let isle = null, isleData = null, life = null;
   const isleQ = { i: -1, d: Infinity, lat: 0, edge: -1 };
-  function enterIsland() {
+  Object.assign(Story.CAST, IsleLife.RIVAL_CAST);
+  const castOf = (who) => Story.CAST[who] || Story.CAST.narr;
+  const nodeName = (k) => { const id = Object.keys(ISLE.hubs).find((h) => ISLE.hubs[h] === k); return id ? TRACKS[trackIndexOf(id)].name : IsleLife.NODE_NAMES[k] || k; };
+  const fmtDist = (m) => (m < 1000 ? `${Math.max(10, Math.round(m / 10) * 10)} m` : `${(m / 1000).toFixed(1).replace('.', ',')} km`);
+  const envOn = (m) => m.root.traverse((o) => { if (o.material && o.material.isMeshStandardMaterial) { o.material.envMap = envMap; o.material.needsUpdate = true; } });
+  const starsTxt = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
+
+  // spawn : { x, z, h } facultatif (multijoueur : on arrive derrière l'autre joueur)
+  function enterIsland(spawn) {
     ensureAudio();
     clearExplore(); adv = null; advNext = null;
     if (!isleData) isleData = buildIsland(ISLE);
+    clearLife();
     if (world) world.dispose();
-    isle = { I: isleData, gate: null, hubName: '', wasIn: null };
-    world = buildIslandWorld(scene, isleData, quality);
+    const I = isleData;
+    isle = { I, hubName: '' };
+    world = buildIslandWorld(scene, I, quality);
     renderer.toneMappingExposure = world.theme.exposure;
     buildEnv(); buildFx(); buildCars(true);
-    playerModel.ground = isleData.terrain.at;
+    playerModel.ground = I.terrain.at;
     const found = (profile.isle && profile.isle.found) || {};
     world.daruma.forEach((g, k) => { g.visible = !found[k]; });
     mode = 'free';
     resetScore();
     skids.clear(); smoke.clear();
-    const hb = isleData.hubs.minato;
-    const st = createCarState(Economy.tunedSpec(CAR_SPECS[profile.current], profile.cars[profile.current].perf, profile.cars[profile.current].tune), hb.x + Math.cos(hb.heading) * 14, hb.z + Math.sin(hb.heading) * 14, hb.heading);
-    player = st; player.x0 = st.x; player.z0 = st.z; player.h0 = st.heading; player.idx = 0; player.prevIdx = 0; player.wetT = 0; player.roadD = 0;
-    isle.wasIn = 'minato'; // pas de porte au départ
+    let x, z, h;
+    const q = spawn ? I.nearestRoad(spawn.x - Math.cos(spawn.h) * 12, spawn.z - Math.sin(spawn.h) * 12, {}) : null;
+    if (q && q.i >= 0) {
+      x = I.X[q.i]; z = I.Z[q.i]; h = Math.atan2(I.TZ[q.i], I.TX[q.i]);
+      if (Math.cos(h - spawn.h) < 0) h += Math.PI;
+    } else { const hb = I.hubs.minato; x = hb.x + Math.cos(hb.heading) * 14; z = hb.z + Math.sin(hb.heading) * 14; h = hb.heading; }
+    placePlayer(x, z, h, 0);
+    buildLife();
     phase = 'count';
     show(null);
     $('hud').hidden = false;
     setTouchVisible();
     $('hudMode').textContent = 'L’ÎLE';
-    $('hudBest').textContent = 'MONDE OUVERT';
+    $('hudBest').textContent = mp ? 'SESSION À ' + mp.S.peers.size : 'MONDE OUVERT';
     $('hudGoal').hidden = false; renderIsleGoal();
+    $('mapBtn').hidden = false;
     drawIsleMinimapBase();
     camPos.set(player.x - Math.cos(player.heading) * 8, gy(player.x, player.z) + 3, player.z - Math.sin(player.heading) * 8);
     camLook.set(player.x, gy(player.x, player.z) + 1, player.z);
     try { renderer.compile(scene, camera); } catch (e) { /* facultatif */ }
     countdown();
     requestWake();
-    announce('L’île de Sideways : roule où tu veux. Les portes jaunes mènent aux lieux de l’aventure.');
+    announce('L’île de Sideways : roule où tu veux. Approche-toi des gens, des portes et des pilotes pour interagir. M ouvre la carte.');
+    if (!IsleLife.isleBag(profile).met.tuto) {
+      IsleLife.isleBag(profile).met.tuto = true; saveProfile();
+      setTimeout(() => toast(isTouch ? 'Approche-toi d’un repère, puis touche le bouton qui apparaît en bas' : 'Approche-toi d’un repère, puis appuie sur E · M : carte et GPS', 'chal'), 3400);
+    }
+  }
+  // voiture du joueur posée à l'arrêt (ou lancée) sur l'île
+  function placePlayer(x, z, h, speed) {
+    const spec = player && player.spec && isle ? player.spec : Economy.tunedSpec(CAR_SPECS[profile.current], profile.cars[profile.current].perf, profile.cars[profile.current].tune);
+    const st = createCarState(spec, x, z, h);
+    st.vx = Math.cos(h) * speed; st.vz = Math.sin(h) * speed;
+    Object.assign(st, { x0: x, z0: z, h0: h, idx: 0, prevIdx: 0, wetT: 0, roadD: 0 });
+    player = st;
+    if (skids) { skids.mark('P-1', x, z, 0, 0.3); skids.mark('P1', x, z, 0, 0.3); }
   }
   // retour au jeu sur piste : on reconstruit la piste courante
   function leaveIsle() {
     if (!isle) return;
+    clearLife();
     isle = null;
-    $('hudGoal').hidden = true;
+    $('hudGoal').hidden = true; $('mapBtn').hidden = true; $('mpPause').hidden = true;
     loadTrack(trackIdx);
   }
   function isleCollide(st) {
@@ -6388,54 +7362,416 @@ function buildIslandWorld(scene, I, quality) {
     const wet = player.wetT > 0.5;
     const I = isleData;
     if (i < 0) { let bd = Infinity; for (let k = 0; k < I.N; k += 2) { const d = (I.X[k] - player.x) ** 2 + (I.Z[k] - player.z) ** 2; if (d < bd) { bd = d; i = k; } } } // loin de tout : la route la plus proche de l'île
-    for (const [id, hb] of Object.entries(I.hubs)) if (Math.hypot(I.X[i] - hb.x, I.Z[i] - hb.z) < 40) isle.wasIn = id; // pas de porte au repêchage
     let h = Math.atan2(I.TZ[i], I.TX[i]);
     let dh = h - player.heading; while (dh > Math.PI) dh -= 2 * Math.PI; while (dh < -Math.PI) dh += 2 * Math.PI;
     if (Math.abs(dh) > Math.PI / 2) h += Math.PI; // garde le sens dans lequel on roulait
     lose('Replacement');
-    const st = createCarState(player.spec, I.X[i], I.Z[i], h);
-    st.vx = Math.cos(h) * 8; st.vz = Math.sin(h) * 8;
-    Object.assign(st, { x0: st.x, z0: st.z, h0: h, idx: 0, prevIdx: 0, wetT: 0, roadD: 0 });
-    player = st;
-    skids.mark('P-1', st.x, st.z, 0, 0.3); skids.mark('P1', st.x, st.z, 0, 0.3);
+    placePlayer(I.X[i], I.Z[i], h, 8);
     popup(wet ? 'Plouf · replacé sur la route' : 'Replacé sur la route', 'apex');
-  }
-  function renderIsleGoal() {
-    const el = $('hudGoal'); el.className = 'hud-goal';
-    el.textContent = `Daruma dorés ${isleFound(profile)}/${ISLE.daruma.length} · les portes jaunes ouvrent l’aventure`;
   }
   function isleTick(dt) {
     const st = player, I = isleData;
     if (st.wetT > 0.8) { st.wetT = 0; isleRespawn(); return; }
-    // lieu le plus proche (affiché sous le chrono) et portes
+    // lieu le plus proche (affiché sous le chrono)
     let best = null, bd = Infinity;
     for (const [id, hb] of Object.entries(I.hubs)) { const d = Math.hypot(st.x - hb.x, st.z - hb.z); if (d < bd) { bd = d; best = id; } }
     const tr = TRACKS.find((t) => t.id === best);
-    const label = bd < 60 ? tr.name : `${tr.name} · ${bd < 1000 ? Math.round(bd / 10) * 10 + ' m' : (bd / 1000).toFixed(1).replace('.', ',') + ' km'}`;
+    const label = bd < 60 ? tr.name : `${tr.name} · ${fmtDist(bd)}`;
     if (label !== isle.hubName) { isle.hubName = label; $('hudLap').textContent = label; }
-    if (bd < 11 && isle.wasIn !== best) {
-      isle.wasIn = best;
-      const ci = Story.zoneIndex(best);
-      if (Story.chapterOpen(profile, ci)) {
-        // on s'arrête à la porte : la carte s'ouvre sur ce lieu
-        phase = 'pause'; clearTouch(); Sound.suspend();
-        advSel = ci; renderAdventure(); show('adventure');
-        toast(`${tr.name} : missions, exploration et histoire du lieu`, 'chal');
-        return;
-      }
-      toast(`${tr.name} : lieu fermé, avance dans l’aventure pour l’ouvrir`, 'lost');
-    }
-    if (bd > 40 && isle.wasIn === best) isle.wasIn = null;
     // daruma dorés
     I.daruma.forEach((d, k) => {
       const g = world.daruma[k];
       if (!g.visible || Math.hypot(st.x - d.x, st.z - d.z) > 3) return;
       g.visible = false;
       const r = isleCollect(profile, k);
-      if (r) { saveProfile(); refreshWallet(); Sound.clip(); vibrate(30); popup(`Daruma doré +${Economy.fmt(r)}`, 'clip'); renderIsleGoal(); }
+      if (r) { saveProfile(); refreshWallet(); Sound.clip(); vibrate(30); popup(`Daruma doré +${Economy.fmt(r)}`, 'clip'); toast(`Daruma doré ${isleFound(profile)} / ${ISLE.daruma.length}`, 'chal'); if (life && life.gps && life.gps.daruma === k) clearGps(); }
     });
   }
-  // mini-carte de l'île entière : routes, portes, daruma restants, voiture
+
+  // ---------- vie de l'île : circulation, rivaux, habitants, belvédères, radars, zones ----------
+  function buildLife() {
+    const I = isleData;
+    const T = IsleLife.createTraffic(I, isTouch ? 16 : 22, 1 + (Date.now() % 9973));
+    // la circulation démarre autour de toi, pas à l'autre bout de l'île
+    T.agents.forEach((A, k) => { if (k % 2 === 0) IsleLife.respawnNear(I, A, player.x, player.z, T.rand); });
+    life = {
+      T, layer: createTrafficLayer(world.group, T.agents, I.terrain.at), spots: buildIsleSpots(world.group, I, castOf),
+      rivals: [], obs: [], me: { x: 0, z: 0, vx: 0, vz: 0 }, gps: null, duel: null, zone: null, radar: {}, near: null,
+      scanT: 0, goalT: 0, sendT: 0, hostT: 0, bumpT: 0, race: null, battle: null, stats: { rivals: 0, stars: 0, photos: 0 },
+    };
+    for (const def of IsleLife.RIVALS) if (IsleLife.rivalOpen(profile, def, Story)) addRival(def);
+    if (mp) for (const R of mp.remotes.values()) remoteModel(R);
+    refreshMpHud();
+  }
+  function clearLife() {
+    $('prompt').hidden = true; $('gps').hidden = true; $('mpHud').hidden = true;
+    if (!life) return;
+    life.layer.dispose(); life.spots.dispose();
+    for (const r of life.rivals) { r.tag.dispose(); r.model.dispose(); }
+    if (mp) for (const R of mp.remotes.values()) dropRemoteModel(R);
+    life = null;
+  }
+  function addRival(def) {
+    const I = isleData, r = I.roads[def.e];
+    const A = IsleLife.makeAgent(I, { id: def.id, e: def.e, dir: 1, s: r.length * 0.4, lane: 0, laneT: 0, k: def.skill, speed: 12, wheelRot: 0, steerAngle: 0, rollAngle: 0, pitchAngle: 0, rearSlip: 0, slip: 0, throttle: 1, rpm: 5000 });
+    const model = buildCar(def.car, lookOf(Object.assign(Economy.defaultCar(def.car), def.look), false));
+    model.ground = I.terrain.at; envOn(model); scene.add(model.root);
+    const c = castOf(def.who), tag = makeTag();
+    tag.set(c.name, def.crew, c.col); tag.sprite.position.set(0, 2.7, 0); model.root.add(tag.sprite);
+    life.rivals.push({ def, A, model, tag, c, cool: 0, farT: 0, fx: 'R' + life.rivals.length });
+  }
+
+  // contact avec la circulation, les rivaux et les autres joueurs : deux disques par voiture, seul le joueur local est repoussé
+  function lifeCollide(st) {
+    const L = life, c = Math.cos(st.heading), s = Math.sin(st.heading);
+    const P0x = st.x + c * 1.05, P0z = st.z + s * 1.05, P1x = st.x - c * 1.05, P1z = st.z - s * 1.05;
+    const hit = (ox, oz, oh, half, rad, ovx, ovz, A, r) => {
+      const oc = Math.cos(oh), os = Math.sin(oh);
+      for (const q of [half, -half]) {
+        const qx = ox + oc * q, qz = oz + os * q;
+        for (const [px, pz] of [[P0x, P0z], [P1x, P1z]]) {
+          let dx = px - qx, dz = pz - qz;
+          const d = Math.hypot(dx, dz), m = 1.0 + rad;
+          if (d >= m || d < 1e-4) continue;
+          dx /= d; dz /= d;
+          st.x += dx * (m - d); st.z += dz * (m - d);
+          const vrel = (st.vx - ovx) * dx + (st.vz - ovz) * dz;
+          if (vrel < 0) { st.vx -= dx * vrel * 1.25; st.vz -= dz * vrel * 1.25; st.omega += (px === P0x ? 1 : -1) * (dx * -s + dz * c) * vrel * 0.06; bump(-vrel, qx, qz, A, r); }
+          return;
+        }
+      }
+    };
+    for (const A of L.T.agents) { if (Math.abs(A.x - st.x) < 9 && Math.abs(A.z - st.z) < 9) hit(A.x, A.z, A.heading, A.kind.len / 2 - A.kind.w / 2, A.kind.w / 2 + 0.05, A.vx || 0, A.vz || 0, A, null); }
+    for (const r of L.rivals) { const A = r.A; if (Math.abs(A.x - st.x) < 9 && Math.abs(A.z - st.z) < 9) hit(A.x, A.z, A.heading, 1.05, 1.0, A.vx || 0, A.vz || 0, null, r); }
+    if (mp) for (const R of mp.remotes.values()) { const v = R.view; if (R.shown && Math.abs(v.x - st.x) < 9 && Math.abs(v.z - st.z) < 9) hit(v.x, v.z, v.heading, 1.05, 1.0, v.vx, v.vz, null, null); }
+  }
+  function bump(v, x, z, A, r) {
+    if (A) { if (v > 1.5 && A.hitT <= 0) A.hitT = 2.5 + Math.random() * 2; A.speed *= 0.5; }
+    if (v < 1.6 || life.bumpT > 0) return;
+    life.bumpT = 0.35;
+    Sound.impact(v); vibrate(Math.min(120, v * 12));
+    if (!settings.reduce) shake = Math.min(1, shake + v * 0.06);
+    for (let k = 0; k < Math.min(24, v * 4); k++) sparks.emit(x, gy(x, z) + 0.6, z, (Math.random() - 0.5) * 6, 2 + Math.random() * 4, (Math.random() - 0.5) * 6, 0.4 + Math.random() * 0.3, 0.25, 0.08, 1);
+    if (v > 3 && phase === 'play') lose(A ? 'Accrochage' : 'Touchette');
+  }
+
+  // un pas de vie (jeu ou compte à rebours) : circulation, rivaux, interactions, GPS, duel, activités, multijoueur
+  function lifeTick(dt) {
+    const L = life, I = isleData, st = player;
+    if (L.bumpT > 0) L.bumpT -= dt;
+    const obs = L.obs; obs.length = 0;
+    L.me.x = st.x; L.me.z = st.z; L.me.vx = st.vx; L.me.vz = st.vz; obs.push(L.me);
+    for (const r of L.rivals) obs.push(r.A);
+    if (mp) for (const R of mp.remotes.values()) if (R.shown) obs.push(R.view);
+    for (const A of L.T.agents) obs.push(A);
+    for (const A of L.T.agents) {
+      const dx = A.x - st.x, dz = A.z - st.z, d2 = dx * dx + dz * dz;
+      if (d2 > 640 * 640) { IsleLife.respawnNear(I, A, st.x, st.z, L.T.rand); continue; }
+      const ev = IsleLife.stepAgent(I, A, dt, obs, L.T.rand, false);
+      if (ev === 'honk' && d2 < 110 * 110) Sound.horn(1 - Math.sqrt(d2) / 110, A.kind.id === 'bus' ? 0.72 : A.kind.id === 'kei' ? 1.22 : 1);
+    }
+    rivalsTick(dt);
+    if (L.duel) duelTick(dt);
+    actsTick(dt);
+    if (L.race) raceTick(dt);
+    if (L.battle) battleTick(dt);
+    L.scanT -= dt;
+    if (L.scanT <= 0) { L.scanT = 0.1; scanInteract(); updateGps(); }
+    L.goalT -= dt;
+    if (L.goalT <= 0) { L.goalT = 0.2; renderIsleGoal(); }
+  }
+  function rivalsTick(dt) {
+    const L = life, I = isleData, st = player;
+    for (const r of L.rivals) {
+      const A = r.A, d = Math.hypot(A.x - st.x, A.z - st.z), mine = L.duel && L.duel.r === r;
+      if (r.cool > 0) r.cool -= dt;
+      if (!mine) {
+        // il roule ; s'il te voit de près, il ralentit, se range et t'attend
+        const free = r.cool <= 0 && !L.duel && !L.race && !L.battle;
+        A.k = r.def.skill * (free && d < 110 ? 0.55 : 1);
+        A.hold = free && d < 40;
+        A.laneT = A.hold ? -4.3 : A.passS != null ? A.laneT : 0;
+        r.farT = d > 900 ? r.farT + dt : 0;
+        if (r.farT > 40) { r.farT = 0; IsleLife.respawnNear(I, A, st.x, st.z, L.T.rand, 0); A.k = r.def.skill; }
+      }
+      IsleLife.stepAgent(I, A, dt, L.obs, L.T.rand, true);
+      // état lu par le modèle 3D et la fumée
+      A.wheelRot += A.speed / 0.31 * dt * (1 + Math.abs(A.beta));
+      A.steerAngle += ((-A.beta * 0.9) - A.steerAngle) * Math.min(1, dt * 8);
+      A.rollAngle += ((-A.beta * 0.07 * Math.min(A.speed / 15, 1)) - A.rollAngle) * Math.min(1, dt * 5);
+      A.slip = -A.beta; A.rearSlip = Math.abs(A.beta) * 1.2; A.throttle = A.hold ? 0 : 1; A.fwd = A.speed;
+    }
+  }
+
+  // ---------- interactions : l'objet le plus proche propose une action (E, ou toucher le bouton) ----------
+  function scanInteract() {
+    const L = life, I = isleData, st = player;
+    let best = null;
+    const cand = (d, max, o) => { if (d < max && (!best || d / max < best.w)) best = Object.assign(o, { w: d / max }); };
+    const slow = st.speed < 7;
+    for (const [id, hb] of Object.entries(I.hubs)) {
+      const open = Story.chapterOpen(profile, Story.zoneIndex(id));
+      cand(Math.hypot(st.x - hb.x, st.z - hb.z), 14, { kind: 'gate', id, text: `Entrer : ${TRACKS[trackIndexOf(id)].name}`, sub: open ? 'missions, exploration, histoire' : 'lieu fermé · avance dans l’aventure', off: !open });
+    }
+    if (!L.duel && !L.race && !L.battle) for (const r of L.rivals) if (r.cool <= 0) cand(Math.hypot(st.x - r.A.x, st.z - r.A.z), 28, { kind: 'rival', r, text: `Défier ${r.c.name}`, sub: slow ? `${r.def.crew} · ${r.def.car.toUpperCase()}` : 'ralentis pour lui parler', off: !slow });
+    for (const n of L.spots.npcs) { const c = castOf(n.def.who); cand(Math.hypot(st.x - n.x, st.z - n.z), 11, { kind: 'npc', n, text: `Parler à ${c.name}`, sub: slow ? c.role : 'ralentis pour parler', off: !slow }); }
+    for (const p of L.spots.photos) { const done = IsleLife.isleBag(profile).photo[p.def.id]; cand(Math.hypot(st.x - p.x, st.z - p.z), 8, { kind: 'photo', p, text: done ? 'Reprendre la photo' : 'Prendre la photo', sub: st.speed > 2.5 ? 'arrête-toi dans le cercle' : p.def.name, off: st.speed > 2.5 }); }
+    setPrompt(best);
+  }
+  function setPrompt(b) {
+    if (life) life.near = b;
+    const el = $('prompt');
+    if (!b || phase !== 'play' || dlg) { if (!el.hidden) el.hidden = true; return; }
+    const key = b.kind + b.text + b.sub + b.off;
+    if (el.hidden || el.dataset.k !== key) {
+      el.dataset.k = key; $('promptText').textContent = b.text; $('promptSub').textContent = b.sub;
+      el.classList.toggle('off', !!b.off); el.setAttribute('aria-label', b.text + (b.sub ? ', ' + b.sub : ''));
+      if (el.hidden) { el.hidden = false; Sound.ui(); }
+    }
+  }
+  function interact() {
+    const b = life && life.near;
+    if (!b || phase !== 'play') return;
+    if (b.off) { Sound.lost(); return; }
+    setPrompt(null);
+    if (b.kind === 'gate') { phase = 'pause'; clearTouch(); Sound.suspend(); advSel = Story.zoneIndex(b.id); renderAdventure(); show('adventure'); }
+    else if (b.kind === 'rival') rivalTalk(b.r);
+    else if (b.kind === 'npc') npcChat(b.n);
+    else if (b.kind === 'photo') takePhoto(b.p);
+  }
+  $('prompt').addEventListener('click', () => interact());
+  // dialogue pendant le jeu : la voiture s'arrête le temps de parler
+  function chat(lines, done, choices) { phase = 'pause'; clearTouch(); Sound.suspend(); setPrompt(null); talk(lines, done, choices); }
+
+  function npcChat(n) {
+    const t = IsleLife.npcTalk(profile, n.def.id, Story);
+    chat(t.lines, (act) => {
+      const r = IsleLife.npcMet(profile, n.def.id);
+      if (r) { saveProfile(); refreshWallet(); toast(`Rencontre : ${castOf(n.def.who).name} · +${Economy.fmt(r)}`, 'chal'); }
+      gpsAct(act);
+      resumeGame();
+    }, t.choices.map((c) => ({ label: c.label, act: c.act })));
+  }
+  // choix d'un habitant ou de la carte → destination du GPS
+  function gpsAct(act) {
+    const I = isleData, st = player, L = life;
+    if (act === 'story') {
+      if (Story.chapterDone(profile, Story.CHAPTERS.length - 1)) { toast('Le Tour est gagné : tous les lieux restent ouverts', 'chal'); return; }
+      const id = Story.CHAPTERS[Story.currentChapter(profile)].track, hb = I.hubs[id];
+      setGps({ name: TRACKS[trackIndexOf(id)].name, x: hb.x, z: hb.z, arrive: 13 });
+    } else if (act === 'daruma') {
+      let k = -1, bd = Infinity;
+      I.daruma.forEach((d, j) => { if (!world.daruma[j].visible) return; const dd = Math.hypot(d.x - st.x, d.z - st.z); if (dd < bd) { bd = dd; k = j; } });
+      if (k < 0) toast('Tous les daruma dorés sont trouvés !', 'chal');
+      else setGps({ name: 'Daruma doré', x: I.daruma[k].x, z: I.daruma[k].z, arrive: 2, daruma: k });
+    } else if (act === 'rival') {
+      let best = null, bd = Infinity;
+      for (const r of L.rivals) { const d = Math.hypot(r.A.x - st.x, r.A.z - st.z); if (d < bd) { bd = d; best = r; } }
+      if (!best) toast('Aucun rival ne roule encore : avance dans l’aventure', 'lost');
+      else { best.cool = 0; setGps({ name: best.c.name, get: () => [best.A.x, best.A.z], arrive: 30 }); }
+    } else if (act === 'activity') {
+      const bag = IsleLife.isleBag(profile);
+      let best = null, bd = Infinity;
+      for (const a of L.spots.acts) { const n = IsleLife.starsOf(a.def, bag.best[a.def.id] || 0); const d = Math.hypot(a.x - st.x, a.z - st.z) + n * 3000; if (n < 3 && d < bd) { bd = d; best = a; } }
+      if (!best) toast('Trois étoiles partout. Respect.', 'chal');
+      else setGps({ name: best.def.name, x: best.x, z: best.z, arrive: 12 });
+    }
+  }
+
+  // ---------- GPS : flèche, distance par la route, tracé sur la mini-carte ----------
+  function setGps(g) {
+    if (!life) return;
+    life.gps = Object.assign({ route: null, t: 0, pts: [], ang: null, arrive: 16 }, g);
+    const el = $('gps'); el.hidden = false; el.classList.toggle('race', !!g.race);
+    updateGps(true); Sound.ping();
+    if (!g.race) toast(`GPS : ${g.name}`, 'apex');
+  }
+  function clearGps() { if (!life) return; life.gps = null; $('gps').hidden = true; }
+  function updateGps(force) {
+    const G = life && life.gps; if (!G) return;
+    const I = isleData, st = player;
+    if (G.get) { const p = G.get(); G.x = p[0]; G.z = p[1]; }
+    G.t -= 0.1;
+    if (force || G.t <= 0) {
+      G.t = 0.5; G.route = IsleLife.route(I, st.x, st.z, G.x, G.z); G.pts.length = 0;
+      if (G.route) { let k = 0; IsleLife.routeWalk(I, G.route, null, (x, z) => { if (k++ % 6 === 0) G.pts.push(x, z); }); }
+      G.pts.push(G.x, G.z);
+    }
+    const straight = Math.hypot(G.x - st.x, G.z - st.z);
+    if (!G.race && straight < G.arrive) { toast(`Arrivée : ${G.name}`, 'chal'); Sound.ping(); clearGps(); return; }
+    const ahead = G.route && straight > 45 ? IsleLife.routeWalk(I, G.route, 30) : null;
+    const tx = ahead ? ahead[0] : G.x, tz = ahead ? ahead[1] : G.z;
+    let a = (Math.atan2(tz - st.z, tx - st.x) - st.heading) * 180 / Math.PI;
+    if (G.ang == null) G.ang = a; else { let d = a - G.ang; d -= Math.round(d / 360) * 360; G.ang += d; }
+    $('gpsArrow').style.transform = `rotate(${G.ang.toFixed(1)}deg)`;
+    setText('gpsName', G.name);
+    setText('gpsDist', fmtDist(G.route ? G.route.len : straight) + (G.race ? ' · course' : ''));
+  }
+
+  // ---------- duels de rue contre les rivaux ----------
+  function rivalTalk(r) {
+    const I = isleData, wins = IsleLife.isleBag(profile).rivals[r.def.id] || 0;
+    const reward = wins ? Math.round(r.def.reward / 5 / 100) * 100 : r.def.reward;
+    let near = null, nd = Infinity;
+    for (const [k, [x, z]] of Object.entries(I.def.nodes)) { const d = Math.hypot(x - r.A.x, z - r.A.z); if (d < nd) { nd = d; near = k; } }
+    const tgt = IsleLife.tougeTarget(I, r.A.x, r.A.z, nd < 60 ? near : null);
+    const lines = r.def.hello.slice();
+    if (wins) lines.push(['narr', `${r.c.name} : ${wins} défaite${wins > 1 ? 's' : ''} contre toi. Revanche payée ${Economy.fmt(reward)}.`]);
+    chat(lines, (act) => {
+      if (act === 'race' && tgt) startDuel(r, 'race', tgt);
+      else if (act === 'tandem') startDuel(r, 'tandem');
+      else { r.cool = 25; resumeGame(); }
+    }, [
+      ...(tgt ? [{ label: `Touge → ${nodeName(tgt.node)} · ${fmtDist(tgt.route.len)} · ${Economy.fmt(reward)}`, act: 'race' }] : []),
+      { label: `Tandem de rue · 45 s · ${Economy.fmt(reward)}`, act: 'tandem' },
+      { label: 'Pas maintenant', act: 'bye' },
+    ]);
+  }
+  function startDuel(r, kind, tgt) {
+    const I = isleData, A = r.A, L = life;
+    Object.assign(A, { hold: true, arrived: false, route: null, passS: null, speed: 0, beta: 0, waitT: 0 });
+    if (kind === 'race') {
+      // côte à côte, tournés vers la destination
+      const route = IsleLife.route(I, A.x, A.z, tgt.x, tgt.z), sg = route.segs[0], dir = sg.i1 >= sg.i0 ? 1 : -1, rr = I.roads[sg.e];
+      A.e = sg.e; A.dir = dir; A.s = (dir > 0 ? sg.i0 : rr.count - 1 - sg.i0) * rr.step;
+      A.route = IsleLife.agentPlan(I, route);
+      A.lane = A.laneT = 2.1;
+    } else {
+      // le rival mène, tu pars 14 m derrière lui
+      A.s = Math.max(16, Math.min(I.roads[A.e].length - 30, A.s));
+      A.lane = A.laneT = 0; A.k = r.def.skill * 0.86;
+    }
+    const p = IsleLife.roadPose(I, A.e, A.dir, A.s, A.lane, {});
+    A.x = p.x; A.z = p.z; A.heading = Math.atan2(p.tz, p.tx);
+    const q = kind === 'race' ? IsleLife.roadPose(I, A.e, A.dir, A.s, -2.1, {}) : IsleLife.roadPose(I, A.e, A.dir, A.s - 14, 0, {});
+    placePlayer(q.x, q.z, Math.atan2(q.tz, q.tx), 0);
+    L.duel = { r, kind, tgt, t: 0, state: 'count', near: 0, both: 0, far: 0, dur: 45, pRem: tgt ? tgt.route.len : 0, rRem: tgt ? tgt.route.len : 0, chkT: 0 };
+    if (kind === 'race') setGps({ name: nodeName(tgt.node), x: tgt.x, z: tgt.z, race: true });
+    camPos.set(player.x - Math.cos(player.heading) * 8, gy(player.x, player.z) + 3, player.z - Math.sin(player.heading) * 8);
+    show(null); phase = 'count'; countdown();
+    announce(kind === 'race' ? `Touge contre ${r.c.name} jusqu’à ${nodeName(tgt.node)}.` : `Tandem de rue derrière ${r.c.name} : reste collé pendant 45 secondes.`);
+  }
+  function duelTick(dt) {
+    const D = life.duel, A = D.r.A, st = player, I = isleData;
+    if (D.state === 'count') { if (phase === 'play') { D.state = 'run'; A.hold = false; A.laneT = D.kind === 'race' ? 1.2 : 0; } return; }
+    if (phase !== 'play') return;
+    D.t += dt;
+    if (D.kind === 'race') {
+      D.chkT -= dt;
+      if (D.chkT <= 0) {
+        D.chkT = 0.3;
+        const rp = IsleLife.route(I, st.x, st.z, D.tgt.x, D.tgt.z), rr = A.arrived ? null : IsleLife.route(I, A.x, A.z, D.tgt.x, D.tgt.z);
+        if (rp) D.pRem = rp.len; D.rRem = A.arrived ? 0 : rr ? rr.len : D.rRem;
+        const gap = D.pRem - D.rRem; // élastique léger : le rival ne s'envole pas, ne t'attend pas non plus
+        A.k = D.r.def.skill * (gap > 160 ? 0.9 : gap < -120 ? 1.06 : 1);
+      }
+      if (Math.hypot(st.x - D.tgt.x, st.z - D.tgt.z) < 18) { endDuel(true); return; }
+      if (A.arrived || D.t > 300) { endDuel(false, A.arrived ? `${D.r.c.name} arrive le premier.` : 'Trop long : le rival est rentré.'); return; }
+    } else {
+      const d = Math.hypot(st.x - A.x, st.z - A.z), ang = Math.abs(st.slip) * 180 / Math.PI;
+      if (d < 15) { D.near += dt; if (ang > 12 && Math.abs(A.beta) > 0.2) D.both += dt; }
+      D.far = d > 110 ? D.far + dt : Math.max(0, D.far - dt);
+      setBar('tandemFill', clamp(1 - (d - 3) / 22, 0, 1));
+      if (D.far > 4) { endDuel(false, 'Distancé : le rival a disparu dans les virages.'); return; }
+      if (D.t >= D.dur) endDuel(tandemPct(D) >= 50);
+    }
+  }
+  const tandemPct = (D) => Math.round(Math.min(1, (D.near + D.both * 0.5) / D.dur) * 100);
+  function endDuel(win, why) {
+    const D = life.duel, r = D.r, A = r.A;
+    life.duel = null; r.cool = 40;
+    Object.assign(A, { route: null, arrived: false, hold: false, k: r.def.skill, laneT: 0 });
+    if (D.kind === 'race') clearGps();
+    let amount = 0;
+    if (win) { amount = IsleLife.rivalWin(profile, r.def.id, D.kind); saveProfile(); refreshWallet(); life.stats.rivals++; Sound.bank(true); } else Sound.lost();
+    const lines = (win ? r.def.win : r.def.lose).slice();
+    if (D.kind === 'tandem') lines.unshift(['narr', `Tandem : ${tandemPct(D)} % (il fallait 50 %)${D.both > 1 ? ` · ${Math.round(D.both)} s de glisse à deux` : ''}.`]);
+    if (why) lines.unshift(['narr', why]);
+    chat(lines, () => { if (amount) toast(`Victoire contre ${r.c.name} · +${Economy.fmt(amount)}`, 'chal'); resumeGame(); });
+  }
+
+  // ---------- belvédères, radars, zones de glisse ----------
+  function takePhoto(p) {
+    const f = $('flash'); f.hidden = true; void f.offsetWidth; f.hidden = settings.reduce; setTimeout(() => { f.hidden = true; }, 650);
+    Sound.shutter(); vibrate(20);
+    const r = IsleLife.photoTaken(profile, p.def.id);
+    if (r) { saveProfile(); refreshWallet(); life.stats.photos++; toast(`Lou : « ${p.def.line} » · +${Economy.fmt(r)}`, 'chal'); }
+    else toast(`Belle photo : ${p.def.name}`, 'apex');
+  }
+  function actsTick(dt) {
+    const L = life, st = player, kmh = st.speed * 3.6;
+    for (const a of L.spots.acts) {
+      if (a.def.type !== 'radar') continue;
+      const d = Math.hypot(st.x - a.x, st.z - a.z), id = a.def.id;
+      if (d < 9) L.radar[id] = Math.max(L.radar[id] || 0, kmh);
+      else if (L.radar[id] != null && d > 16) { const v = L.radar[id]; delete L.radar[id]; if (v > 40 && phase === 'play') radarFlash(a.def, v); }
+    }
+    if (!L.zone && !L.duel && !L.race && phase === 'play') {
+      for (const a of L.spots.acts) {
+        if (a.def.type !== 'zone' || Math.hypot(st.x - a.x, st.z - a.z) > 9) continue;
+        if (st.vx * a.tx + st.vz * a.tz < 4) continue; // dans le bon sens, lancé
+        L.zone = { a, base: score.total + score.combo, t: 0, offT: 0 };
+        const best = IsleLife.isleBag(profile).best[a.def.id] || 0;
+        popup('Zone de glisse', 'apex'); Sound.ping();
+        toast(`${a.def.name} : glisse jusqu’à l’arche d’arrivée${best ? ` · record ${best.toLocaleString('fr-FR')}` : ''}`, 'apex');
+        break;
+      }
+    }
+    const Z = L.zone;
+    if (Z) {
+      Z.t += dt;
+      Z.offT = isleQ.edge !== Z.a.def.e || isleQ.d > isleData.half + 4 ? Z.offT + dt : 0;
+      if (Z.offT > 3 || Z.t > 240) { L.zone = null; popup('Zone abandonnée', 'lost'); return; }
+      if (Math.hypot(st.x - Z.a.x1, st.z - Z.a.z1) < 11) {
+        bank();
+        const v = Math.max(0, Math.round(score.total - Z.base)), r = IsleLife.recordActivity(profile, Z.a.def.id, v);
+        L.zone = null;
+        popup(`${Z.a.def.name} · ${v.toLocaleString('fr-FR')} ${starsTxt(r.stars)}`, r.stars ? 'clip' : 'apex');
+        if (r.reward) { saveProfile(); refreshWallet(); L.stats.stars += r.stars - r.prev; toast(`${Z.a.def.name} · ${starsTxt(r.stars)} · +${Economy.fmt(r.reward)}`, 'chal'); Sound.cash(); }
+        else if (r.record) { saveProfile(); toast(`${Z.a.def.name} : record personnel`, 'apex'); }
+        else toast(`${Z.a.def.name} : ${v.toLocaleString('fr-FR')} pts (record ${r.best.toLocaleString('fr-FR')})`, 'apex');
+      }
+    }
+  }
+  function radarFlash(def, v) {
+    const r = IsleLife.recordActivity(profile, def.id, Math.round(v));
+    const f = $('flash'); if (!settings.reduce) { f.hidden = true; f.className = 'soft'; void f.offsetWidth; f.hidden = false; setTimeout(() => { f.hidden = true; f.className = ''; }, 650); }
+    Sound.shutter();
+    popup(`Radar ${Math.round(v)} km/h ${starsTxt(r.stars)}`, r.stars ? 'clip' : 'apex');
+    if (r.reward) { saveProfile(); refreshWallet(); life.stats.stars += r.stars - r.prev; toast(`${def.name} · ${starsTxt(r.stars)} · +${Economy.fmt(r.reward)}`, 'chal'); Sound.cash(); }
+    else if (r.record) { saveProfile(); toast(`${def.name} : record personnel, ${Math.round(v)} km/h`, 'apex'); }
+  }
+
+  // bandeau d'objectif de l'île : duel, zone, course ou battle en cours, sinon l'avancement
+  function renderIsleGoal() {
+    const L = life, el = $('hudGoal');
+    if (!el || !isle) return;
+    let t, cls = 'hud-goal';
+    if (L && L.duel) {
+      const D = L.duel, n = D.r.c.name;
+      cls += ' street';
+      if (D.state === 'count') t = D.kind === 'race' ? `Touge contre ${n} · jusqu’à ${nodeName(D.tgt.node)}` : `Tandem de rue · colle ${n} pendant 45 s`;
+      else if (D.kind === 'race') { const g = Math.round(D.rRem - D.pRem); t = `Touge · ${n} · ${fmtDist(D.pRem)} · ${g >= 0 ? `devant de ${Math.abs(g)} m` : `derrière de ${Math.abs(g)} m`}`; }
+      else t = `Tandem · ${n} · ${tandemPct(D)} % / 50 % · ${Math.max(0, Math.ceil(D.dur - D.t))} s`;
+    } else if (L && L.zone) {
+      const Z = L.zone, v = Math.max(0, Math.round(score.total + score.combo - Z.base)), next = Z.a.def.stars.find((s) => s > v);
+      cls += ' street';
+      t = `Zone · ${Z.a.def.name} · ${v.toLocaleString('fr-FR')} pts${next ? ` · ★ à ${next.toLocaleString('fr-FR')}` : ' · ★★★'}`;
+    } else if (L && L.race) {
+      const R = L.race; cls += ' street';
+      t = R.state === 'count' ? `Course → ${R.name}` : `Course → ${R.name} · ${fmtTime(R.t)} · arrivés ${R.results.size} / ${mp ? mp.S.peers.size : 1}`;
+    } else if (L && L.battle) {
+      const B = L.battle; cls += ' street';
+      t = `Battle de drift · ${Math.round(score.total + score.combo - B.base).toLocaleString('fr-FR')} pts · ${Math.max(0, Math.ceil(B.dur - B.t))} s`;
+    } else {
+      const bag = IsleLife.isleBag(profile), stars = IsleLife.ACTIVITIES.reduce((a, d) => a + IsleLife.starsOf(d, bag.best[d.id] || 0), 0);
+      t = `Daruma ${isleFound(profile)}/${ISLE.daruma.length} · ★ ${stars}/${IsleLife.ACTIVITIES.length * 3}${isTouch ? '' : ' · M : carte'}`;
+    }
+    if (el.className !== cls) el.className = cls;
+    if (el.textContent !== t) el.textContent = t;
+  }
+
+  // mini-carte de l'île entière : routes, portes, GPS, daruma restants, rivaux, autres joueurs, voiture
   let isleMM = null;
   function drawIsleMinimapBase() {
     const I = isleData, c = document.createElement('canvas'); c.width = c.height = 208;
@@ -6456,22 +7792,54 @@ function buildIslandWorld(scene, I, quality) {
     isleMM = { c, T };
   }
   function drawIsleMinimap(g) {
+    const T = isleMM.T, L = life;
     g.drawImage(isleMM.c, 0, 0);
+    if (L && L.gps && L.gps.pts.length > 2) {
+      const P = L.gps.pts; g.beginPath(); g.moveTo(...T(player.x, player.z));
+      for (let k = 0; k < P.length; k += 2) g.lineTo(...T(P[k], P[k + 1]));
+      g.strokeStyle = L.gps.race ? '#f7d154' : '#7b8cff'; g.lineWidth = 3; g.stroke();
+      const [gx, gz] = T(L.gps.x, L.gps.z); g.fillStyle = g.strokeStyle; g.beginPath(); g.arc(gx, gz, 4, 0, 7); g.fill();
+    }
     const found = (profile.isle && profile.isle.found) || {};
     g.fillStyle = '#ffb020';
-    isleData.daruma.forEach((d, k) => { if (found[k]) return; const [x, y] = isleMM.T(d.x, d.z); g.beginPath(); g.arc(x, y, 2.2, 0, 7); g.fill(); });
-    const [x, y] = isleMM.T(player.x, player.z), h = player.heading;
+    isleData.daruma.forEach((d, k) => { if (found[k]) return; const [x, y] = T(d.x, d.z); g.beginPath(); g.arc(x, y, 2.2, 0, 7); g.fill(); });
+    if (L) {
+      g.fillStyle = 'rgba(255,255,255,.55)';
+      for (const A of L.T.agents) { const [x, y] = T(A.x, A.z); g.fillRect(x - 1, y - 1, 2, 2); }
+      for (const r of L.rivals) { const [x, y] = T(r.A.x, r.A.z); g.fillStyle = '#000'; g.beginPath(); g.arc(x, y, 4.2, 0, 7); g.fill(); g.fillStyle = r.c.col; g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); }
+    }
+    if (mp) for (const R of mp.remotes.values()) if (R.shown) { const [x, y] = T(R.view.x, R.view.z); g.fillStyle = '#000'; g.beginPath(); g.arc(x, y, 5, 0, 7); g.fill(); g.fillStyle = R.color; g.beginPath(); g.arc(x, y, 3.6, 0, 7); g.fill(); }
+    const [x, y] = T(player.x, player.z), h = player.heading;
     g.save(); g.translate(x, y); g.rotate(h);
     g.fillStyle = '#000'; g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, 6); g.lineTo(-6, -6); g.closePath(); g.fill();
     g.fillStyle = '#ff3d3d'; g.beginPath(); g.moveTo(7, 0); g.lineTo(-4, 4.5); g.lineTo(-4, -4.5); g.closePath(); g.fill();
     g.restore();
   }
-  // fin de balade : gains du mode libre, daruma trouvés
+
+  // ---------- rendu de la vie : circulation, rivaux, autres joueurs (aussi pendant la pause : les autres roulent) ----------
+  function lifeDraw(dt, t) {
+    const L = life, cx = camera.position.x, cz = camera.position.z;
+    L.layer.update(cx, cz);
+    L.spots.update(t);
+    for (const r of L.rivals) {
+      const A = r.A, d2 = (A.x - cx) ** 2 + (A.z - cz) ** 2, vis = d2 < 300 * 300;
+      r.model.root.visible = vis;
+      if (!vis) continue;
+      r.model.update(A, dt, A.hold || A.speed < 3);
+      if (d2 < 140 * 140 && phase !== 'pause') carFx(A, r.model, dt, r.fx, 'L');
+      const chip = r.cool <= 0 && !L.duel && Math.hypot(A.x - player.x, A.z - player.z) < 110 ? 'DÉFI' : null;
+      const wins = IsleLife.isleBag(profile).rivals[r.def.id] || 0;
+      r.tag.set(r.c.name, `${r.def.crew}${wins ? ` · battu ×${wins}` : ''}`, r.c.col, chip);
+    }
+    if (mp) remotesDraw(dt);
+  }
+
+  // fin de balade : gains du mode libre, trouvailles et rencontres de l'île
   function finishIsle() {
     bank();
     phase = 'results';
     Sound.suspend();
-    $('hud').hidden = true; $('hudGoal').hidden = true;
+    $('hud').hidden = true; $('hudGoal').hidden = true; $('prompt').hidden = true;
     setTouchVisible();
     const total = Math.round(score.total), driftPct = Math.round(score.driftT / Math.max(score.runT, 1) * 100);
     $('resGrade').textContent = '—';
@@ -6482,11 +7850,15 @@ function buildIslandWorld(scene, I, quality) {
     $('resAngle').textContent = Math.round(score.maxAngle) + '°';
     $('resDrift').textContent = driftPct + ' %';
     $('resEyebrow').textContent = 'Balade · L’île de Sideways';
-    $('resHeadline').textContent = '« Une île, neuf kilomètres de routes, et personne pour te dire où tourner. »';
+    const S = life ? life.stats : { rivals: 0, stars: 0, photos: 0 };
+    $('resHeadline').textContent = S.rivals ? `« ${S.rivals} ${S.rivals > 1 ? 'rivaux battus' : 'rival battu'} sur les routes de l’île. »` : '« Une île, neuf kilomètres de routes, et personne pour te dire où tourner. »';
     const res = Economy.applyRun(profile, { day: today(), trackId: 'ile', trackName: 'L’île', mode: 'free', score: total, grade: null, clips: 0, zones: 0, maxAngle: score.maxAngle, bestCombo: Math.round(score.best), driftPct, record: false });
     saveProfile(); refreshWallet();
+    const bag = IsleLife.isleBag(profile), stars = IsleLife.ACTIVITIES.reduce((a, d) => a + IsleLife.starsOf(d, bag.best[d.id] || 0), 0);
+    const met = IsleLife.ISLE_NPCS.filter((n) => bag.met[n.id]).length, photos = IsleLife.PHOTO_SPOTS.filter((p) => bag.photo[p.id]).length;
     const rg = $('resGoal'); rg.hidden = false;
-    rg.innerHTML = `<div class="h">L’île</div><div class="r"><span>Daruma dorés ${isleFound(profile)} / ${ISLE.daruma.length} · temps sur la route ${fmtTime(score.runT)}</span></div>`;
+    rg.innerHTML = `<div class="h">L’île · cette balade</div><div class="r"><span>Temps sur la route ${fmtTime(score.runT)} · rivaux battus ${S.rivals} · étoiles gagnées ${S.stars} · photos ${S.photos}</span></div>`
+      + `<div class="h">L’île · en tout</div><div class="r"><span>Daruma ${isleFound(profile)} / ${ISLE.daruma.length} · étoiles ${stars} / ${IsleLife.ACTIVITIES.length * 3} · rencontres ${met} / ${IsleLife.ISLE_NPCS.length} · photos ${photos} / ${IsleLife.PHOTO_SPOTS.length}</span></div>`;
     $('payLines').innerHTML = res.payout.lines.map((l) => `<div><span>${l.label}</span><b>+${Economy.fmt(l.amount)}</b></div>`).join('') || '<div><span>Aucun gain sur cette balade.</span></div>';
     $('payChal').innerHTML = res.challenges.map((c) => `<div>Défi réussi : ${c.label} · +${Economy.fmt(c.reward)}</div>`).join('');
     $('payBal').textContent = 'Solde : ' + Economy.fmt(profile.money);
@@ -6496,6 +7868,396 @@ function buildIslandWorld(scene, I, quality) {
     show('results');
     releaseWake();
   }
+
+  // ---------- carte de l'île : repères, et un toucher règle le GPS ----------
+  let mapItems = [];
+  function openIsleMap() {
+    if (!isle || !life) return;
+    if (phase === 'play' || phase === 'count') { clearTimeout(countTimer); $('count').hidden = true; phase = 'pause'; Sound.suspend(); clearTouch(); }
+    setPrompt(null);
+    renderIsleMap(); show('isleMap');
+  }
+  function closeIsleMap() { show(null); resumeGame(); }
+  function renderIsleMap() {
+    const I = isleData, L = life, cv = $('mapCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
+    const { cx, cz, rx, rz } = I.def.shape, s = Math.min(W / (rx * 2.12), H / (rz * 2.2)), ox = W / 2 - cx * s, oz = H / 2 - cz * s;
+    const T = (x, z) => [ox + x * s, oz + z * s];
+    const bag = IsleLife.isleBag(profile), found = bag.found;
+    mapItems = [];
+    const item = (o) => { mapItems.push(o); return mapItems.length - 1; };
+    // fond : mer, île, volcan, routes
+    g.fillStyle = '#0b2733'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#123a4a'; g.beginPath(); g.ellipse(...T(cx, cz), rx * s * 1.04, rz * s * 1.05, 0, 0, 7); g.fill();
+    g.fillStyle = '#3f5a2c'; g.beginPath(); g.ellipse(...T(cx, cz), rx * s, rz * s, 0, 0, 7); g.fill();
+    const V = I.def.volcano, gr = g.createRadialGradient(...T(V.x, V.z), 0, ...T(V.x, V.z), V.r * s);
+    gr.addColorStop(0, '#2c2725'); gr.addColorStop(0.35, '#55493f'); gr.addColorStop(1, 'rgba(63,90,44,0)'); g.fillStyle = gr; g.beginPath(); g.arc(...T(V.x, V.z), V.r * s, 0, 7); g.fill();
+    g.fillStyle = 'rgba(238,242,246,.35)'; g.beginPath(); g.ellipse(...T(-640, 330), 200 * s, 130 * s, 0, 0, 7); g.fill();
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    for (const r of I.roads) {
+      g.beginPath();
+      for (let i = 0; i < r.count; i += 3) { const [x, y] = T(r.px[i], r.pz[i]); i ? g.lineTo(x, y) : g.moveTo(x, y); }
+      g.lineTo(...T(r.px[r.count - 1], r.pz[r.count - 1]));
+      g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 7; g.stroke(); g.strokeStyle = '#e9e5da'; g.lineWidth = 3.4; g.stroke();
+    }
+    // zones de glisse : le tronçon en jaune
+    for (const a of L.spots.acts) if (a.def.type === 'zone') {
+      const r = I.roads[a.def.e], i0 = Math.round(a.def.from * (r.count - 1)), i1 = Math.round(a.def.to * (r.count - 1));
+      g.beginPath(); for (let i = i0; i <= i1; i += 3) { const [x, y] = T(r.px[i], r.pz[i]); i === i0 ? g.moveTo(x, y) : g.lineTo(x, y); }
+      g.strokeStyle = 'rgba(247,209,84,.85)'; g.lineWidth = 4; g.stroke();
+    }
+    if (L.gps && L.gps.pts.length > 2) {
+      const P = L.gps.pts; g.beginPath(); g.moveTo(...T(player.x, player.z)); for (let k = 0; k < P.length; k += 2) g.lineTo(...T(P[k], P[k + 1]));
+      g.strokeStyle = '#7b8cff'; g.lineWidth = 4; g.setLineDash([8, 6]); g.stroke(); g.setLineDash([]);
+    }
+    const dot = (x, y, r, col, ring) => { g.fillStyle = '#07080a'; g.beginPath(); g.arc(x, y, r + 2.5, 0, 7); g.fill(); g.fillStyle = col; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); if (ring) { g.strokeStyle = ring; g.lineWidth = 2; g.stroke(); } };
+    const label = (x, y, t, col) => { g.font = '700 12px "Archivo", sans-serif'; g.textAlign = 'center'; g.lineWidth = 3.5; g.strokeStyle = 'rgba(7,8,10,.85)'; g.strokeText(t, x, y); g.fillStyle = col || '#f2f2ef'; g.fillText(t, x, y); };
+    const side = { hubs: [], rivals: [], acts: [], npcs: [], photos: [] };
+    for (const [id, hb] of Object.entries(I.hubs)) {
+      const [x, y] = T(hb.x, hb.z), open = Story.chapterOpen(profile, Story.zoneIndex(id)), name = TRACKS[trackIndexOf(id)].name;
+      g.fillStyle = '#07080a'; g.fillRect(x - 7, y - 7, 14, 14); g.fillStyle = open ? '#f7d154' : '#6c717a'; g.fillRect(x - 5, y - 5, 10, 10);
+      label(x, y - 12, name);
+      side.hubs.push({ i: item({ x, y, name, set: () => setGps({ name, x: hb.x, z: hb.z, arrive: 13 }) }), name, sub: open ? `chapitre ${Story.zoneIndex(id) + 1}${Story.chapterDone(profile, Story.zoneIndex(id)) ? ' · terminé' : ''}` : 'fermé', lock: !open });
+    }
+    for (const a of L.spots.acts) {
+      const [x, y] = T(a.x, a.z), n = IsleLife.starsOf(a.def, bag.best[a.def.id] || 0);
+      dot(x, y, 4.5, a.def.type === 'radar' ? '#7b8cff' : '#f7d154');
+      side.acts.push({ i: item({ x, y, name: a.def.name, set: () => setGps({ name: a.def.name, x: a.x, z: a.z, arrive: 12 }) }), name: a.def.name, sub: a.def.type === 'radar' ? `radar · record ${bag.best[a.def.id] || 0} km/h` : `zone · record ${(bag.best[a.def.id] || 0).toLocaleString('fr-FR')} pts`, stars: n });
+    }
+    for (const n of L.spots.npcs) {
+      const [x, y] = T(n.x, n.z), c = castOf(n.def.who);
+      dot(x, y, 4, c.col, '#f2f2ef');
+      side.npcs.push({ i: item({ x, y, name: c.name, set: () => setGps({ name: c.name, x: n.x, z: n.z, arrive: 10 }) }), name: c.name, sub: c.role, em: bag.met[n.def.id] ? '✓' : '' });
+    }
+    for (const p of L.spots.photos) {
+      const [x, y] = T(p.x, p.z);
+      g.fillStyle = '#07080a'; g.fillRect(x - 6, y - 4.5, 12, 9); g.fillStyle = '#7b8cff'; g.fillRect(x - 4.5, y - 3, 9, 6);
+      side.photos.push({ i: item({ x, y, name: p.def.name, set: () => setGps({ name: p.def.name, x: p.x, z: p.z, arrive: 7 }) }), name: p.def.name, sub: 'belvédère', em: bag.photo[p.def.id] ? '✓' : '' });
+    }
+    I.daruma.forEach((d, k) => { if (found[k]) return; const [x, y] = T(d.x, d.z); dot(x, y, 2.6, '#ffb020'); item({ x, y, name: 'Daruma doré', set: () => setGps({ name: 'Daruma doré', x: d.x, z: d.z, arrive: 2, daruma: k }) }); });
+    for (const r of L.rivals) {
+      const [x, y] = T(r.A.x, r.A.z), w = bag.rivals[r.def.id] || 0;
+      dot(x, y, 5.5, r.c.col, '#ff4d4f'); label(x, y - 10, r.c.name, r.c.col);
+      side.rivals.push({ i: item({ x, y, name: r.c.name, set: () => { r.cool = 0; setGps({ name: r.c.name, get: () => [r.A.x, r.A.z], arrive: 30 }); } }), name: r.c.name, sub: `${r.def.crew} · ${r.def.car.toUpperCase()}`, em: w ? `battu ×${w}` : Economy.fmt(r.def.reward) });
+    }
+    for (const def of IsleLife.RIVALS) if (!L.rivals.some((r) => r.def === def)) side.rivals.push({ i: -1, name: castOf(def.who).name, sub: `arrive au chapitre ${def.unlock + 1}`, lock: true });
+    if (mp) for (const R of mp.remotes.values()) if (R.shown) { const [x, y] = T(R.view.x, R.view.z); dot(x, y, 5.5, R.color, '#f2f2ef'); label(x, y - 10, R.name, R.color); item({ x, y, name: R.name, set: () => setGps({ name: R.name, get: () => (R.shown ? [R.view.x, R.view.z] : [player.x, player.z]), arrive: 20 }) }); }
+    // toi
+    const [px, py] = T(player.x, player.z);
+    g.save(); g.translate(px, py); g.rotate(player.heading); g.fillStyle = '#07080a'; g.beginPath(); g.moveTo(12, 0); g.lineTo(-8, 8); g.lineTo(-8, -8); g.closePath(); g.fill();
+    g.fillStyle = '#ff3d3d'; g.beginPath(); g.moveTo(9, 0); g.lineTo(-5, 5.5); g.lineTo(-5, -5.5); g.closePath(); g.fill(); g.restore();
+    const sec = (title, list) => list.length ? `<div><h3>${title}</h3><ul>${list.map((o) => `<li class="${o.lock ? 'lock' : ''}"><button ${o.i < 0 ? 'disabled' : `data-i="${o.i}"`}><span>${esc(o.name)}<small>${esc(o.sub || '')}</small></span><em>${o.stars != null ? `${'★'.repeat(o.stars)}<span class="st0">${'☆'.repeat(3 - o.stars)}</span>` : esc(o.em || '')}</em></button></li>`).join('')}</ul></div>` : '';
+    $('mapSide').innerHTML = `<p class="sub" style="margin:0">Touche un repère pour y régler le GPS.${L.gps ? ` En cours : <b>${esc(L.gps.name)}</b> · <button class="btn ghost" data-gps-off style="min-height:32px;padding:0 10px">Arrêter</button>` : ''}</p>`
+      + sec('Rivaux', side.rivals) + sec('Activités', side.acts) + sec('Lieux de l’aventure', side.hubs) + sec('Habitants', side.npcs) + sec('Belvédères', side.photos);
+    $('mapLegend').innerHTML = '<span><i style="background:#f7d154"></i>lieux, zones</span><span><i style="background:#7b8cff"></i>radars, belvédères</span><span><i style="background:#ffb020"></i>daruma</span><span><i style="background:#ff4d4f"></i>rivaux</span><span><i style="background:#ff3d3d"></i>toi</span>';
+  }
+  function pickMap(i) { const it = mapItems[i]; if (!it) return; it.set(); renderIsleMap(); }
+  $('mapCv').addEventListener('click', (e) => {
+    const cv = $('mapCv'), b = cv.getBoundingClientRect(), x = (e.clientX - b.left) * cv.width / b.width, y = (e.clientY - b.top) * cv.height / b.height;
+    let best = -1, bd = 22 * 22;
+    mapItems.forEach((o, k) => { const d = (o.x - x) ** 2 + (o.y - y) ** 2; if (d < bd) { bd = d; best = k; } });
+    if (best >= 0) { Sound.ui(); pickMap(best); }
+  });
+  $('mapSide').addEventListener('click', (e) => {
+    if (e.target.closest('[data-gps-off]')) { clearGps(); renderIsleMap(); return; }
+    const b = e.target.closest('[data-i]'); if (b) { Sound.ui(); pickMap(+b.dataset.i); }
+  });
+  $('mapBtn').addEventListener('click', () => { Sound.ui(); renderIsleMap(); show('isleMap'); });
+
+  // ---------- multijoueur (net.js) : session, voitures des autres, émotes, course et battle de groupe ----------
+  // mp : null | { S : session, remotes : id → { name, kind, cfg, color, interp, model, tag, view, shown, emote, emoteT }, internet, offer, answer }
+  let mp = null;
+  const EMOTE_CHIP = { horn: 'TÛT', gg: 'GG', wave: 'SALUT', fire: 'FEU', follow: 'SUIS' };
+  const mpUi = { view: 'start', status: '', err: '', busy: false, offerIn: '' };
+  const myName = () => Net.cleanName(store.get('mpName', ''));
+  function mpStart(role) {
+    const name = Net.cleanName($('mpName') ? $('mpName').value : myName());
+    store.set('mpName', name);
+    const me = { name, kind: profile.current, cfg: profile.cars[profile.current] };
+    mp = { S: Net.createSession(me, mpOn, Economy), remotes: new Map(), internet: !!store.get('mpNet', 0), offer: null, answer: null };
+    if (role === 'host') mp.S.host();
+    mpUi.view = role; mpUi.status = ''; mpUi.err = '';
+    refreshMpHud();
+  }
+  function mpClose(quiet) {
+    if (!mp) return;
+    if (mp.offer) mp.offer.cancel();
+    for (const R of mp.remotes.values()) dropRemoteModel(R);
+    mp.S.close();
+    mp = null; mpUi.view = 'start'; mpUi.status = ''; mpUi.answer = '';
+    if (life) { life.race = null; life.battle = null; }
+    refreshMpHud(); renderMulti();
+    if (!quiet) toast('Session fermée', 'apex');
+  }
+  function mpOn(t, d) {
+    if (!mp) return;
+    if (t === 'peers') { refreshMpHud(); renderMulti(); }
+    else if (t === 'join') { ensureRemote(d.id, d); if (mp.S.role === 'host') { mpUi.status = ''; } toast(`${d.name} rejoint la session`, 'chal'); Sound.ping(); }
+    else if (t === 'leave') { const R = mp.remotes.get(d.id); if (R) { toast(`${R.name} quitte la session`, 'apex'); dropRemoteModel(R); mp.remotes.delete(d.id); } }
+    else if (t === 'state') { const R = mp.remotes.get(d.id); if (R) R.interp.push(d.s, performance.now()); }
+    else if (t === 'emote') showEmote(d.id, d.e);
+    else if (t === 'ev') mpEvent(d.id, d.ev);
+    else if (t === 'welcome') {
+      for (const [id, p] of mp.S.peers) ensureRemote(id, p);
+      const host = mp.S.peers.get(0);
+      mpUi.status = 'ok'; renderMulti();
+      toast(`Connecté à la session de ${host ? host.name : 'l’hôte'}`, 'chal'); Sound.ping();
+      if (!isle) { show(null); setTimeout(() => enterIsland(d.at), 40); }
+    } else if (t === 'closed') { toast('Session terminée : l’hôte est parti', 'lost'); mpClose(true); }
+    else if (t === 'full') { toast('Session complète : 4 pilotes au maximum', 'lost'); mpClose(true); }
+  }
+  function ensureRemote(id, p) {
+    if (!mp || id === mp.S.id) return null;
+    let R = mp.remotes.get(id);
+    if (!R) { R = { id, name: p.name, kind: p.kind, cfg: p.cfg, color: p.color || Net.COLORS[id % 4], interp: Net.createInterp(), model: null, tag: null, view: null, shown: false, emote: null, emoteT: 0 }; mp.remotes.set(id, R); }
+    remoteModel(R);
+    refreshMpHud();
+    return R;
+  }
+  function remoteModel(R) {
+    if (R.model || !isle || !life) return;
+    R.model = buildCar(R.kind, lookOf(R.cfg, false));
+    R.model.ground = isleData.terrain.at; envOn(R.model); scene.add(R.model.root); R.model.root.visible = false;
+    R.tag = makeTag(); R.tag.sprite.position.set(0, 2.7, 0); R.model.root.add(R.tag.sprite);
+  }
+  function dropRemoteModel(R) { if (!R.model) return; R.tag.dispose(); R.model.dispose(); R.model = null; R.tag = null; R.shown = false; }
+  function remotesDraw(dt) {
+    const now = performance.now(), cx = camera.position.x, cz = camera.position.z;
+    for (const R of mp.remotes.values()) {
+      if (!R.model) continue;
+      const v = R.interp.sample(now);
+      R.view = v; R.shown = !!v && v.age < 4;
+      R.model.root.visible = R.shown;
+      if (!R.shown) continue;
+      R.model.update(v, dt, v.brake);
+      if ((v.x - cx) ** 2 + (v.z - cz) ** 2 < 150 * 150) carFx(v, R.model, dt, 'M' + R.id, 'L');
+      if (R.emoteT > 0) R.emoteT -= dt;
+      R.tag.set(R.name, v.combo > 200 ? `combo ${Math.round(v.combo).toLocaleString('fr-FR')}` : R.kind.toUpperCase(), R.color, R.emoteT > 0 ? EMOTE_CHIP[R.emote] : null);
+    }
+  }
+  function refreshMpHud() {
+    const on = !!(mp && mp.S.role && isle);
+    $('mpHud').hidden = !on;
+    $('mpPause').hidden = !(on && mp.S.role === 'host');
+    if (!on) return;
+    const list = mp.S.peerList().sort((a, b) => a.id - b.id);
+    $('mpList').innerHTML = list.map((p) => `<span><i style="background:${Net.COLORS[p.id % 4]}"></i>${esc(p.name)}${p.id === mp.S.id ? ' · toi' : ''}</span>`).join('');
+    $('hudBest').textContent = 'SESSION À ' + list.length;
+  }
+  function sendEmote(e) {
+    if (!Net.EMOTES[e]) return;
+    if (e === 'horn') Sound.horn(1, 0.9);
+    if (!mp || !mp.S.role) return;
+    mp.S.emote(e);
+    if (e !== 'horn') toast(`Toi : ${Net.EMOTES[e]}`, 'buy');
+  }
+  function showEmote(id, e) {
+    const R = mp.remotes.get(id); if (!R) return;
+    R.emote = e; R.emoteT = 2.6;
+    if (e === 'horn') { const d = R.view ? Math.hypot(R.view.x - player.x, R.view.z - player.z) : 50; Sound.horn(Math.max(0.15, 1 - d / 150), 0.9); }
+    else { toast(`${R.name} : ${Net.EMOTES[e]}`, 'buy'); if (e === 'follow' && R.view && life) setGps({ name: R.name, get: () => (R.shown ? [R.view.x, R.view.z] : [player.x, player.z]), arrive: 20 }); }
+  }
+  $('emotes').addEventListener('click', (e) => { const b = e.target.closest('[data-emote]'); if (b) sendEmote(b.dataset.emote); });
+  // évènements de groupe : l'hôte lance, tout le monde (hôte compris) les applique
+  function mpSend(ev) { if (!mp || !mp.S.role) return; mp.S.event(ev); const c = Net.cleanEvent(ev, mp.S.role === 'host'); if (c) mpEvent(mp.S.id, c); }
+  const nameOf = (id) => (mp && id === mp.S.id ? 'Toi' : mp && mp.remotes.get(id) ? mp.remotes.get(id).name : 'Pilote');
+  function mpEvent(id, ev) {
+    if (!isle || !life) return;
+    const I = isleData;
+    if (ev.k === 'race') {
+      if (life.duel) { life.duel.r.cool = 10; Object.assign(life.duel.r.A, { route: null, hold: false }); life.duel = null; }
+      life.zone = null; life.battle = null;
+      const [nx, nz] = I.def.nodes[ev.node] || [];
+      if (nx == null) return;
+      // grille de départ : deux par rangée derrière l'hôte, dans l'ordre des numéros
+      const ids = mp.S.peerList().map((p) => p.id).sort((a, b) => a - b), rank = Math.max(0, ids.indexOf(mp.S.id));
+      if (ev.at) {
+        const back = 6 + 9 * Math.floor(rank / 2), q = I.nearestRoad(ev.at.x - Math.cos(ev.at.h) * back, ev.at.z - Math.sin(ev.at.h) * back, {});
+        if (q.i >= 0) {
+          let h = Math.atan2(I.TZ[q.i], I.TX[q.i]); if (Math.cos(h - ev.at.h) < 0) h += Math.PI;
+          const lat = rank % 2 ? 2.2 : -2.2;
+          placePlayer(I.X[q.i] - Math.sin(h) * lat, I.Z[q.i] + Math.cos(h) * lat, h, 0);
+        }
+      }
+      life.race = { node: ev.node, name: nodeName(ev.node), x: nx, z: nz, t: 0, state: 'count', results: new Map(), mine: false, endT: 0 };
+      setGps({ name: nodeName(ev.node), x: nx, z: nz, race: true });
+      show(null); phase = 'count'; countdown();
+      toast(`Course : premier arrivé à ${nodeName(ev.node)}`, 'chal');
+    } else if (ev.k === 'arrive' && life.race) {
+      if (life.race.results.has(id)) return;
+      life.race.results.set(id, ev.time);
+      const pos = life.race.results.size;
+      toast(`${pos}${pos === 1 ? 'er' : 'e'} · ${nameOf(id)} · ${fmtTime(ev.time)}`, pos === 1 ? 'chal' : 'apex');
+    } else if (ev.k === 'battle') {
+      life.race = null; life.zone = null;
+      life.battle = { dur: ev.dur, t: 0, base: score.total + score.combo, scores: new Map(), sent: false, endT: 0 };
+      popup('Battle de drift', 'apex'); Sound.count(true);
+      toast(`Battle de drift : ${ev.dur} s, le plus gros score gagne`, 'chal');
+    } else if (ev.k === 'score' && life.battle) life.battle.scores.set(id, ev.pts);
+    else if (ev.k === 'cancel') { life.race = null; life.battle = null; clearGps(); toast('Épreuve annulée par l’hôte', 'lost'); }
+  }
+  function raceTick(dt) {
+    const R = life.race, st = player;
+    if (R.state === 'count') { if (phase === 'play') R.state = 'run'; return; }
+    if (phase === 'play' && !R.mine) R.t += dt;
+    if (!R.mine && Math.hypot(st.x - R.x, st.z - R.z) < 18) {
+      R.mine = true; clearGps();
+      mpSend({ k: 'arrive', time: Math.max(0.1, R.t) });
+      Sound.bank(R.results.size === 1);
+    }
+    const total = mp ? mp.S.peers.size : 1;
+    if (R.results.size >= total || R.t > 300) {
+      R.endT += dt;
+      if (R.endT > 1.2 || R.t > 300) {
+        life.race = null; clearGps();
+        const list = [...R.results.entries()].sort((a, b) => a[1] - b[1]);
+        const lines = [['narr', `Course jusqu’à ${R.name} : ` + (list.map(([id, t], k) => `${k + 1}. ${nameOf(id)} (${fmtTime(t)})`).join(' · ') || 'personne n’est arrivé.')]];
+        const first = list[0] && list[0][0] === mp.S.id;
+        if (first) { Economy.credit(profile, 'Course entre amis', 800); saveProfile(); refreshWallet(); lines.push(['narr', 'Victoire : +¥800.']); }
+        chat(lines, () => resumeGame());
+      }
+    }
+  }
+  function battleTick(dt) {
+    const B = life.battle;
+    if (phase === 'play' || phase === 'count') B.t += dt;
+    if (B.t >= B.dur && !B.sent) {
+      bank(); B.sent = true;
+      mpSend({ k: 'score', pts: Math.max(0, Math.round(score.total - B.base)) });
+    }
+    if (B.sent) {
+      B.endT += dt;
+      if (B.scores.size >= (mp ? mp.S.peers.size : 1) || B.endT > 5) {
+        life.battle = null;
+        const list = [...B.scores.entries()].sort((a, b) => b[1] - a[1]);
+        const lines = [['narr', 'Battle de drift : ' + list.map(([id, p], k) => `${k + 1}. ${nameOf(id)} (${p.toLocaleString('fr-FR')} pts)`).join(' · ')]];
+        if (list[0] && list[0][0] === mp.S.id && list.length > 1) { Economy.credit(profile, 'Battle de drift entre amis', 800); saveProfile(); refreshWallet(); lines.push(['narr', 'Victoire : +¥800.']); }
+        chat(lines, () => resumeGame());
+      }
+    }
+  }
+  $('mpRaceBtn').addEventListener('click', () => {
+    if (!mp || !isle) return;
+    const tgt = IsleLife.tougeTarget(isleData, player.x, player.z);
+    if (!tgt) return;
+    Sound.ui();
+    mpSend({ k: 'race', node: tgt.node, at: { x: player.x, z: player.z, h: player.heading } });
+  });
+  $('mpBattleBtn').addEventListener('click', () => { if (!mp || !isle) return; Sound.ui(); show(null); mpSend({ k: 'battle', dur: 90 }); resumeGame(); });
+  // l'état part 15 fois par seconde, même en pause (les autres voient ta voiture arrêtée)
+  function mpSendTick(dt) {
+    if (!mp || !mp.S.role || !isle || !player) return;
+    life.sendT -= dt;
+    if (life.sendT <= 0) { life.sendT = 1 / Net.HZ; mp.S.sendState(Net.encodeState(performance.now(), player, score.combo, input.brake > 0.1 || input.handbrake > 0.5)); }
+    if (mp.S.role === 'host') { life.hostT -= dt; if (life.hostT <= 0) { life.hostT = 1; mp.S.setHostAt(player.x, player.z, player.heading); } }
+  }
+
+  // écran de session : créer, inviter (code ou lien), rejoindre
+  function shareLink(code) { return /^https?:/.test(location.href) ? location.href.split('#')[0] + '#sdc=' + code : code; }
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); toast('Copié', 'apex'); return; } catch (e) { /* repli ci-dessous */ }
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('Copié', 'apex'); } catch (e) { toast('Copie impossible : sélectionne le texte', 'lost'); }
+    ta.remove();
+  }
+  async function shareText(t, title) { try { await navigator.share({ title, text: t }); } catch (e) { copyText(t); } }
+  function openMulti(code) {
+    if (code) { mpUi.offerIn = code; if (!mp) mpUi.view = 'join'; }
+    renderMulti(); show('multi');
+  }
+  function renderMulti() {
+    const B = $('mpBody'); if (!B) return;
+    const players = () => mp ? `<div class="players">${mp.S.peerList().sort((a, b) => a.id - b.id).map((p) => `<div><i style="background:${Net.COLORS[p.id % 4]}"></i>${esc(p.name)}${p.id === mp.S.id ? ' (toi)' : ''}<small>${p.kind.toUpperCase()}${p.id === 0 ? ' · hôte' : ''}</small></div>`).join('')}</div>` : '';
+    const err = mpUi.err ? `<div class="status ko">${esc(mpUi.err)}</div>` : '';
+    const pri = mp && mp.offer ? 'btn' : 'btn primary'; // une invitation en cours garde l'action principale
+    const ride = isle ? `<button class="${pri}" data-mp="back">Retour sur l’île</button>` : `<button class="${pri}" data-mp="ride">Rouler sur l’île</button>`;
+    const kept = { a: $('mpAnsIn') && $('mpAnsIn').value, o: $('mpOffIn') && $('mpOffIn').value }; // saisie en cours gardée
+    const view = mp && mp.S.role === 'host' ? 'host' : mp && mp.S.role === 'guest' && mp.S.id != null ? 'guest' : mpUi.view === 'join' ? 'join' : 'start';
+    let h;
+    if (view === 'start') {
+      const net = store.get('mpNet', 0);
+      h = `<p class="sub" style="margin:0">Jusqu’à 4 pilotes sur l’île, chacun sur son appareil. Pas de compte : l’hôte envoie un code d’invitation, l’invité renvoie un code de réponse.</p>
+        <label class="f">Pseudo affiché aux autres<input type="text" id="mpName" maxlength="16" autocomplete="off" spellcheck="false" value="${esc(myName() === 'Pilote' ? '' : myName())}" placeholder="Pilote"></label>
+        <div class="seg" role="group" aria-label="Réseau"><button class="opt" data-net="0" aria-pressed="${!net}"><b>Même Wi-Fi</b><small>Aucun serveur tiers</small></button><button class="opt" data-net="1" aria-pressed="${!!net}"><b>Internet</b><small>Serveur STUN public de Google</small></button></div>
+        <div class="note"><b>Ce qui est partagé :</b> ton pseudo, ta voiture et ta position sur l’île, uniquement avec les joueurs de la session, le temps de la session. Rien n’est enregistré en ligne. La connexion est directe entre appareils : chacun voit l’adresse IP des autres. En mode Internet, un serveur STUN de Google (hors UE) voit aussi ton adresse IP. Évite ton vrai nom comme pseudo.</div>
+        ${err}<div class="acts"><button class="btn primary" data-mp="host">Créer une session</button><button class="btn" data-mp="join">Rejoindre une session</button></div>`;
+    } else if (view === 'host') {
+      const o = mp.offer;
+      h = `<div class="status ok">Session ouverte · ${mp.S.peers.size} / ${Net.MAX} pilotes · ${mp.internet ? 'Internet' : 'même Wi-Fi'}</div>${players()}`;
+      if (mp.S.peers.size < Net.MAX) h += o ? `<div class="step"><h3>1 · Envoie l’invitation</h3><textarea readonly id="mpOffer" aria-label="Code d’invitation">${esc(shareLink(o.code))}</textarea><div class="acts"><button class="btn" data-mp="copy">Copier</button>${navigator.share ? '<button class="btn" data-mp="share">Partager…</button>' : ''}</div>
+          <h3>2 · Colle sa réponse</h3><textarea id="mpAnsIn" placeholder="SDC1…" aria-label="Code de réponse"></textarea><div class="acts"><button class="btn primary" data-mp="accept"${mpUi.busy ? ' disabled' : ''}>Valider la réponse</button><button class="btn ghost" data-mp="cancelInv">Annuler l’invitation</button></div>${mpUi.status === 'wait' ? '<div class="status">Connexion…</div>' : ''}</div>`
+        : `<div class="acts"><button class="btn" data-mp="invite"${mpUi.busy ? ' disabled' : ''}>${mpUi.busy ? 'Préparation…' : 'Inviter un pilote'}</button></div>`;
+      h += `${err}<div class="acts">${ride}<button class="btn ghost" data-mp="close">Fermer la session</button></div>`;
+    } else if (view === 'guest') {
+      h = `<div class="status ok">Connecté · ${mp.S.peers.size} / ${Net.MAX} pilotes</div>${players()}${err}<div class="acts">${ride}<button class="btn ghost" data-mp="close">Quitter la session</button></div>`;
+    } else {
+      h = `<div class="step"><h3>1 · Colle l’invitation reçue</h3><textarea id="mpOffIn" placeholder="Lien ou code SDC1…" aria-label="Code d’invitation">${esc(mpUi.offerIn || '')}</textarea><div class="acts"><button class="btn primary" data-mp="answer"${mpUi.busy ? ' disabled' : ''}>${mpUi.busy ? 'Préparation…' : 'Créer ma réponse'}</button></div></div>`;
+      if (mp && mp.answer) h += `<div class="step"><h3>2 · Renvoie ce code à l’hôte</h3><textarea readonly id="mpAns" aria-label="Code de réponse">${esc(mp.answer)}</textarea><div class="acts"><button class="btn" data-mp="copyAns">Copier</button>${navigator.share ? '<button class="btn" data-mp="shareAns">Partager…</button>' : ''}</div><div class="status">En attente de l’hôte…</div></div>`;
+      h += `${err}<div class="acts"><button class="btn ghost" data-mp="close">Annuler</button></div>`;
+    }
+    B.innerHTML = h;
+    if (kept.a && $('mpAnsIn')) $('mpAnsIn').value = kept.a;
+    if (kept.o && $('mpOffIn')) $('mpOffIn').value = kept.o;
+  }
+  $('mpBody').addEventListener('click', async (e) => {
+    const n = e.target.closest('[data-net]');
+    if (n) { store.set('mpNet', +n.dataset.net); Sound.ui(); const nm = $('mpName') && $('mpName').value; renderMulti(); if (nm != null && $('mpName')) $('mpName').value = nm; return; }
+    const b = e.target.closest('[data-mp]'); if (!b) return;
+    const a = b.dataset.mp; Sound.ui(); mpUi.err = '';
+    if (a === 'host') { mpStart('host'); renderMulti(); }
+    else if (a === 'join') { store.set('mpName', Net.cleanName($('mpName').value)); mpUi.view = 'join'; renderMulti(); }
+    else if (a === 'invite') {
+      mpUi.busy = true; renderMulti();
+      try {
+        const o = await Net.rtcOffer(mp.internet);
+        mp.offer = o; mp.S.addGuestLink(o.link);
+        o.ready.then(() => { if (mp && mp.offer === o) { mp.offer = null; mpUi.status = ''; renderMulti(); } });
+      } catch (err) { mpUi.err = 'Connexion directe indisponible sur ce navigateur.'; }
+      mpUi.busy = false; renderMulti();
+    } else if (a === 'copy' || a === 'share') { const t = $('mpOffer').value; if (a === 'copy') copyText(t); else shareText(t, 'Sideways Drift Club · invitation'); }
+    else if (a === 'accept') {
+      const o = mp.offer; if (!o) return;
+      mpUi.busy = true;
+      const ok = await o.accept($('mpAnsIn').value).catch(() => false);
+      mpUi.busy = false;
+      if (!ok) mpUi.err = 'Code de réponse illisible : recopie-le en entier.';
+      else {
+        mpUi.status = 'wait';
+        setTimeout(() => { if (mp && mp.offer === o && !o.link.open) { mpUi.err = 'Connexion impossible. Même Wi-Fi des deux côtés ? Sinon, essaie le mode Internet.'; mpUi.status = ''; o.cancel(); mp.offer = null; renderMulti(); } }, 15000);
+      }
+      renderMulti();
+    } else if (a === 'cancelInv') { if (mp.offer) mp.offer.cancel(); mp.offer = null; renderMulti(); }
+    else if (a === 'answer') {
+      const text = $('mpOffIn').value; mpUi.offerIn = text;
+      mpUi.busy = true; renderMulti();
+      try {
+        const ans = await Net.rtcAnswer(text);
+        if (!ans) mpUi.err = 'Invitation illisible : copie le lien ou le code en entier.';
+        else {
+          if (mp) mpClose(true);
+          mpStart('guest'); mpUi.view = 'join'; mp.answer = ans.code; mp.internet = ans.internet;
+          const m0 = mp;
+          ans.ready.then((link) => { if (mp === m0) mp.S.join(link); });
+          setTimeout(() => { if (mp === m0 && mp.S.id == null) { mpUi.err = 'L’hôte n’a pas répondu. Vérifie qu’il a bien validé ta réponse.'; renderMulti(); } }, 90000);
+        }
+      } catch (err) { mpUi.err = 'Connexion directe indisponible sur ce navigateur.'; }
+      mpUi.busy = false; renderMulti();
+    } else if (a === 'copyAns' || a === 'shareAns') { const t = $('mpAns').value; if (a === 'copyAns') copyText(t); else shareText(t, 'Sideways Drift Club · réponse'); }
+    else if (a === 'close') { mpClose(); mpUi.view = 'start'; renderMulti(); }
+    else if (a === 'ride') { show(null); toast('Chargement de l’île…', 'apex'); setTimeout(() => enterIsland(mp && mp.S.role === 'guest' ? mp.S.hostAt : null), 40); }
+    else if (a === 'back') { show(null); resumeGame(); }
+  });
+  $('multiBtn').addEventListener('click', () => { Sound.ui(); ensureAudio(); openMulti(); });
+
+  // touches de l'île : E interagir, M carte, H klaxon, 1-4 messages rapides en session
+  addEventListener('keydown', (e) => {
+    if (e.repeat || dlg || !isle || document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    const k = e.key.toLowerCase();
+    if (k === 'e' && phase === 'play') interact();
+    else if (k === 'm' && (phase === 'play' || phase === 'count')) openIsleMap();
+    else if (k === 'm' && screenId === 'isleMap') closeIsleMap();
+    else if (k === 'h' && phase === 'play') sendEmote('horn');
+    else if (mp && phase === 'play' && /^[1-4]$/.test(k)) sendEmote(['wave', 'gg', 'follow', 'fire'][+k - 1]);
+  });
 
   function syncSettingsUI() {
     pressGroup($('assistSeg'), 'data-v', settings.assist);
@@ -6530,12 +8292,13 @@ function buildIslandWorld(scene, I, quality) {
   $('helpBtn').addEventListener('click', go('help'));
   $('advBtn').addEventListener('click', () => { Sound.ui(); ensureAudio(); openAdventure(); });
   // construire l'île prend un instant sur mobile : on l'annonce d'abord
-  $('isleBtn').addEventListener('click', () => { Sound.ui(); toast('Chargement de l’île…', 'apex'); setTimeout(enterIsland, 40); });
+  $('isleBtn').addEventListener('click', () => { Sound.ui(); toast('Chargement de l’île…', 'apex'); setTimeout(() => enterIsland(), 40); });
   for (const b of document.querySelectorAll('[data-back]')) b.addEventListener('click', () => {
     Sound.ui();
     const scr = b.closest('.screen').id;
     if (scr === 'help' && helpThenSelect) { helpThenSelect = false; openSelect(); return; }
     if (scr === 'adventure' && isle) { show(null); resumeGame(); return; } // retour sur la route de l'île
+    if (scr === 'isleMap') { closeIsleMap(); return; }
     show(scr === 'settings' ? returnTo : 'menu');
   });
   $('goBtn').addEventListener('click', startRun);
@@ -6565,9 +8328,12 @@ function buildIslandWorld(scene, I, quality) {
     show('menu');
     refreshWallet();
     claimDaily();
+    // lien d'invitation multijoueur (…#sdc=CODE) : on ouvre directement l'écran pour rejoindre
+    const inv = location.hash.match(/sdc=(SDC1[zr]\.[A-Za-z0-9_-]+)/);
+    if (inv) { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* pas grave */ } openMulti(inv[1]); }
     requestAnimationFrame((n) => { last = n; frame(n); });
     // accès de test (non utilisé par le jeu)
-    window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); }, carRoot: () => playerModel.root, trace: (on) => { const t = dbgTrace; dbgTrace = on ? [] : null; return t; }, profile, isle: () => isleData, preview: (k, c) => { showKind = k; showCfg = c; buildCars(); }, view: (v) => { shopView = v; snapCam = true; }, yaw: (y) => { garageYaw = y; } };
+    window.__sdcDbg = { scene, envMap: () => envMap, renderer, perf, setQuality: (q) => { qLevel = q; quality = QUALITY[q]; loadTrack(trackIdx); }, carRoot: () => playerModel.root, trace: (on) => { const t = dbgTrace; dbgTrace = on ? [] : null; return t; }, profile, isle: () => isleData, life: () => life, mp: () => mp, enterIsland, interact, openIsleMap, gpsAct, startDuel: (k, kind) => { const r = life && life.rivals.find((x) => x.def.id === k); if (r) startDuel(r, kind, kind === 'race' ? IsleLife.tougeTarget(isleData, r.A.x, r.A.z) : null); }, mpStart, mpLocal: (role) => { const api = Net.localLinks('sdc-test'); if (role === 'host') { mpStart('host'); api.listen(); api.onguest = (l) => mp.S.addGuestLink(l); } else { mpStart('guest'); api.knock().then((l) => mp.S.join(l)); } return api; }, preview: (k, c) => { showKind = k; showCfg = c; buildCars(); }, view: (v) => { shopView = v; snapCam = true; }, yaw: (y) => { garageYaw = y; } };
     window.__sdc = { get phase() { return phase; }, get player() { return player; }, get score() { return score; }, get track() { return track; }, get line() { return line; }, lossLog, startRun, input, touch, layouts, tState: () => tState, openLayoutEditor, setMode: (m) => { mode = m; }, setTrack: (i) => { trackIdx = i; loadTrack(i); }, finishRun, get fps() { return 1000 / frameAvg; } };
   }
   if (document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1500))]).then(boot);

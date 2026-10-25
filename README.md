@@ -57,7 +57,8 @@ Aucune installation, aucun compte, aucune pub. Tout reste sur ton appareil.
 | | |
 |---|---|
 | 🛣️ **6 pistes** | Docks de Minato (nuit), Col d'Akane (coucher de soleil), Piton Volcan (jour), Quai de Shiohama (aube), Col de Yukimi (neige, adhérence ×0,88), Corniche de Kaigan (crépuscule). |
-| 🏝️ **L'île, monde ouvert** | 2,1 × 1,5 km, 15 routes, 10 carrefours, 9 km de bitume, relief jusqu'à 110 m, 12 daruma dorés à trouver. |
+| 🏝️ **L'île, monde ouvert** | 2,1 × 1,5 km, 15 routes, 10 carrefours, 9 km de bitume, relief jusqu'à 110 m. Circulation (5 modèles, roulage à gauche), 4 pilotes rivaux à défier (touge, tandem de rue), 6 habitants à qui parler, radars, zones de glisse, belvédères photo, 12 daruma dorés, carte et GPS. |
+| 👥 **Multijoueur** | Jusqu'à 4 pilotes sur l'île, pair à pair (WebRTC), sans compte ni serveur de jeu : invitation par code ou lien, messages rapides, course et battle de drift lancées par l'hôte. |
 | 📖 **Aventure** | « Le Tour de l'Île » : 6 chapitres × 3 missions, 7 personnages, archives à collectionner, défis de rue. |
 | 🎯 **3 modes** | Run noté (note de S à D), Tandem (chasse le leader), Libre (entraînement). |
 | 🔧 **Atelier** | 3 voitures, carrosserie, 12 peintures × 5 finitions, 6 livrées, 5 jantes, fumée colorée, 6 pièces de perf × 3 niveaux, réglages freins et suspension. |
@@ -74,6 +75,9 @@ Aucune installation, aucun compte, aucune pub. Tout reste sur ton appareil.
 | Frein à main (lancer la glisse) | `FREIN À MAIN` | Espace |
 | Caméra | 📷 | C |
 | Se replacer | menu pause | R |
+| Interagir (île) | bouton contextuel en bas | E |
+| Carte et GPS (île) | menu pause | M |
+| Klaxon · messages rapides (session) | 📯 👋 GG ➜ 🔥 | H · 1 à 4 |
 
 Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le frein à main un court instant, puis tiens les gaz.
 
@@ -109,7 +113,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 </td><td>
 
 **Qualité et livraison**
-- Tests `node:test` (80) : économie, physique, tracés, île, aventure
+- Tests `node:test` (98) : économie, physique, tracés, île, vie de l'île, multijoueur, aventure
 - Bancs d'essai **Playwright** : bot pilote, perf, CPU ralenti ×6, audio
 - Build : `build.mjs` assemble `src/*` en **un seul `index.html`**
 - Hébergement **Vercel**, déployé depuis `main`
@@ -228,12 +232,14 @@ Direction : « Télémétrie de nuit ». La 3D est le sujet, l'interface s'effac
 | `src/audio.js` | Moteur, turbo, crissement synthétisés (Web Audio) |
 | `src/ai.js` | Leader tandem sur trajectoire précalculée |
 | `src/story.js` | Aventure « Le Tour de l'Île » : 6 chapitres × 3 missions, dialogues, objectifs, exploration (archives, défis de rue, rencontres). Logique pure, testée |
-| `src/island.js` | L'île : monde ouvert continu (9 km de routes, carrefours, relief, volcan, mer), recherche de route, terrain (partie pure, testée) et rendu Three.js |
+| `src/island.js` | L'île : monde ouvert continu (9 km de routes, carrefours, relief, volcan, mer), recherche de route, terrain (partie pure, testée) et rendu Three.js, dont circulation instanciée (~15 appels de dessin pour tout le trafic), habitants, radars, arches de zone, étiquettes flottantes |
+| `src/isleai.js` | Vie de l'île : GPS (plus court chemin), circulation (suivi de voie, distance d'arrêt, klaxon, dépassement), rivaux en glisse, activités à étoiles, habitants et belvédères. Logique pure, testée |
+| `src/net.js` | Multijoueur pair à pair : session hôte/invités avec relais, état compact à 15 Hz, interpolation 120 ms, filtrage de tout ce qui vient du réseau, codes d'invitation compressés, transport WebRTC. Partie pure testée |
 | `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
 | `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |
 | `assets/favicon.svg`, `icons/`, `manifest.webmanifest` | Favicon (intégré au build), icônes d'application, manifeste PWA |
 | `docs/` | Visuels de cette page : `screenshots/`, `brand/` (bannière, logos PNG, boutons) |
-| `tests/` | `node --test tests/*.test.js` : économie, effets physiques des réglages, tracés, île, aventure |
+| `tests/` | `node --test tests/*.test.js` : économie, effets physiques des réglages, tracés, île, vie de l'île, multijoueur, aventure |
 | `tools/` | Bancs d'essai : physique (Node), captures, tour complet, bot expert, perf, CPU ralenti, analyse audio, visuels du README (Playwright) |
 
 </details>
@@ -263,8 +269,24 @@ Direction : « Télémétrie de nuit ». La 3D est le sujet, l'interface s'effac
 
 - Menu → « L'île » : une île continue d'environ 2,1 × 1,5 km, 15 routes et 10 carrefours (9 km), relief jusqu'à 110 m au volcan, mer tout autour, régions (port, côte, montagne, volcan, neige).
 - Conduite libre partout, y compris hors route (l'herbe freine). En mer, la voiture est replacée sur la route la plus proche.
-- Les six lieux de l'aventure sont des portes jaunes sur l'île : en franchir une ouvre la carte de l'aventure sur ce chapitre (« Retour » remet sur la route).
-- 12 daruma dorés à trouver (¥500 chacun), mini-carte de l'île entière. Fin de balade : gains du mode libre.
+- **Interagir** : un bouton apparaît en bas quand quelque chose est à portée (E au clavier). La voiture s'arrête le temps du dialogue.
+- **Portes** : les six lieux de l'aventure ; entrer ouvre la carte de l'aventure sur ce chapitre (« Retour » remet sur la route).
+- **Circulation** : 16 à 22 voitures (kei, berline, fourgon, kei-truck, bus) qui roulent à gauche, ralentissent dans les virages, s'arrêtent derrière un obstacle, klaxonnent puis dépassent. Les accrocher coûte le combo.
+- **Rivaux** : Nana (dès le début), Kai (chapitre 2), Tetsu (chapitre 4), Mika (chapitre 5). Ils sillonnent l'île en glisse ; approche-toi, ils se rangent et t'attendent. Défis : touge (premier arrivé à un lieu à 0,7–1,8 km) ou tandem de rue (rester à moins de 15 m pendant 45 s, 50 % du temps). Prime pleine à la première victoire, un cinquième ensuite.
+- **Habitants** : Kenji, Lou, Zélie, Ume, Sora, Hoshi. Chacun a quelque chose à dire et propose de régler le GPS (prochaine étape de l'aventure, daruma le plus proche, rival, défi à tenter).
+- **Activités** : 3 radars (vitesse) et 4 zones de glisse (points entre deux arches), 3 étoiles chacune, payées une fois. 4 belvédères : arrête-toi dans le cercle bleu et prends la photo.
+- **Carte et GPS** : carte complète (lieux, rivaux en direct, activités et étoiles, habitants, belvédères, daruma) ; toucher un repère règle le GPS (flèche, distance par la route, tracé sur la mini-carte).
+- 12 daruma dorés à trouver (¥500 chacun). Fin de balade : gains du mode libre et bilan de l'île. Progression dans `sdc:profile.isle`.
+
+</details>
+
+<details>
+<summary><b>👥 Multijoueur</b></summary>
+
+- Menu → « Multijoueur » : un hôte crée la session, invite jusqu'à 3 pilotes. Pas de compte, pas de serveur de jeu : l'hôte envoie un **code ou un lien d'invitation** (copier, ou partager), l'invité colle l'invitation et renvoie un **code de réponse**, l'hôte le valide. Ouvrir le lien d'invitation ouvre directement l'écran pour rejoindre.
+- Réseau : **même Wi-Fi** (par défaut, aucun serveur tiers) ou **Internet** (serveur STUN public, qui voit l'adresse IP).
+- Sur l'île : voitures des autres avec pseudo et combo en cours, contacts, messages rapides (klaxon, salut, GG, suis-moi qui règle ton GPS sur l'autre joueur, en feu). L'hôte lance une **course** (grille de départ derrière lui, premier arrivé à un lieu) ou une **battle de drift** de 90 s. Gagnant : ¥800.
+- Technique : topologie en étoile (l'hôte relaie), deux canaux (état à 15 Hz non fiable, évènements fiables), interpolation avec 120 ms de retard, tout message reçu est filtré (taille, types, bornes, pseudo nettoyé, voiture validée). La circulation et les rivaux sont propres à chaque appareil.
 
 </details>
 
@@ -287,7 +309,8 @@ Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + tai
 
 ## 🔒 Données et transparence
 
-- **Aucune donnée personnelle.** Réglages, records et profil de jeu (`sdc:profile` : solde, voitures, pièces, défis, 40 derniers mouvements) restent en `localStorage` sur l'appareil du joueur. Rien n'est envoyé.
+- **Hors multijoueur, aucune donnée personnelle ne quitte l'appareil.** Réglages, records et profil de jeu (`sdc:profile` : solde, voitures, pièces, défis, 40 derniers mouvements) restent en `localStorage` sur l'appareil du joueur.
+- **Multijoueur (à l'initiative du joueur) :** pseudo, voiture et position sont envoyés aux seuls joueurs de la session, le temps de la session, sans stockage en ligne. La connexion est directe : chaque joueur voit l'adresse IP des autres. Mode « même Wi-Fi » par défaut, sans serveur tiers ; le mode « Internet » utilise un serveur STUN public de Google (hors UE), qui voit l'adresse IP. L'écran l'explique avant toute connexion et conseille un pseudo qui n'est pas le vrai nom. Analyse à faire valider par le DPO / conseil avant une diffusion large.
 - **Contenu assisté par IA :** jeu conçu et codé avec l'assistance d'une IA (Claude) ; logo et visuels créés avec des outils d'IA. Mention affichée dans l'écran d'aide du jeu.
 - Monnaie du jeu fictive, sans achat réel.
 
