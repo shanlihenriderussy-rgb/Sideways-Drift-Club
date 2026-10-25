@@ -3,7 +3,7 @@
 //   node build.mjs --local  -> test.html (Three.js depuis vendor/three.min.js), pour les tests hors ligne
 import fs from 'fs';
 const src = (f) => fs.readFileSync(new URL('./src/' + f, import.meta.url), 'utf8');
-const js = ['physics.js', 'economy.js', 'track.js', 'world.js', 'car.js', 'fx.js', 'audio.js', 'ai.js', 'shop.js', 'story.js', 'isleai.js', 'net.js', 'island.js', 'game.js']
+const js = ['physics.js', 'economy.js', 'track.js', 'world.js', 'car.js', 'fx.js', 'audio.js', 'ai.js', 'shop.js', 'story.js', 'ghost.js', 'isleai.js', 'net.js', 'island.js', 'game.js']
   .map((f) => `// --- ${f}\n` + src(f).replace(/^if \(typeof module.*$/m, ''))
   .join('\n');
 const local = process.argv.includes('--local');
