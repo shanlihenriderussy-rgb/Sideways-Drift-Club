@@ -62,6 +62,7 @@ Aucune installation, aucun compte, aucune pub. Tout reste sur ton appareil.
 | 📖 **Aventure** | « Le Tour de l'Île » : 6 chapitres × 3 missions, 7 personnages, archives à collectionner, défis de rue. |
 | 🎯 **3 modes** | Run noté (note de S à D), Tandem (chasse le leader), Libre (entraînement). En run noté, ton **fantôme** (meilleur run de la piste) roule en transparence et le HUD affiche l'écart de points en direct. |
 | 🔧 **Atelier** | 3 voitures, carrosserie, 12 peintures × 5 finitions, 6 livrées, 5 jantes, fumée colorée, 6 pièces de perf × 3 niveaux, réglages freins et suspension. |
+| 🎬 **Moments forts** | En fin de run, les 3 meilleurs instants (gros combo, clip, frôlé, angle record) ; replay cinématique (poursuite, travelling, bord de piste, ralenti sur les clips et les frôlés). Les 8 derniers enregistrements des pistes se revoient depuis la Carrière. |
 | 💴 **Carrière** | Yens fictifs (aucun achat réel), 36 défis, bonus quotidien, records par piste. |
 | 📱 **Tactile d'abord** | Boutons déplaçables et redimensionnables, miroir gauche/droite, clavier et manette aussi. |
 | ⚡ **Fluide sur petit Android** | Physique à 120 Hz interpolée, résolution dynamique, 65–68 appels de dessin par image. |
@@ -73,7 +74,7 @@ Aucune installation, aucun compte, aucune pub. Tout reste sur ton appareil.
 | Gaz / frein | `GAZ` / `FREIN` | ↑ ↓ ou Z S / W S |
 | Braquer | ‹ › | ← → ou Q D / A D |
 | Frein à main (lancer la glisse) | `FREIN À MAIN` | Espace |
-| Caméra | 📷 | C |
+| Vue (caméra) | 👁 | C |
 | Se replacer | menu pause | R |
 | Interagir (île) | bouton contextuel en bas | E |
 | Carte et GPS (île) | menu pause | M |
@@ -113,7 +114,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 </td><td>
 
 **Qualité et livraison**
-- Tests `node:test` (102) : économie, physique, tracés, île, vie de l'île, multijoueur, aventure
+- Tests `node:test` (106) : économie, physique, tracés, île, vie de l'île, multijoueur, aventure
 - Bancs d'essai **Playwright** : bot pilote, perf, CPU ralenti ×6, audio
 - Build : `build.mjs` assemble `src/*` en **un seul `index.html`**
 - Hébergement **Vercel**, déployé depuis `main`
@@ -235,6 +236,7 @@ Direction : « Télémétrie de nuit ». La 3D est le sujet, l'interface s'effac
 | `src/island.js` | L'île : monde ouvert continu (9 km de routes, carrefours, relief, volcan, mer), recherche de route, terrain (partie pure, testée) et rendu Three.js, dont circulation instanciée (~15 appels de dessin pour tout le trafic), habitants, radars, arches de zone, étiquettes flottantes |
 | `src/isleai.js` | Vie de l'île : GPS (plus court chemin), circulation (suivi de voie, distance d'arrêt, klaxon, dépassement), rivaux en glisse, activités à étoiles, habitants et belvédères. Logique pure, testée |
 | `src/ghost.js` | Fantôme du record : échantillon toutes les 0,1 s (position, cap, dérive, points), stockage compact vérifié (`sdc:ghosts`), relecture interpolée. Logique pure, testée |
+| `src/replay.js` | Moments forts : choix des 3 meilleurs instants sans chevauchement, découpe de la trajectoire, enregistrements vérifiés (`sdc:recs`, 8 au plus), lecture interpolée. Logique pure, testée |
 | `src/net.js` | Multijoueur pair à pair : session hôte/invités avec relais, état compact à 15 Hz, interpolation 120 ms, filtrage de tout ce qui vient du réseau, codes d'invitation compressés, transport WebRTC. Partie pure testée |
 | `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
 | `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |

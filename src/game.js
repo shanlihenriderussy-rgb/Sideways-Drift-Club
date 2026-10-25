@@ -471,7 +471,7 @@
   // ---------- score ----------
   const score = { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, lastBank: 0, walls: 0 };
   function resetScore() {
-    Object.assign(score, { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, walls: 0 });
+    Object.assign(score, { total: 0, combo: 0, mult: 1, idle: 0, best: 0, clips: 0, maxAngle: 0, driftT: 0, runT: 0, offT: 0, tandemT: 0, walls: 0, ev: [], c0: 0, angT: 0 });
     for (const z of track.zones) z.hit = false;
   }
   const WORDS = [[1500, 'BIEN'], [4000, 'SUPER'], [9000, 'ÉNORME'], [16000, 'INSENSÉ'], [Infinity, 'LÉGENDAIRE']];
@@ -519,6 +519,7 @@
     if (pts >= 150) {
       const word = WORDS.find((w) => pts < w[0])[1];
       popup(`${word} +${pts.toLocaleString('fr-FR')}`, 'bank');
+      if (pts >= 400 && score.ev) score.ev.push({ k: 'combo', t: score.runT, t0: score.c0, v: pts, label: `${word} · ${pts.toLocaleString('fr-FR')} pts` });
       Sound.bank(pts > 9000);
     }
     score.combo = 0; score.mult = 1;
@@ -559,13 +560,14 @@
     score.runT += dt;
     if (drifting) {
       score.driftT += dt;
-      score.maxAngle = Math.max(score.maxAngle, Math.min(ang, 90));
+      if (Math.min(ang, 90) > score.maxAngle) { score.maxAngle = Math.min(ang, 90); score.angT = score.runT; }
       let tandemK = 1;
       if (leader && mode === 'tandem') {
         const d = Math.hypot(st.x - leader.state.x, st.z - leader.state.z);
         if (d < 11 && leader.drifting) { tandemK = 1.6; score.tandemT += dt; score.mult = Math.min(8, score.mult + dt * 0.18); }
       }
       const pts = (Math.min(ang, 70) - 8) * (st.speed * 3.6 / 10) * dt * 1.1 * tandemK;
+      if (score.combo <= 0) score.c0 = score.runT; // début du combo (moments forts)
       score.combo += pts * score.mult;
       score.mult = Math.min(8, score.mult + dt * 0.1);
       score.idle = 0;
@@ -585,11 +587,11 @@
         if (z.type === 'outer') {
           const [rx, rz] = carPoint(st, playerModel.rearX - 0.8, 0);
           const lat = latOf(st.idx, rx, rz) * z.side;
-          if (lat > track.half - 3.2) { z.hit = true; z.flash = 1; score.clips++; score.mult = Math.min(8, score.mult + 0.5); score.combo += 400 * score.mult; popup('Clip extérieur +400', 'clip'); Sound.clip(); vibrate(25); }
+          if (lat > track.half - 3.2) { z.hit = true; z.flash = 1; score.clips++; score.mult = Math.min(8, score.mult + 0.5); score.combo += 400 * score.mult; popup('Clip extérieur +400', 'clip'); score.ev.push({ k: 'clip', t: score.runT, v: 400, label: 'Clip extérieur, l’arrière au mur' }); Sound.clip(); vibrate(25); }
         } else {
           const [fx, fz] = carPoint(st, playerModel.frontX + 0.7, 0);
           const lat = latOf(st.idx, fx, fz) * z.side;
-          if (lat > track.half - 3.6) { z.hit = true; z.flash = 1; score.clips++; score.mult = Math.min(8, score.mult + 0.35); score.combo += 250 * score.mult; popup('Corde +250', 'apex'); Sound.clip(); vibrate(20); }
+          if (lat > track.half - 3.6) { z.hit = true; z.flash = 1; score.clips++; score.mult = Math.min(8, score.mult + 0.35); score.combo += 250 * score.mult; popup('Corde +250', 'apex'); score.ev.push({ k: 'clip', t: score.runT, v: 250, label: 'Corde, l’avant au cône' }); Sound.clip(); vibrate(20); }
         }
       }
     }
@@ -751,7 +753,9 @@
     frameAvg += (dt * 1000 - frameAvg) * 0.05;
     const t = now / 1000;
 
-    if (phase === 'menu' || phase === 'results' || (phase === 'pause' && !player)) {
+    if (phase === 'replay' && rp) {
+      replayFrame(dt);
+    } else if (phase === 'menu' || phase === 'results' || (phase === 'pause' && !player)) {
       // mode attraction : ta voiture (garage) glisse seule, la caméra tourne autour
       playerModel.root.visible = true;
       leaderModel.root.visible = false;
@@ -789,6 +793,7 @@
         if (!isle) updateProgress(dt);
         updateScore(dt);
         if (ghostRec) Ghost.push(ghostRec, score.runT, player, score.total + score.combo);
+        if (hlRec) Ghost.push(hlRec, score.runT, player, score.total + score.combo);
         if (explore) updateExplore(dt);
         if (isle) isleTick(dt);
         if (mode === 'tandem') {
@@ -826,12 +831,12 @@
       lifeDraw(dt, t);
       mpSendTick(dt);
     }
-    if (phase !== 'pause') { smoke.update(dt); sparks.update(dt); }
+    if (phase !== 'pause') { const fx = phase === 'replay' && rp ? dt * rp.rate : dt; smoke.update(fx); sparks.update(fx); }
     skids.flush();
     updateFavicon(dt);
     world.update(t, camera.position);
     // ombre qui suit la voiture visible
-    const focus = phase === 'play' || phase === 'count' || phase === 'pause' ? player : leader.state;
+    const focus = phase === 'replay' && rp ? rv : phase === 'play' || phase === 'count' || phase === 'pause' ? player : leader.state;
     if (focus) {
       const fy = gy(focus.x, focus.z);
       world.sun.target.position.set(focus.x, fy, focus.z);
@@ -1029,6 +1034,7 @@
     goal.hidden = !adv; goal.className = 'hud-goal';
     if (adv && !adv.explore) goal.textContent = 'Objectif · ' + Story.goalText(Story.CHAPTERS[adv.ci].missions[adv.k].goal);
     ghostRec = mode === 'run' ? Ghost.recorder(profile.current) : null;
+    hlRec = Ghost.recorder(profile.current);
     buildGhost();
     el('hudBest').classList.remove('ahead', 'behind'); el('hudBest').dataset.d = ''; hudCache.hudBest = null;
     const b = bests[track.def.id + ':' + mode];
@@ -1130,6 +1136,7 @@
     $('againBtn').firstElementChild.textContent = advNext ? 'Mission suivante' : 'Rejouer';
     $('payBal').textContent = 'Solde : ' + Economy.fmt(profile.money);
     countUp($('payTotal'), res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0) + (fr ? fr.reward : 0));
+    showMoments(mode, total, mode === 'free' ? null : grade);
     show('results');
     if (fr) {
       const ch = Story.CHAPTERS[adv.ci];
@@ -1228,6 +1235,7 @@
     $('careerStats').innerHTML = cell('Solde', Economy.fmt(profile.money)) + cell('Runs terminés', st.runs) + cell('Total gagné', Economy.fmt(st.earned)) + cell('Meilleur gain', Economy.fmt(st.bestPayout));
     $('chalList').innerHTML = Economy.CHALLENGES.map((c) => `<li class="${profile.done[c.id] ? 'done' : ''}"><span class="ck" aria-hidden="true">${profile.done[c.id] ? '✓' : ''}</span><span>${c.label}<span class="sr">${profile.done[c.id] ? ', réussi' : ''}</span></span><b>${Economy.fmt(c.reward)}</b></li>`).join('');
     const fmtD = (t) => new Date(t).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    renderRecs();
     $('logList').innerHTML = profile.log.slice(0, 15).map((l) => `<li><span>${fmtD(l.t)} · ${l.label.replace(/[<>&]/g, '')}</span><b class="${l.amount < 0 ? 'neg' : ''}">${l.amount < 0 ? '−' : '+'}${Economy.fmt(Math.abs(l.amount))}</b></li>`).join('') || '<li><span>Aucun mouvement pour l’instant.</span></li>';
     show('career');
   }
@@ -1552,6 +1560,7 @@
     } else { const hb = I.hubs.minato; x = hb.x + Math.cos(hb.heading) * 14; z = hb.z + Math.sin(hb.heading) * 14; h = hb.heading; }
     placePlayer(x, z, h, 0);
     dropGhost(); el('hudBest').classList.remove('ahead', 'behind');
+    hlRec = Ghost.recorder(profile.current);
     buildLife();
     phase = 'count';
     show(null);
@@ -1737,7 +1746,7 @@
       A.nearCool = 6;
       const pts = Math.round(300 * score.mult);
       score.combo += pts; score.mult = Math.min(8, score.mult + 0.3); L.stats.near = (L.stats.near || 0) + 1;
-      popup(`Frôlé +${pts.toLocaleString('fr-FR')}`, 'clip'); Sound.clip(); vibrate(15);
+      popup(`Frôlé +${pts.toLocaleString('fr-FR')}`, 'clip'); score.ev.push({ k: 'near', t: score.runT, v: pts, label: `Frôlé un ${{ kei: 'kei', sedan: 'berline', van: 'fourgon', truck: 'kei-truck', bus: 'bus' }[A.kind.id]} en glisse` }); Sound.clip(); vibrate(15);
       if (Math.random() < 0.6) Sound.horn(0.5, A.kind.id === 'bus' ? 0.72 : 1.1);
     }
   }
@@ -2127,6 +2136,7 @@
     $('menuBtn').firstElementChild.textContent = 'Menu';
     $('againBtn').firstElementChild.textContent = 'Reprendre la route';
     countUp($('payTotal'), res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0));
+    showMoments('free', total, null);
     show('results');
     releaseWake();
   }
@@ -2521,6 +2531,137 @@
     else if (k === 'm' && screenId === 'isleMap') closeIsleMap();
     else if (k === 'h' && phase === 'play') sendEmote('horn');
     else if (mp && phase === 'play' && /^[1-4]$/.test(k)) sendEmote(['wave', 'gg', 'follow', 'fire'][+k - 1]);
+  });
+
+  // ---------- moments forts et enregistrements (replay.js) ----------
+  // hlRec : trajectoire du run en cours (tous modes) ; lastRec : enregistrement du dernier run ; recs : enregistrements gardés
+  let hlRec = null, lastRec = null, rp = null;
+  let recs = (store.get('recs', []) || []).map(Replay.checkRecording).filter(Boolean);
+  const KIND_TXT = { combo: 'Combo', clip: 'Clip', near: 'Frôlé', angle: 'Angle' };
+  const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  // fin de run : choisit les moments, les affiche, garde l'enregistrement (pistes seulement : l'île se revoit tout de suite)
+  function showMoments(modeName, total, grade) {
+    const box = $('resMoments');
+    const ev = score.ev.slice();
+    if (score.maxAngle >= 40) ev.push({ k: 'angle', t: score.angT, v: Math.round(score.maxAngle), label: `Angle max ${Math.round(score.maxAngle)}°` });
+    const d = hlRec ? hlRec.d : [];
+    const moments = d.length ? Replay.pickMoments(ev, (d.length / 5 - 1) * Ghost.DT, 3) : [];
+    hlRec = null;
+    lastRec = moments.length ? Replay.makeRecording({ id: 'r' + Date.now().toString(36), date: Date.now(), track: isle ? 'ile' : track.def.id, mode: modeName, kind: profile.current, score: total, grade }, d, moments) : null;
+    if (lastRec && !lastRec.moments.length) lastRec = null;
+    if (lastRec && !isle) { recs = Replay.addRecording(recs, lastRec); store.set('recs', recs); }
+    box.hidden = false;
+    box.innerHTML = `<div class="h">Moments forts</div>` + (lastRec
+      ? `<ol>${lastRec.moments.map((m, k) => `<li><button data-moment="${k}"><i>${mmss(m.t)}</i><span><b>${esc(KIND_TXT[m.k])}</b> ${esc(m.label)}</span><em aria-hidden="true">▶</em></button></li>`).join('')}</ol><button class="btn" data-moment="0"><span>▶ Revoir les moments forts</span></button>`
+      : '<p>Pas encore de moment fort : tiens une glisse plus longtemps, ou clippe un mur.</p>');
+  }
+  $('resMoments').addEventListener('click', (e) => { const b = e.target.closest('[data-moment]'); if (b && lastRec) playRecording(lastRec, 'results', +b.dataset.moment); });
+
+  // lecteur : chaque moment avec sa caméra (poursuite, travelling, bord de piste), ralenti autour d'un clip ou d'un frôlé
+  const rv = { x: 0, z: 0, heading: 0, vx: 0, vz: 0, speed: 0, slip: 0, rearSlip: 0, steerAngle: 0, wheelRot: 0, rollAngle: 0, pitchAngle: 0, throttle: 1, wheelSpin: 0, rpm: 3000, fwd: 0 };
+  function playRecording(rec, back, from) {
+    if (!rec || !rec.moments.length) return;
+    if (!isle && rec.track !== track.def.id) { const ti = trackIndexOf(rec.track); if (ti < 0) { toast('Piste inconnue', 'lost'); return; } trackIdx = ti; loadTrack(ti); }
+    if (isle && rec.track !== 'ile') return;
+    rp = { rec, back, backPhase: phase, i: Math.max(0, Math.min(rec.moments.length - 1, from || 0)), u: 0, paused: false, rate: 1, swapped: false, cam: null };
+    if (rec.kind !== profile.current) { showKind = rec.kind; showCfg = profile.cars[rec.kind] || Economy.defaultCar(rec.kind); buildCars(true); rp.swapped = true; }
+    if (isle) playerModel.ground = isleData.terrain.at;
+    ensureAudio();
+    phase = 'replay';
+    show(null); $('hud').hidden = true; $('prompt').hidden = true; setTouchVisible();
+    $('replay').hidden = false;
+    startMoment(rp.i);
+    announce('Replay des moments forts. Espace : pause, flèches : moment précédent ou suivant, Échap : fermer.');
+  }
+  function startMoment(i) {
+    const m = rp.rec.moments[i];
+    rp.i = i; rp.u = 0; rv.wheelRot = 0;
+    skids.clear(); smoke.clear();
+    const s = Replay.playAt(m, 0, rv);
+    // caméra : 1er moment en poursuite, 2e en travelling, 3e au bord de la piste (fixe, téléobjectif)
+    const style = ['chase', 'orbit', 'side'][i % 3];
+    rp.cam = { style };
+    if (style === 'side') {
+      const mid = Replay.playAt(m, Replay.momentDur(m) * 0.55, {});
+      const nx = -Math.sin(mid.heading), nz = Math.cos(mid.heading), sd = i % 2 ? 1 : -1;
+      const cx = mid.x + nx * 11 * sd + Math.cos(mid.heading) * 6, cz = mid.z + nz * 11 * sd + Math.sin(mid.heading) * 6;
+      rp.cam.pos = new THREE.Vector3(cx, gy(cx, cz) + 2.2, cz);
+    }
+    camPos.set(s.x - Math.cos(s.heading) * 7, gy(s.x, s.z) + 2.6, s.z - Math.sin(s.heading) * 7);
+    camLook.set(s.x, gy(s.x, s.z) + 0.8, s.z);
+    const n = rp.rec.moments.length;
+    $('rpTitle').textContent = `${KIND_TXT[m.k]} · ${m.label}`;
+    $('rpSub').textContent = `Moment ${i + 1} / ${n} · ${mmss(m.t)} · ${rp.rec.track === 'ile' ? 'L’île' : TRACKS[trackIndexOf(rp.rec.track)].name}`;
+    const cut = $('rpCut'); cut.classList.remove('on'); void cut.offsetWidth; if (!settings.reduce) cut.classList.add('on');
+  }
+  function replayFrame(dt) {
+    const m = rp.rec.moments[rp.i], dur = Replay.momentDur(m);
+    // ralenti en douceur autour de l'instant fort
+    const near = m.slow ? Math.abs(m.a + rp.u - m.t) : 9;
+    const want = rp.paused ? 0 : near < 0.9 ? 0.35 : 1;
+    rp.rate += (want - rp.rate) * Math.min(1, dt * 6);
+    const dd = dt * rp.rate;
+    rp.u += dd;
+    const s = Replay.playAt(m, rp.u, rv);
+    rv.slip = s.rearSlip; rv.fwd = s.speed;
+    rv.wheelRot += s.speed / 0.31 * dd;
+    rv.steerAngle += (clamp(-s.yaw * 0.12 - s.rearSlip * 0.6 * Math.sign(s.yaw || 1), -0.65, 0.65) - rv.steerAngle) * Math.min(1, dt * 8);
+    rv.rollAngle += (clamp(-s.yaw * s.speed * 0.004, -0.09, 0.09) - rv.rollAngle) * Math.min(1, dt * 5);
+    rv.rpm = Math.min(7600, 2600 + s.speed * 150 + s.rearSlip * 1500); rv.throttle = rp.paused ? 0 : 1;
+    playerModel.root.visible = true; leaderModel.root.visible = false;
+    playerModel.update(rv, dt, false);
+    if (dd > 0) carFx(rv, playerModel, dd, 'P');
+    const C = rp.cam;
+    if (C.style === 'chase') updateCamera(dt, rv, false);
+    else if (C.style === 'orbit') updateCamera(dt, rv, true);
+    else {
+      camera.position.copy(C.pos);
+      camLook.lerp(_camL.set(rv.x, gy(rv.x, rv.z) + 0.7, rv.z), 1 - Math.exp(-dt * 8));
+      camera.lookAt(camLook);
+      camera.fov += (34 - camera.fov) * Math.min(1, dt * 4); camera.updateProjectionMatrix();
+    }
+    Sound.update(rv, rp.rec.kind, !rp.paused);
+    $('rpBar').style.transform = `scaleX(${clamp(rp.u / dur, 0, 1).toFixed(3)})`;
+    $('rpSlow').hidden = rp.rate > 0.6 || rp.paused;
+    if (s.end && !rp.paused) { if (rp.i + 1 < rp.rec.moments.length) startMoment(rp.i + 1); else stopReplay(); }
+  }
+  function stopReplay() {
+    if (!rp) return;
+    const r = rp; rp = null;
+    $('replay').hidden = true;
+    Sound.suspend();
+    if (r.swapped) { showKind = null; showCfg = null; buildCars(true); if (isle) playerModel.ground = isleData.terrain.at; }
+    phase = r.backPhase === 'replay' ? 'results' : r.backPhase;
+    skids.clear();
+    show(r.back);
+    if (r.back === 'career') openCareer();
+  }
+  const rpBtn = (id, f) => $(id).addEventListener('click', () => { if (rp) { Sound.ui(); f(); } });
+  rpBtn('rpPrev', () => startMoment(Math.max(0, rp.i - 1)));
+  rpBtn('rpNext', () => (rp.i + 1 < rp.rec.moments.length ? startMoment(rp.i + 1) : stopReplay()));
+  rpBtn('rpPause', () => { rp.paused = !rp.paused; $('rpPause').setAttribute('aria-label', rp.paused ? 'Lecture (Espace)' : 'Pause (Espace)'); $('rpPause').classList.toggle('paused', rp.paused); });
+  rpBtn('rpClose', stopReplay);
+  addEventListener('keydown', (e) => {
+    if (!rp || dlg) return;
+    const k = e.key;
+    if (k === ' ') { e.preventDefault(); $('rpPause').click(); }
+    else if (k === 'ArrowLeft') $('rpPrev').click();
+    else if (k === 'ArrowRight') $('rpNext').click();
+    else if (k === 'Escape') { e.stopImmediatePropagation(); stopReplay(); }
+  }, true);
+
+  // Carrière : les enregistrements gardés sur l'appareil
+  function renderRecs() {
+    const fmtD = (t) => new Date(t).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    $('recList').innerHTML = recs.map((r) => {
+      const ti = trackIndexOf(r.track), name = ti >= 0 ? TRACKS[ti].name : r.track;
+      return `<li><button class="rec-play" data-rec="${esc(r.id)}" aria-label="Revoir : ${esc(name)}, ${r.score} points"><em aria-hidden="true">▶</em><span><b>${esc(name)}</b> · ${r.mode === 'run' ? 'Run noté' : r.mode === 'tandem' ? 'Tandem' : 'Libre'}${r.grade ? ' · note ' + esc(r.grade) : ''} · ${r.score.toLocaleString('fr-FR')} pts<small>${fmtD(r.date)} · ${r.moments.map((m) => esc(KIND_TXT[m.k])).join(', ')}</small></span></button><button class="rec-del" data-del="${esc(r.id)}" aria-label="Supprimer cet enregistrement">✕</button></li>`;
+    }).join('') || '<li class="empty"><span>Aucun enregistrement : tes moments forts apparaîtront ici après un run sur piste.</span></li>';
+  }
+  $('recList').addEventListener('click', (e) => {
+    const p = e.target.closest('[data-rec]'), d = e.target.closest('[data-del]');
+    if (p) { const r = recs.find((x) => x.id === p.dataset.rec); if (r) { Sound.ui(); playRecording(r, 'career', 0); } }
+    else if (d) { recs = recs.filter((x) => x.id !== d.dataset.del); store.set('recs', recs); Sound.ui(); renderRecs(); }
   });
 
   function syncSettingsUI() {
