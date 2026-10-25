@@ -13,7 +13,7 @@
     </div>
     <div class="total"><div class="lbl">SCORE</div><div class="num" id="hudTotal">0</div><div class="lbl" id="hudBest">RECORD —</div></div>
     <div class="top-right">
-      <button class="icon-btn" id="camBtn" aria-label="Changer de caméra (C)"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1zm8 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg></button>
+      <button class="icon-btn" id="camBtn" aria-label="Changer de vue (C)"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 5.5c-5 0-8.7 3.6-10.2 6.5C3.3 14.9 7 18.5 12 18.5s8.7-3.6 10.2-6.5C20.7 9.1 17 5.5 12 5.5zm0 10.6a4.1 4.1 0 1 1 0-8.2 4.1 4.1 0 0 1 0 8.2zm0-6.3a2.2 2.2 0 1 0 0 4.4 2.2 2.2 0 0 0 0-4.4z"/></svg></button>
       <button class="icon-btn" id="pauseBtn" aria-label="Pause (Échap)"><svg viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z"/></svg></button>
     </div>
   </div>
@@ -53,6 +53,23 @@
 </div>
 
 <div id="toasts" aria-live="polite"></div>
+
+<!-- replay des moments forts : bandes cinéma, titre du moment, commandes -->
+<div id="replay" hidden role="region" aria-label="Replay des moments forts">
+  <div class="rp-band top"></div><div class="rp-band bot"></div>
+  <div class="rp-cut" id="rpCut"></div>
+  <div class="rp-head"><span class="rp-rec">REPLAY</span><div><b id="rpTitle"></b><small id="rpSub"></small></div></div>
+  <div class="rp-slow" id="rpSlow" hidden>RALENTI</div>
+  <div class="rp-foot">
+    <div class="rp-bar"><i id="rpBar"></i></div>
+    <div class="rp-ctl">
+      <button class="icon-btn" id="rpPrev" aria-label="Moment précédent (←)"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+      <button class="icon-btn big" id="rpPause" aria-label="Pause (Espace)"><svg class="i-pause" viewBox="0 0 24 24"><path d="M7 5h3v14H7zM14 5h3v14h-3z"/></svg><svg class="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="icon-btn" id="rpNext" aria-label="Moment suivant (→)"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+      <button class="btn ghost" id="rpClose"><span>Fermer</span></button>
+    </div>
+  </div>
+</div>
 
 <!-- menu titre -->
 <section class="screen" id="menu" hidden aria-labelledby="logoTitle">
@@ -158,6 +175,8 @@
     <div class="eyebrow"><span>Carrière</span><span class="jp">記録</span></div>
     <h2 id="careerTitle">Ton palmarès</h2>
     <div class="res-grid" id="careerStats"></div>
+    <div class="label">Enregistrements · moments forts</div>
+    <ul class="rec-list" id="recList"></ul>
     <div class="label">Défis</div>
     <ul class="chal-list" id="chalList"></ul>
     <div class="label">Derniers mouvements</div>
@@ -241,6 +260,7 @@
     <div class="res-head"><div class="grade" id="resGrade">A</div><div><h2 id="resTitle">Note des juges <span class="jp">結果</span></h2><div class="res-total" id="resTotal">0</div><div id="resRecord"></div></div></div>
     <p class="headline" id="resHeadline"></p>
     <div class="res-goal" id="resGoal" hidden></div>
+    <div class="res-moments" id="resMoments" hidden></div>
     <div class="res-grid">
       <div>Meilleur combo<b id="resCombo">0</b></div>
       <div>Clips réussis<b id="resClips">0</b></div>
