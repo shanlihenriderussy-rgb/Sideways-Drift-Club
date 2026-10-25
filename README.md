@@ -60,7 +60,7 @@ Aucune installation, aucun compte, aucune pub. Tout reste sur ton appareil.
 | 🏝️ **L'île, monde ouvert** | 2,1 × 1,5 km, 15 routes, 10 carrefours, 9 km de bitume, relief jusqu'à 110 m. Circulation (5 modèles, roulage à gauche), 4 pilotes rivaux à défier (touge, tandem de rue), 6 habitants à qui parler, radars, zones de glisse, belvédères photo, 12 daruma dorés, carte et GPS. |
 | 👥 **Multijoueur** | Jusqu'à 4 pilotes sur l'île, pair à pair (WebRTC), sans compte ni serveur de jeu : invitation par code ou lien, messages rapides, course et battle de drift lancées par l'hôte. |
 | 📖 **Aventure** | « Le Tour de l'Île » : 6 chapitres × 3 missions, 7 personnages, archives à collectionner, défis de rue. |
-| 🎯 **3 modes** | Run noté (note de S à D), Tandem (chasse le leader), Libre (entraînement). |
+| 🎯 **3 modes** | Run noté (note de S à D), Tandem (chasse le leader), Libre (entraînement). En run noté, ton **fantôme** (meilleur run de la piste) roule en transparence et le HUD affiche l'écart de points en direct. |
 | 🔧 **Atelier** | 3 voitures, carrosserie, 12 peintures × 5 finitions, 6 livrées, 5 jantes, fumée colorée, 6 pièces de perf × 3 niveaux, réglages freins et suspension. |
 | 💴 **Carrière** | Yens fictifs (aucun achat réel), 36 défis, bonus quotidien, records par piste. |
 | 📱 **Tactile d'abord** | Boutons déplaçables et redimensionnables, miroir gauche/droite, clavier et manette aussi. |
@@ -113,7 +113,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 </td><td>
 
 **Qualité et livraison**
-- Tests `node:test` (98) : économie, physique, tracés, île, vie de l'île, multijoueur, aventure
+- Tests `node:test` (102) : économie, physique, tracés, île, vie de l'île, multijoueur, aventure
 - Bancs d'essai **Playwright** : bot pilote, perf, CPU ralenti ×6, audio
 - Build : `build.mjs` assemble `src/*` en **un seul `index.html`**
 - Hébergement **Vercel**, déployé depuis `main`
@@ -234,6 +234,7 @@ Direction : « Télémétrie de nuit ». La 3D est le sujet, l'interface s'effac
 | `src/story.js` | Aventure « Le Tour de l'Île » : 6 chapitres × 3 missions, dialogues, objectifs, exploration (archives, défis de rue, rencontres). Logique pure, testée |
 | `src/island.js` | L'île : monde ouvert continu (9 km de routes, carrefours, relief, volcan, mer), recherche de route, terrain (partie pure, testée) et rendu Three.js, dont circulation instanciée (~15 appels de dessin pour tout le trafic), habitants, radars, arches de zone, étiquettes flottantes |
 | `src/isleai.js` | Vie de l'île : GPS (plus court chemin), circulation (suivi de voie, distance d'arrêt, klaxon, dépassement), rivaux en glisse, activités à étoiles, habitants et belvédères. Logique pure, testée |
+| `src/ghost.js` | Fantôme du record : échantillon toutes les 0,1 s (position, cap, dérive, points), stockage compact vérifié (`sdc:ghosts`), relecture interpolée. Logique pure, testée |
 | `src/net.js` | Multijoueur pair à pair : session hôte/invités avec relais, état compact à 15 Hz, interpolation 120 ms, filtrage de tout ce qui vient du réseau, codes d'invitation compressés, transport WebRTC. Partie pure testée |
 | `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
 | `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |
@@ -274,6 +275,7 @@ Direction : « Télémétrie de nuit ». La 3D est le sujet, l'interface s'effac
 - **Circulation** : 16 à 22 voitures (kei, berline, fourgon, kei-truck, bus) qui roulent à gauche, ralentissent dans les virages, s'arrêtent derrière un obstacle, klaxonnent puis dépassent. Les accrocher coûte le combo.
 - **Rivaux** : Nana (dès le début), Kai (chapitre 2), Tetsu (chapitre 4), Mika (chapitre 5). Ils sillonnent l'île en glisse ; approche-toi, ils se rangent et t'attendent. Défis : touge (premier arrivé à un lieu à 0,7–1,8 km) ou tandem de rue (rester à moins de 15 m pendant 45 s, 50 % du temps). Prime pleine à la première victoire, un cinquième ensuite.
 - **Habitants** : Kenji, Lou, Zélie, Ume, Sora, Hoshi. Chacun a quelque chose à dire et propose de régler le GPS (prochaine étape de l'aventure, daruma le plus proche, rival, défi à tenter).
+- **Frôlé !** : passer en glisse à moins d'un mètre d'une voiture de la circulation sans la toucher : +300 × multiplicateur, une fois par voiture et par passage.
 - **Activités** : 3 radars (vitesse) et 4 zones de glisse (points entre deux arches), 3 étoiles chacune, payées une fois. 4 belvédères : arrête-toi dans le cercle bleu et prends la photo.
 - **Carte et GPS** : carte complète (lieux, rivaux en direct, activités et étoiles, habitants, belvédères, daruma) ; toucher un repère règle le GPS (flèche, distance par la route, tracé sur la mini-carte).
 - 12 daruma dorés à trouver (¥500 chacun). Fin de balade : gains du mode libre et bilan de l'île. Progression dans `sdc:profile.isle`.

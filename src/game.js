@@ -89,6 +89,7 @@
   }
 
   function loadTrack(i) {
+    dropGhost();
     if (world) world.dispose();
     trackIdx = i;
     track = buildTrackData(TRACKS[i]);
@@ -474,8 +475,44 @@
     for (const z of track.zones) z.hit = false;
   }
   const WORDS = [[1500, 'BIEN'], [4000, 'SUPER'], [9000, 'ÉNORME'], [16000, 'INSENSÉ'], [Infinity, 'LÉGENDAIRE']];
+  // ---------- fantôme du record (ghost.js) : rejoue ton meilleur run noté, écart de points en direct ----------
+  const ghosts = store.get('ghosts', {});
+  let ghostRec = null, ghostCar = null, ghostT = 0;
+  const ghostView = { x: 0, z: 0, heading: 0, rollAngle: 0, pitchAngle: 0, wheelRot: 0, steerAngle: 0, rearSlip: 0 };
+  function dropGhost() { if (ghostCar) { ghostCar.model.dispose(); ghostCar = null; } }
+  function buildGhost() {
+    dropGhost();
+    const g = mode === 'run' && !isle ? Ghost.unpack(ghosts[track.def.id]) : null;
+    if (!g) return;
+    const model = buildCar(g.kind, lookOf(profile.cars[g.kind] || Economy.defaultCar(g.kind), world.theme.headlights));
+    model.ground = track.terrain.at;
+    // voiture de verre : tous les matériaux deviennent transparents, l'opacité suit la distance à ta voiture
+    const mats = [];
+    model.root.traverse((o) => { if (!o.material) return; for (const m of [].concat(o.material)) if (!mats.includes(m)) { m.userData.o = m.opacity; m.transparent = true; m.depthWrite = false; mats.push(m); } });
+    model.root.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+    scene.add(model.root);
+    ghostCar = { g, model, mats, fade: -1 };
+  }
+  function updateGhost(dt) {
+    const G = ghostCar, s = Ghost.at(G.g, score.runT, ghostView);
+    ghostView.wheelRot += dt * 50; ghostView.steerAngle = -s.rearSlip * 0.5;
+    G.model.update(ghostView, dt, false);
+    const d = Math.hypot(s.x - player.x, s.z - player.z);
+    const f = (s.done ? 0 : clamp((d - 2.5) / 9, 0, 1)) * 0.38;
+    if (Math.abs(f - G.fade) > 0.02) { G.fade = f; for (const m of G.mats) m.opacity = m.userData.o * f; G.model.root.visible = f > 0.01; }
+    ghostT -= dt;
+    if (ghostT <= 0) {
+      ghostT = 0.25;
+      const delta = Math.round(score.total + score.combo - s.pts), b = el('hudBest');
+      setText('hudBest', `RECORD ${(bests[track.def.id + ':run'] || 0).toLocaleString('fr-FR')} · ${delta >= 0 ? '+' : '−'}${Math.abs(delta).toLocaleString('fr-FR')}`);
+      const cls = delta >= 0 ? 'ahead' : 'behind';
+      if (b.dataset.d !== cls) { b.dataset.d = cls; b.classList.toggle('ahead', delta >= 0); b.classList.toggle('behind', delta < 0); }
+    }
+  }
+
   function bank() {
     if (score.combo < 1) { score.combo = 0; score.mult = 1; return; }
+    if (score.combo >= 1500) pulseHeat();
     const pts = Math.round(score.combo);
     score.total += pts;
     score.best = Math.max(score.best, pts);
@@ -504,6 +541,8 @@
     setTimeout(() => el.remove(), 1650);
   }
   function announce(t) { $('live').textContent = t; }
+  // encaissement d'un gros combo : un éclat du halo (sans effet si « mouvement réduit »)
+  function pulseHeat() { if (settings.reduce) return; const h = $('heat'); h.classList.remove('pulse'); void h.offsetWidth; h.classList.add('pulse'); }
 
   // point de la voiture en coordonnées monde (x local avant, z local droite)
   function carPoint(st, lx, lz) {
@@ -749,6 +788,7 @@
         }
         if (!isle) updateProgress(dt);
         updateScore(dt);
+        if (ghostRec) Ghost.push(ghostRec, score.runT, player, score.total + score.combo);
         if (explore) updateExplore(dt);
         if (isle) isleTick(dt);
         if (mode === 'tandem') {
@@ -771,6 +811,7 @@
       // affichage interpolé entre les deux derniers pas physiques : mouvement régulier à 60, 90, 120 ou 144 Hz
       const pv = interp(player, phase === 'play' ? acc / STEP : 1);
       playerModel.update(pv, dt, input.brake > 0.1 || input.handbrake > 0.5);
+      if (ghostCar && phase === 'play') updateGhost(dt);
       leaderModel.update(leader.state, dt, false);
       carFx(pv, playerModel, dt, 'P');
       updateCamera(dt, pv, false);
@@ -897,6 +938,9 @@
     if (!isle) setText('hudLap', mode === 'free' ? `Tour ${lap.n + 1}` : `${Math.round(clamp(lap.progress / track.length, 0, 1) * 100)} %`);
     let tandemNear = false;
     if (mode === 'tandem') tandemNear = Math.hypot(st.x - leader.state.x, st.z - leader.state.z) < 11;
+    // chaleur du combo : le bord de l'écran rougeoie avec le multiplicateur
+    const heat = score.combo > 0 ? Math.round(clamp((score.mult - 1.6) / 4.5, 0, 1) * (settings.reduce ? 0.45 : 1) * 20) / 20 : 0;
+    if (hudCache.heat !== heat) { hudCache.heat = heat; el('heat').style.opacity = heat; }
     const comboEl = el('combo');
     const active = score.combo > 0;
     if (hudCache.active !== active) { hudCache.active = active; comboEl.classList.toggle('idle', !active); }
@@ -984,6 +1028,9 @@
     const goal = $('hudGoal');
     goal.hidden = !adv; goal.className = 'hud-goal';
     if (adv && !adv.explore) goal.textContent = 'Objectif · ' + Story.goalText(Story.CHAPTERS[adv.ci].missions[adv.k].goal);
+    ghostRec = mode === 'run' ? Ghost.recorder(profile.current) : null;
+    buildGhost();
+    el('hudBest').classList.remove('ahead', 'behind'); el('hudBest').dataset.d = ''; hudCache.hudBest = null;
     const b = bests[track.def.id + ':' + mode];
     $('hudBest').textContent = b ? 'RECORD ' + b.toLocaleString('fr-FR') : 'RECORD —';
     camPos.set(player.x - Math.cos(player.heading) * 8, gy(player.x, player.z) + 3, player.z - Math.sin(player.heading) * 8);
@@ -1038,12 +1085,16 @@
     const prev = bests[key] || 0;
     const record = total > prev && total > 0;
     if (record) { bests[key] = total; store.set('bests', bests); }
+    // nouveau record noté : son run devient le fantôme de la piste
+    const ghostSaved = record && mode === 'run' && ghostRec && ghostRec.d.length >= 50;
+    if (ghostSaved) { ghosts[track.def.id] = Ghost.pack(ghostRec); store.set('ghosts', ghosts); }
+    ghostRec = null; dropGhost();
     const par = track.def.par * (mode === 'tandem' ? 1.25 : 1);
     const r = total / par;
     const grade = r >= 1 ? 'S' : r >= 0.75 ? 'A' : r >= 0.5 ? 'B' : r >= 0.28 ? 'C' : 'D';
     $('resGrade').textContent = mode === 'free' ? '—' : grade;
     $('resTotal').textContent = total.toLocaleString('fr-FR') + ' pts';
-    $('resRecord').innerHTML = record ? '<span class="record">NOUVEAU RECORD</span>' : prev ? `<span class="hint">Record : ${prev.toLocaleString('fr-FR')}</span>` : '';
+    $('resRecord').innerHTML = record ? `<span class="record">NOUVEAU RECORD</span>${ghostSaved ? '<span class="hint"> · ton fantôme t’attendra au prochain run</span>' : ''}` : prev ? `<span class="hint">Record : ${prev.toLocaleString('fr-FR')}</span>` : '';
     $('resCombo').textContent = Math.round(score.best).toLocaleString('fr-FR');
     $('resClips').textContent = `${score.clips} / ${track.zones.length}`;
     $('resAngle').textContent = Math.round(score.maxAngle) + '°';
@@ -1105,6 +1156,7 @@
   }
   function toMenu() {
     phase = 'menu';
+    ghostRec = null; dropGhost();
     claimDaily(); refreshWallet();
     Sound.suspend();
     $('hud').hidden = true; clearTouch(); setTouchVisible(); $('count').hidden = true;
@@ -1499,6 +1551,7 @@
       if (Math.cos(h - spawn.h) < 0) h += Math.PI;
     } else { const hb = I.hubs.minato; x = hb.x + Math.cos(hb.heading) * 14; z = hb.z + Math.sin(hb.heading) * 14; h = hb.heading; }
     placePlayer(x, z, h, 0);
+    dropGhost(); el('hudBest').classList.remove('ahead', 'behind');
     buildLife();
     phase = 'count';
     show(null);
@@ -1658,6 +1711,7 @@
       const ev = IsleLife.stepAgent(I, A, dt, obs, L.T.rand, false);
       if (ev === 'honk' && d2 < 110 * 110) Sound.horn(1 - Math.sqrt(d2) / 110, A.kind.id === 'bus' ? 0.72 : A.kind.id === 'kei' ? 1.22 : 1);
     }
+    nearMiss(dt);
     rivalsTick(dt);
     if (L.duel) duelTick(dt);
     actsTick(dt);
@@ -1667,6 +1721,25 @@
     if (L.scanT <= 0) { L.scanT = 0.1; scanInteract(); updateGps(); }
     L.goalT -= dt;
     if (L.goalT <= 0) { L.goalT = 0.2; renderIsleGoal(); }
+  }
+  // « Frôlé ! » : passer en glisse à moins d'un mètre d'une voiture sans la toucher rapporte des points (une fois par voiture et par passage)
+  function nearMiss(dt) {
+    const st = player, L = life;
+    const drifting = phase === 'play' && Math.abs(st.slip) * 180 / Math.PI > 15 && st.speed > 9 && score.combo > 0;
+    const c = Math.cos(st.heading), s = Math.sin(st.heading);
+    for (const A of L.T.agents) {
+      if (A.nearCool > 0) A.nearCool -= dt;
+      if (!drifting || A.nearCool > 0 || A.hitT > 0 || Math.abs(A.x - st.x) > 9 || Math.abs(A.z - st.z) > 9) continue;
+      const half = A.kind.len / 2 - A.kind.w / 2, rad = A.kind.w / 2 + 0.05, oc = Math.cos(A.heading), os = Math.sin(A.heading);
+      let gap = Infinity;
+      for (const q of [half, 0, -half]) for (const p of [1.05, -1.05]) gap = Math.min(gap, Math.hypot(st.x + c * p - A.x - oc * q, st.z + s * p - A.z - os * q) - 1.0 - rad);
+      if (gap > 1.1 || gap < 0.05 || L.bumpT > 0) continue;
+      A.nearCool = 6;
+      const pts = Math.round(300 * score.mult);
+      score.combo += pts; score.mult = Math.min(8, score.mult + 0.3); L.stats.near = (L.stats.near || 0) + 1;
+      popup(`Frôlé +${pts.toLocaleString('fr-FR')}`, 'clip'); Sound.clip(); vibrate(15);
+      if (Math.random() < 0.6) Sound.horn(0.5, A.kind.id === 'bus' ? 0.72 : 1.1);
+    }
   }
   function rivalsTick(dt) {
     const L = life, I = isleData, st = player;
@@ -2046,7 +2119,7 @@
     const bag = IsleLife.isleBag(profile), stars = IsleLife.ACTIVITIES.reduce((a, d) => a + IsleLife.starsOf(d, bag.best[d.id] || 0), 0);
     const met = IsleLife.ISLE_NPCS.filter((n) => bag.met[n.id]).length, photos = IsleLife.PHOTO_SPOTS.filter((p) => bag.photo[p.id]).length;
     const rg = $('resGoal'); rg.hidden = false;
-    rg.innerHTML = `<div class="h">L’île · cette balade</div><div class="r"><span>Temps sur la route ${fmtTime(score.runT)} · rivaux battus ${S.rivals} · étoiles gagnées ${S.stars} · photos ${S.photos}</span></div>`
+    rg.innerHTML = `<div class="h">L’île · cette balade</div><div class="r"><span>Temps sur la route ${fmtTime(score.runT)} · rivaux battus ${S.rivals} · frôlés ${S.near || 0} · étoiles gagnées ${S.stars} · photos ${S.photos}</span></div>`
       + `<div class="h">L’île · en tout</div><div class="r"><span>Daruma ${isleFound(profile)} / ${ISLE.daruma.length} · étoiles ${stars} / ${IsleLife.ACTIVITIES.length * 3} · rencontres ${met} / ${IsleLife.ISLE_NPCS.length} · photos ${photos} / ${IsleLife.PHOTO_SPOTS.length}</span></div>`;
     $('payLines').innerHTML = res.payout.lines.map((l) => `<div><span>${l.label}</span><b>+${Economy.fmt(l.amount)}</b></div>`).join('') || '<div><span>Aucun gain sur cette balade.</span></div>';
     $('payChal').innerHTML = res.challenges.map((c) => `<div>Défi réussi : ${c.label} · +${Economy.fmt(c.reward)}</div>`).join('');
