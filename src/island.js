@@ -546,17 +546,31 @@ function makeTag(keep) {
   return { sprite: sp, set, dispose() { tex.dispose(); mat.dispose(); } };
 }
 
+// étiquette lisible à toute distance : taille à l'écran à peu près constante (largeur ≈ 22 % de la distance, 1,4 à 7 m),
+// cachée tout près (le bouton d'interaction prend le relais) et au-delà de 220 m. base : hauteur du bas de l'étiquette.
+function fitTag(sp, x, z, cx, cz, base) {
+  const d = Math.hypot(x - cx, z - cz);
+  sp.visible = d > 7 && d < 220;
+  if (!sp.visible) return;
+  const k = Math.min(7, Math.max(1.4, d * 0.22));
+  sp.scale.set(k, k / 3.2, 1);
+  sp.position.y = base + k / 6.4;
+}
+
 // repères de l'île : habitants, belvédères, radars, zones de glisse. Renvoie les objets animés et de quoi les nettoyer.
 function buildIsleSpots(group, I, castOf) {
   const keepL = [], keep = (o) => { keepL.push(o); return o; }, at = I.terrain.at, L = IsleLife;
   const out = { npcs: [], photos: [], acts: [] };
-  // habitants : silhouette simple à la couleur du personnage + étiquette
-  const bodyG = keep(new THREE.CylinderGeometry(0.32, 0.4, 1.25, 10)), headG = keep(new THREE.SphereGeometry(0.27, 12, 10));
-  bodyG.translate(0, 0.63, 0); headG.translate(0, 1.55, 0);
-  const skin = keep(new THREE.MeshLambertMaterial({ color: 0xd9a37a }));
+  // habitants : silhouette (jambes, buste à la couleur du personnage, bras, tête, cheveux) + étiquette
+  const legsG = keep(mergeGeos([(() => { const g = new THREE.CylinderGeometry(0.11, 0.1, 0.82, 7); g.translate(-0.13, 0.41, 0); return g; })(), (() => { const g = new THREE.CylinderGeometry(0.11, 0.1, 0.82, 7); g.translate(0.13, 0.41, 0); return g; })()]));
+  const bodyG = keep(new THREE.CylinderGeometry(0.25, 0.29, 0.66, 10)); bodyG.translate(0, 1.15, 0);
+  const armsG = keep(mergeGeos([(() => { const g = new THREE.CylinderGeometry(0.075, 0.07, 0.62, 6); g.rotateZ(0.12); g.translate(-0.35, 1.13, 0); return g; })(), (() => { const g = new THREE.CylinderGeometry(0.075, 0.07, 0.62, 6); g.rotateZ(-0.12); g.translate(0.35, 1.13, 0); return g; })()]));
+  const headG = keep(new THREE.SphereGeometry(0.2, 14, 10)); headG.translate(0, 1.7, 0);
+  const hairG = keep(new THREE.SphereGeometry(0.215, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.55)); hairG.translate(0, 1.72, -0.01);
+  const skin = keep(new THREE.MeshLambertMaterial({ color: 0xc98f66 })), dark = keep(new THREE.MeshLambertMaterial({ color: 0x23252b })), hair = keep(new THREE.MeshLambertMaterial({ color: 0x1a1512 }));
   for (const n of L.ISLE_NPCS) {
-    const c = castOf(n.who), p = L.spotPos(I, n.e, n.at, n.side, 2.6), g = new THREE.Group();
-    g.add(new THREE.Mesh(bodyG, keep(new THREE.MeshLambertMaterial({ color: new THREE.Color(c.col) }))), new THREE.Mesh(headG, skin));
+    const c = castOf(n.who), p = L.spotPos(I, n.e, n.at, n.side, 2.6), g = new THREE.Group(), cloth = keep(new THREE.MeshLambertMaterial({ color: new THREE.Color(c.col) }));
+    g.add(new THREE.Mesh(legsG, dark), new THREE.Mesh(bodyG, cloth), new THREE.Mesh(armsG, cloth), new THREE.Mesh(headG, skin), new THREE.Mesh(hairG, n.who === 'zelie' ? keep(new THREE.MeshLambertMaterial({ color: 0xd8d4cc })) : hair));
     const tag = makeTag(keep); tag.set(c.name, c.role, c.col, 'PARLER'); tag.sprite.position.y = 3.3; g.add(tag.sprite);
     g.position.set(p.x, at(p.x, p.z), p.z); g.rotation.y = -Math.atan2(-p.tz, -p.tx) + Math.PI / 2;
     group.add(g); out.npcs.push({ def: n, x: p.x, z: p.z, obj: g, tag });
@@ -601,8 +615,9 @@ function buildIsleSpots(group, I, castOf) {
       out.acts.push({ def: a, x: p0.x, z: p0.z, tx: p0.tx, tz: p0.tz, x1: p1.x, z1: p1.z });
     }
   }
-  out.update = (t) => {
-    for (const n of out.npcs) n.tag.sprite.position.y = 3.3 + Math.sin(t * 2 + n.x) * 0.08;
+  out.update = (t, cx, cz) => {
+    for (const n of out.npcs) { fitTag(n.tag.sprite, n.x, n.z, cx, cz, 2.2); n.tag.sprite.position.y += Math.sin(t * 2 + n.x) * 0.06; }
+    for (const p of out.photos) fitTag(p.tag.sprite, p.x, p.z, cx, cz, 2.4);
     ringM.opacity = 0.4 + 0.25 * Math.sin(t * 2.6);
   };
   out.dispose = () => { for (const o of keepL) o.dispose && o.dispose(); };
