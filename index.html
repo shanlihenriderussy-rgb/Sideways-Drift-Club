@@ -516,8 +516,8 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
 .prompt.off { border-color: var(--hair-2); cursor: default; } .prompt.off .pk { background: var(--s4); color: var(--fg-3); }
 .prompt:not(.off):hover { border-color: var(--accent); }
 @keyframes promptIn { from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(.96); } to { opacity: 1; transform: translateX(-50%); } }
-@media (pointer: coarse) { .prompt .pk { font-size: 0; } .prompt .pk::before { content: "●"; font-size: 14px; } }
-@media (orientation: portrait) and (max-width: 700px) { .prompt { bottom: calc(max(14px, env(safe-area-inset-bottom)) + var(--btn) * 2.2 + 96px); } }
+@media (pointer: coarse) { .prompt .pk { font-size: 0; } .prompt .pk::before { content: "OK"; display: block; font-size: 13px; line-height: 1; letter-spacing: .02em; } }
+@media (orientation: portrait) and (max-width: 700px) { .prompt { bottom: calc(max(14px, env(safe-area-inset-bottom)) + var(--btn) * 2.2 + 124px); } }
 #flash { position: fixed; inset: 0; z-index: 30; pointer-events: none; background: #fff; animation: flash .6s ease-out forwards; }
 @keyframes flash { from { opacity: .95; } to { opacity: 0; } }
 #flash.soft { animation-name: flashSoft; } @keyframes flashSoft { from { opacity: .32; } to { opacity: 0; } }
@@ -573,6 +573,31 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
 .mp .players i { width: 10px; height: 10px; border-radius: 50%; } .mp .players small { margin-left: auto; color: var(--fg-2); font-weight: 600; }
 .mp .step { display: grid; gap: 8px; padding: 12px; border-radius: 12px; border: 1px dashed var(--hair-2); }
 .mp .step h3 { margin: 0; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+
+/* en jeu : les messages prennent la place du bandeau d'objectif le temps de s'afficher, au lieu de le recouvrir */
+#hud:not([hidden]) ~ #toasts { top: calc(max(12px, env(safe-area-inset-top)) + 80px); }
+.hud-goal { transition: opacity .2s; }
+body.toasting .hud-goal { opacity: 0; }
+#mpBody { display: grid; gap: 12px; }
+#mpBody .sub { margin: 0; }
+.imap-side .gps-on { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--accent-2-soft); border: 1px solid rgba(123,140,255,.35); font-size: 13px; }
+.imap-side .gps-on .btn { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.imap-legend .sq { border-radius: 2px; } .imap-legend .ring { background: transparent !important; box-shadow: 0 0 0 2px #ff4d4f inset; } .imap-legend .tri { width: 0; height: 0; border-radius: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #ff3d3d; background: none !important; }
+.pause-acts { display: grid; gap: 10px; margin-top: 14px; }
+@media (orientation: landscape) and (max-height: 560px) {
+  .imap { gap: 8px; } .imap-head h2 { font-size: 22px; margin-top: 2px; } .imap-head .btn { min-height: 40px; }
+  .imap-body { grid-template-columns: auto minmax(0, 1fr); }
+  #mapCv { width: auto; max-width: 100%; height: calc(100dvh - 150px); max-height: calc(100vh - 150px); }
+  .imap-legend { display: none; }
+  .imap-side { max-height: calc(100dvh - 140px); }
+  #menu .menu-btns { grid-template-columns: 1fr 1fr; width: min(460px, 100%); column-gap: 8px; }
+  #menu .menu-btns .btn.primary { grid-column: 1 / -1; }
+  #menu .menu-btns .btn { min-height: 34px; font-size: 15px; }
+  #pause .card { width: min(560px, 100%) !important; }
+  .pause-acts { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; } .pause-acts > :first-child, .pause-acts .mp-pause { grid-column: 1 / -1; } .pause-acts .btn { min-height: 44px; }
+}
+@media (orientation: portrait) and (max-width: 700px) { .gps { top: calc(max(12px, env(safe-area-inset-top)) + 140px); } .mp-hud { top: calc(max(12px, env(safe-area-inset-top)) + 196px); } }
+#mpBody .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 </style>
 
 </head>
@@ -799,7 +824,7 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
   <div class="card" style="width:min(380px,100%)">
     <div class="eyebrow"><span>Pause</span><span class="jp">休憩</span></div>
     <h2 id="pauseTitle">On souffle</h2>
-    <div style="display:grid;gap:10px;margin-top:14px">
+    <div class="pause-acts">
       <button class="btn primary" id="resumeBtn"><span>Reprendre</span></button>
       <button class="btn" id="mapBtn" hidden><span>Carte de l’île et GPS</span></button>
       <div class="mp-pause" id="mpPause" hidden><button class="btn" id="mpRaceBtn"><span>Lancer une course</span></button><button class="btn" id="mpBattleBtn"><span>Battle de drift · 90 s</span></button></div>
@@ -5746,17 +5771,31 @@ function makeTag(keep) {
   return { sprite: sp, set, dispose() { tex.dispose(); mat.dispose(); } };
 }
 
+// étiquette lisible à toute distance : taille à l'écran à peu près constante (largeur ≈ 22 % de la distance, 1,4 à 7 m),
+// cachée tout près (le bouton d'interaction prend le relais) et au-delà de 220 m. base : hauteur du bas de l'étiquette.
+function fitTag(sp, x, z, cx, cz, base) {
+  const d = Math.hypot(x - cx, z - cz);
+  sp.visible = d > 7 && d < 220;
+  if (!sp.visible) return;
+  const k = Math.min(7, Math.max(1.4, d * 0.22));
+  sp.scale.set(k, k / 3.2, 1);
+  sp.position.y = base + k / 6.4;
+}
+
 // repères de l'île : habitants, belvédères, radars, zones de glisse. Renvoie les objets animés et de quoi les nettoyer.
 function buildIsleSpots(group, I, castOf) {
   const keepL = [], keep = (o) => { keepL.push(o); return o; }, at = I.terrain.at, L = IsleLife;
   const out = { npcs: [], photos: [], acts: [] };
-  // habitants : silhouette simple à la couleur du personnage + étiquette
-  const bodyG = keep(new THREE.CylinderGeometry(0.32, 0.4, 1.25, 10)), headG = keep(new THREE.SphereGeometry(0.27, 12, 10));
-  bodyG.translate(0, 0.63, 0); headG.translate(0, 1.55, 0);
-  const skin = keep(new THREE.MeshLambertMaterial({ color: 0xd9a37a }));
+  // habitants : silhouette (jambes, buste à la couleur du personnage, bras, tête, cheveux) + étiquette
+  const legsG = keep(mergeGeos([(() => { const g = new THREE.CylinderGeometry(0.11, 0.1, 0.82, 7); g.translate(-0.13, 0.41, 0); return g; })(), (() => { const g = new THREE.CylinderGeometry(0.11, 0.1, 0.82, 7); g.translate(0.13, 0.41, 0); return g; })()]));
+  const bodyG = keep(new THREE.CylinderGeometry(0.25, 0.29, 0.66, 10)); bodyG.translate(0, 1.15, 0);
+  const armsG = keep(mergeGeos([(() => { const g = new THREE.CylinderGeometry(0.075, 0.07, 0.62, 6); g.rotateZ(0.12); g.translate(-0.35, 1.13, 0); return g; })(), (() => { const g = new THREE.CylinderGeometry(0.075, 0.07, 0.62, 6); g.rotateZ(-0.12); g.translate(0.35, 1.13, 0); return g; })()]));
+  const headG = keep(new THREE.SphereGeometry(0.2, 14, 10)); headG.translate(0, 1.7, 0);
+  const hairG = keep(new THREE.SphereGeometry(0.215, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.55)); hairG.translate(0, 1.72, -0.01);
+  const skin = keep(new THREE.MeshLambertMaterial({ color: 0xc98f66 })), dark = keep(new THREE.MeshLambertMaterial({ color: 0x23252b })), hair = keep(new THREE.MeshLambertMaterial({ color: 0x1a1512 }));
   for (const n of L.ISLE_NPCS) {
-    const c = castOf(n.who), p = L.spotPos(I, n.e, n.at, n.side, 2.6), g = new THREE.Group();
-    g.add(new THREE.Mesh(bodyG, keep(new THREE.MeshLambertMaterial({ color: new THREE.Color(c.col) }))), new THREE.Mesh(headG, skin));
+    const c = castOf(n.who), p = L.spotPos(I, n.e, n.at, n.side, 2.6), g = new THREE.Group(), cloth = keep(new THREE.MeshLambertMaterial({ color: new THREE.Color(c.col) }));
+    g.add(new THREE.Mesh(legsG, dark), new THREE.Mesh(bodyG, cloth), new THREE.Mesh(armsG, cloth), new THREE.Mesh(headG, skin), new THREE.Mesh(hairG, n.who === 'zelie' ? keep(new THREE.MeshLambertMaterial({ color: 0xd8d4cc })) : hair));
     const tag = makeTag(keep); tag.set(c.name, c.role, c.col, 'PARLER'); tag.sprite.position.y = 3.3; g.add(tag.sprite);
     g.position.set(p.x, at(p.x, p.z), p.z); g.rotation.y = -Math.atan2(-p.tz, -p.tx) + Math.PI / 2;
     group.add(g); out.npcs.push({ def: n, x: p.x, z: p.z, obj: g, tag });
@@ -5801,8 +5840,9 @@ function buildIsleSpots(group, I, castOf) {
       out.acts.push({ def: a, x: p0.x, z: p0.z, tx: p0.tx, tz: p0.tz, x1: p1.x, z1: p1.z });
     }
   }
-  out.update = (t) => {
-    for (const n of out.npcs) n.tag.sprite.position.y = 3.3 + Math.sin(t * 2 + n.x) * 0.08;
+  out.update = (t, cx, cz) => {
+    for (const n of out.npcs) { fitTag(n.tag.sprite, n.x, n.z, cx, cz, 2.2); n.tag.sprite.position.y += Math.sin(t * 2 + n.x) * 0.06; }
+    for (const p of out.photos) fitTag(p.tag.sprite, p.x, p.z, cx, cz, 2.4);
     ringM.opacity = 0.4 + 0.25 * Math.sin(t * 2.6);
   };
   out.dispose = () => { for (const o of keepL) o.dispose && o.dispose(); };
@@ -6959,8 +6999,10 @@ function buildIsleSpots(group, I, castOf) {
     const el = document.createElement('div');
     el.className = 'toast ' + (cls || ''); el.textContent = text;
     box.appendChild(el);
-    while (box.children.length > 3) box.firstChild.remove();
-    setTimeout(() => el.remove(), 3300);
+    const inGame = !$('hud').hidden;
+    while (box.children.length > (inGame ? 2 : 3)) box.firstChild.remove(); // en jeu : deux au plus, la piste reste visible
+    document.body.classList.add('toasting');
+    setTimeout(() => { el.remove(); if (!box.children.length) document.body.classList.remove('toasting'); }, 3300);
     announce(text);
   }
   function refreshWallet() { $('menuWallet').textContent = Economy.fmt(profile.money); refreshFrontPage(); }
@@ -7820,7 +7862,7 @@ function buildIsleSpots(group, I, castOf) {
   function lifeDraw(dt, t) {
     const L = life, cx = camera.position.x, cz = camera.position.z;
     L.layer.update(cx, cz);
-    L.spots.update(t);
+    L.spots.update(t, cx, cz);
     for (const r of L.rivals) {
       const A = r.A, d2 = (A.x - cx) ** 2 + (A.z - cz) ** 2, vis = d2 < 300 * 300;
       r.model.root.visible = vis;
@@ -7830,6 +7872,7 @@ function buildIsleSpots(group, I, castOf) {
       const chip = r.cool <= 0 && !L.duel && Math.hypot(A.x - player.x, A.z - player.z) < 110 ? 'DÉFI' : null;
       const wins = IsleLife.isleBag(profile).rivals[r.def.id] || 0;
       r.tag.set(r.c.name, `${r.def.crew}${wins ? ` · battu ×${wins}` : ''}`, r.c.col, chip);
+      fitTag(r.tag.sprite, A.x, A.z, cx, cz, 1.7);
     }
     if (mp) remotesDraw(dt);
   }
@@ -7921,7 +7964,8 @@ function buildIsleSpots(group, I, castOf) {
     for (const a of L.spots.acts) {
       const [x, y] = T(a.x, a.z), n = IsleLife.starsOf(a.def, bag.best[a.def.id] || 0);
       dot(x, y, 4.5, a.def.type === 'radar' ? '#7b8cff' : '#f7d154');
-      side.acts.push({ i: item({ x, y, name: a.def.name, set: () => setGps({ name: a.def.name, x: a.x, z: a.z, arrive: 12 }) }), name: a.def.name, sub: a.def.type === 'radar' ? `radar · record ${bag.best[a.def.id] || 0} km/h` : `zone · record ${(bag.best[a.def.id] || 0).toLocaleString('fr-FR')} pts`, stars: n });
+      const rec = bag.best[a.def.id] || 0;
+      side.acts.push({ i: item({ x, y, name: a.def.name, set: () => setGps({ name: a.def.name, x: a.x, z: a.z, arrive: 12 }) }), name: a.def.name, sub: `${a.def.type === 'radar' ? 'radar' : 'zone de glisse'} · ${rec ? `record ${rec.toLocaleString('fr-FR')} ${a.def.type === 'radar' ? 'km/h' : 'pts'}` : 'pas encore tenté'}`, stars: n });
     }
     for (const n of L.spots.npcs) {
       const [x, y] = T(n.x, n.z), c = castOf(n.def.who);
@@ -7946,9 +7990,9 @@ function buildIsleSpots(group, I, castOf) {
     g.save(); g.translate(px, py); g.rotate(player.heading); g.fillStyle = '#07080a'; g.beginPath(); g.moveTo(12, 0); g.lineTo(-8, 8); g.lineTo(-8, -8); g.closePath(); g.fill();
     g.fillStyle = '#ff3d3d'; g.beginPath(); g.moveTo(9, 0); g.lineTo(-5, 5.5); g.lineTo(-5, -5.5); g.closePath(); g.fill(); g.restore();
     const sec = (title, list) => list.length ? `<div><h3>${title}</h3><ul>${list.map((o) => `<li class="${o.lock ? 'lock' : ''}"><button ${o.i < 0 ? 'disabled' : `data-i="${o.i}"`}><span>${esc(o.name)}<small>${esc(o.sub || '')}</small></span><em>${o.stars != null ? `${'★'.repeat(o.stars)}<span class="st0">${'☆'.repeat(3 - o.stars)}</span>` : esc(o.em || '')}</em></button></li>`).join('')}</ul></div>` : '';
-    $('mapSide').innerHTML = `<p class="sub" style="margin:0">Touche un repère pour y régler le GPS.${L.gps ? ` En cours : <b>${esc(L.gps.name)}</b> · <button class="btn ghost" data-gps-off style="min-height:32px;padding:0 10px">Arrêter</button>` : ''}</p>`
+    $('mapSide').innerHTML = (L.gps ? `<div class="gps-on"><span>GPS : <b>${esc(L.gps.name)}</b></span><button class="btn ghost" data-gps-off>Arrêter</button></div>` : '<p class="sub" style="margin:0">Touche un repère pour y régler le GPS.</p>')
       + sec('Rivaux', side.rivals) + sec('Activités', side.acts) + sec('Lieux de l’aventure', side.hubs) + sec('Habitants', side.npcs) + sec('Belvédères', side.photos);
-    $('mapLegend').innerHTML = '<span><i style="background:#f7d154"></i>lieux, zones</span><span><i style="background:#7b8cff"></i>radars, belvédères</span><span><i style="background:#ffb020"></i>daruma</span><span><i style="background:#ff4d4f"></i>rivaux</span><span><i style="background:#ff3d3d"></i>toi</span>';
+    $('mapLegend').innerHTML = '<span><i class="sq" style="background:#f7d154"></i>lieux</span><span><i style="background:#f7d154"></i>zones</span><span><i style="background:#7b8cff"></i>radars</span><span><i class="sq" style="background:#7b8cff"></i>belvédères</span><span><i style="background:#ffb020"></i>daruma</span><span><i class="ring"></i>rivaux</span><span><i class="tri"></i>toi</span>';
   }
   function pickMap(i) { const it = mapItems[i]; if (!it) return; it.set(); renderIsleMap(); }
   $('mapCv').addEventListener('click', (e) => {
@@ -8031,6 +8075,7 @@ function buildIsleSpots(group, I, castOf) {
       R.model.update(v, dt, v.brake);
       if ((v.x - cx) ** 2 + (v.z - cz) ** 2 < 150 * 150) carFx(v, R.model, dt, 'M' + R.id, 'L');
       if (R.emoteT > 0) R.emoteT -= dt;
+      fitTag(R.tag.sprite, v.x, v.z, cx, cz, 1.7);
       R.tag.set(R.name, v.combo > 200 ? `combo ${Math.round(v.combo).toLocaleString('fr-FR')}` : R.kind.toUpperCase(), R.color, R.emoteT > 0 ? EMOTE_CHIP[R.emote] : null);
     }
   }
