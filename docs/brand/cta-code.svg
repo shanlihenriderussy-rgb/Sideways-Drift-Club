@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="64" viewBox="0 0 300 64" role="img" aria-label="Lancer en local">
+  <rect x="1.5" y="1.5" width="297" height="61" rx="16" fill="#07080a" stroke="#3a3d45" stroke-width="2"/>
+  <path d="M30 24 L22 32 L30 40 M44 24 L52 32 L44 40" fill="none" stroke="#f2f2ef" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M40 21 L34 43" stroke="#f7d154" stroke-width="3" stroke-linecap="round"/>
+  <text x="70" y="38.5" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="18" textLength="206" lengthAdjust="spacingAndGlyphs" fill="#f2f2ef">LANCER EN LOCAL</text>
+</svg>
