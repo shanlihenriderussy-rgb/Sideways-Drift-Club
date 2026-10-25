@@ -19,10 +19,15 @@
     <div class="combo idle" id="combo"><div class="tag" id="comboTag">DRIFT</div><div class="pts" id="comboPts">0</div><div class="mult" id="comboMult">x1.0</div><div class="anglebar"><i id="angleFill"></i></div></div>
   <div id="popups"></div>
   <div class="banner" id="banner">SENS INTERDIT</div>
+  <div class="gps" id="gps" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path id="gpsArrow" d="M12 3 19 20 12 15.5 5 20z"/></svg><span><b id="gpsName"></b><small id="gpsDist"></small></span></div>
+  <div class="mp-hud" id="mpHud" hidden><div class="mp-list" id="mpList"></div><div class="emotes" id="emotes" role="group" aria-label="Messages rapides"><button data-emote="horn" aria-label="Klaxon (H)">📯</button><button data-emote="wave" aria-label="Salut (1)">👋</button><button data-emote="gg" aria-label="GG (2)">GG</button><button data-emote="follow" aria-label="Suis-moi (3)">➜</button><button data-emote="fire" aria-label="En feu (4)">🔥</button></div></div>
   <div class="speedo"><div class="kmh" id="hudSpeed">0</div><div class="unit">KM/H</div><div class="rpm" id="rpmBar"><i id="rpmFill"></i></div><div class="gear" id="hudGear">1</div></div>
 </div>
 <div id="count" hidden></div>
 <div class="hud-goal" id="hudGoal" hidden aria-live="polite"></div>
+<!-- interaction contextuelle sur l'île : E au clavier, ou toucher le bouton -->
+<button class="prompt" id="prompt" hidden><span class="pk" aria-hidden="true">E</span><span><b id="promptText"></b><small id="promptSub"></small></span></button>
+<div id="flash" hidden></div>
 
 <!-- dialogues de l'aventure : une ligne à la fois, toucher ou Entrée pour continuer -->
 <div class="dialog" id="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="dlgName" aria-describedby="dlgText">
@@ -31,7 +36,8 @@
     <div class="dlg-body">
       <div class="dlg-who"><b id="dlgName"></b><span id="dlgRole"></span></div>
       <p id="dlgText"></p>
-      <div class="dlg-foot"><button class="btn ghost" id="dlgSkip"><span>Passer</span></button><button class="btn primary" id="dlgNext"><span>Suite</span></button></div>
+      <div class="dlg-choices" id="dlgChoices" hidden role="group" aria-label="Réponses"></div>
+      <div class="dlg-foot" id="dlgFoot"><button class="btn ghost" id="dlgSkip"><span>Passer</span></button><button class="btn primary" id="dlgNext"><span>Suite</span></button></div>
     </div>
   </div>
 </div>
@@ -60,10 +66,11 @@
       <button class="btn primary" id="playBtn"><span>Rouler<em class="dek">six pistes, une ligne</em></span></button>
       <button class="btn" id="isleBtn"><span><i class="no">01</i>L’île<em class="dek">monde ouvert, roule où tu veux</em></span></button>
       <button class="btn" id="advBtn"><span><i class="no">02</i>Aventure<em class="dek">le Tour de l’Île, six chapitres</em></span></button>
-      <button class="btn" id="garageBtn"><span><i class="no">03</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
-      <button class="btn" id="careerBtn"><span><i class="no">04</i>Carrière<em class="dek">défis et palmarès</em></span></button>
-      <button class="btn" id="settingsBtn"><span><i class="no">05</i>Réglages<em class="dek">pilotage et confort</em></span></button>
-      <button class="btn" id="helpBtn"><span><i class="no">06</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
+      <button class="btn" id="multiBtn"><span><i class="no">03</i>Multijoueur<em class="dek">l’île à plusieurs, sans compte</em></span></button>
+      <button class="btn" id="garageBtn"><span><i class="no">04</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
+      <button class="btn" id="careerBtn"><span><i class="no">05</i>Carrière<em class="dek">défis et palmarès</em></span></button>
+      <button class="btn" id="settingsBtn"><span><i class="no">06</i>Réglages<em class="dek">pilotage et confort</em></span></button>
+      <button class="btn" id="helpBtn"><span><i class="no">07</i>Comment jouer<em class="dek">lancer, tenir, clipper</em></span></button>
     </nav>
     <div class="hint portrait-tip">Tourne ton téléphone à l'horizontale pour mieux voir la piste.</div>
     <div class="ticker" aria-hidden="true"><div class="tk" id="ticker"></div></div>
@@ -108,6 +115,27 @@
       <div id="advPanel"></div>
       <div class="row-end adv-back"><button class="btn ghost" data-back><span>Retour</span></button></div>
     </div>
+  </div>
+</section>
+
+<!-- carte de l'île : lieux, rivaux, activités, habitants ; choisir une destination pour le GPS -->
+<section class="screen dim" id="isleMap" hidden aria-labelledby="mapTitle">
+  <div class="card imap">
+    <div class="imap-head"><div><div class="eyebrow"><span>Carte</span><span class="jp">地図</span></div><h2 id="mapTitle">L’île de Sideways</h2></div><button class="btn ghost" data-back><span>Retour à la route</span></button></div>
+    <div class="imap-body">
+      <div class="imap-cv"><canvas id="mapCv" width="720" height="500" role="img" aria-label="Carte de l’île : touche un repère pour y régler le GPS"></canvas><div class="imap-legend" id="mapLegend"></div></div>
+      <div class="imap-side" id="mapSide"></div>
+    </div>
+  </div>
+</section>
+
+<!-- multijoueur : session pair à pair (voir net.js) -->
+<section class="screen dim" id="multi" hidden aria-labelledby="mpTitle">
+  <div class="card mp">
+    <div class="eyebrow"><span>Multijoueur</span><span class="jp">一緒</span></div>
+    <h2 id="mpTitle">Rouler à plusieurs</h2>
+    <div id="mpBody"></div>
+    <div class="row-end"><button class="btn ghost" data-back><span>Retour</span></button></div>
   </div>
 </section>
 
@@ -182,6 +210,7 @@
       <div><b>4 · Encaisser</b>Ton combo est encaissé quand tu cesses de glisser. Un choc, un tête-à-queue ou une sortie de piste le fait perdre.</div>
     </div>
     <p class="sub">Clavier : flèches ou ZQSD/WASD, Espace pour le frein à main, C pour la caméra, R pour te replacer. Manette compatible.</p>
+    <p class="sub">Sur l’île : approche-toi d’un habitant, d’un rival, d’une porte ou d’un belvédère, puis E (ou touche le bouton qui apparaît). M ouvre la carte et règle le GPS, H klaxonne. En session multijoueur, 1 à 4 envoient un message rapide.</p>
     <div class="row-end"><span class="hint">Jeu conçu et codé avec l'assistance d'une IA (Claude). Logo et visuels créés avec des outils d'IA.</span><button class="btn primary" data-back><span>Compris</span></button></div>
   </div>
 </section>
@@ -193,6 +222,8 @@
     <h2 id="pauseTitle">On souffle</h2>
     <div style="display:grid;gap:10px;margin-top:14px">
       <button class="btn primary" id="resumeBtn"><span>Reprendre</span></button>
+      <button class="btn" id="mapBtn" hidden><span>Carte de l’île et GPS</span></button>
+      <div class="mp-pause" id="mpPause" hidden><button class="btn" id="mpRaceBtn"><span>Lancer une course</span></button><button class="btn" id="mpBattleBtn"><span>Battle de drift · 90 s</span></button></div>
       <button class="btn" id="resetBtn"><span>Se replacer sur la piste</span></button>
       <button class="btn" id="restartBtn"><span>Recommencer</span></button>
       <button class="btn" id="pSettingsBtn"><span>Réglages</span></button>

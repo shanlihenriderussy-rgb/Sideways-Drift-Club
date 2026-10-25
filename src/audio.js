@@ -121,6 +121,10 @@ const Sound = (() => {
     lost() { tone(330, 0.3, 0.16, 'sawtooth', 0, 140); },
     count(go) { tone(go ? 1046 : 523, go ? 0.45 : 0.18, 0.2, 'square'); },
     ui() { tone(660, 0.05, 0.08, 'triangle'); },
+    // klaxon : deux notes désaccordées ; vol 0..1 (distance), pitch (petite voiture aiguë, bus grave)
+    horn(vol, pitch) { const v = 0.11 * (vol == null ? 1 : vol), f = 420 * (pitch || 1); if (v < 0.006) return; tone(f, 0.34, v, 'square'); tone(f * 1.26, 0.34, v * 0.8, 'square'); tone(f * 0.5, 0.3, v * 0.5, 'sawtooth'); },
+    shutter() { burst(0.05, 3200, 0.8, 0.3, 'highpass'); burst(0.07, 1800, 1.2, 0.22, 'bandpass'); tone(2400, 0.04, 0.05, 'triangle', 0.09); },
+    ping() { tone(988, 0.1, 0.1, 'triangle'); tone(1480, 0.14, 0.08, 'triangle', 0.06); },
     cash() { tone(1318, 0.09, 0.12, 'square'); tone(1760, 0.16, 0.12, 'square', 0.07); tone(2637, 0.22, 0.07, 'triangle', 0.13); },
   };
 })();

@@ -380,7 +380,7 @@ const fmt = (n) => '¥' + Math.round(n).toLocaleString('fr-FR');
 
 const Economy = {
   defaultTune, START_MONEY, LOG_MAX, CAR_PRICES, PAINTS, RIMS, SMOKES, NEONS, SHOP, PERF, TUNE, CHALLENGES,
-  defaultCar, loadProfile, itemPrice, owns, equip, buyItem, perfPrice, buyPerf, buyCar, setTune,
+  defaultCar, sanitizeCar, loadProfile, itemPrice, owns, equip, buyItem, perfPrice, buyPerf, buyCar, setTune,
   tunedSpec, carStats, computePayout, applyRun, dailyAmount, dailyPreview, claimDaily, credit, fmt,
 };
 if (typeof module !== 'undefined') module.exports = Economy;
