@@ -1,11 +1,12 @@
 // Fantôme du record : enregistrement, stockage vérifié, relecture interpolée. node --test tests/
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const G = require('../src/ghost.js');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { Ghost as G } from '../src/sim/ghost.js';
 
 const run = (secs) => {
   const R = G.recorder('kouki');
-  for (let t = 0; t <= secs + 1e-9; t += 1 / 60) G.push(R, t, { x: t * 10, z: -t, heading: 3.1 + t * 0.01, rearSlip: 0.3 }, t * 100);
+  for (let t = 0; t <= secs + 1e-9; t += 1 / 60)
+    G.push(R, t, { x: t * 10, z: -t, heading: 3.1 + t * 0.01, rearSlip: 0.3 }, t * 100);
   return R;
 };
 
@@ -16,7 +17,8 @@ test('un échantillon toutes les 0,1 s, quelle que soit la cadence', () => {
 
 test('aller-retour par le stockage, puis relecture interpolée', () => {
   const g = G.unpack(JSON.parse(JSON.stringify(G.pack(run(5)))));
-  assert.ok(g); assert.equal(g.kind, 'kouki');
+  assert.ok(g);
+  assert.equal(g.kind, 'kouki');
   const o = G.at(g, 2.25);
   assert.ok(Math.abs(o.x - 22.5) < 0.2, o.x); // au plus une image (1/60 s) de décalage
   assert.ok(Math.abs(o.pts - 225) < 2.5, o.pts); // 100 pts/s × 1/60 s + arrondi

@@ -1,8 +1,9 @@
 // Tests du système monétaire : node --test tests/
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const { CAR_SPECS } = require('../src/physics.js');
-const E = require('../src/economy.js');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { CAR_SPECS } from '../src/sim/physics.js';
+import { Economy as E } from '../src/progress/economy.js';
+import { TRACKS } from '../src/sim/track.js';
 
 const fresh = () => E.loadProfile(null, null);
 
@@ -72,7 +73,10 @@ test('première pièce achetée : défi encaissé une seule fois', () => {
   const p = fresh();
   p.money = 10000;
   const r = E.buyItem(p, 'hachi', 'hood', 'vent');
-  assert.deepEqual(r.challenges.map((c) => c.id), ['firstPart']);
+  assert.deepEqual(
+    r.challenges.map((c) => c.id),
+    ['firstPart'],
+  );
   const r2 = E.buyItem(p, 'hachi', 'exhaust', 'twin');
   assert.deepEqual(r2.challenges, []);
 });
@@ -109,7 +113,18 @@ test('achat de voiture : débit, nouvelle config, sélection, défi', () => {
 });
 
 test('gains de run : barème lisible et cohérent', () => {
-  const run = { trackId: 'minato', mode: 'run', score: 30000, grade: 'A', clips: 6, zones: 10, maxAngle: 55, bestCombo: 6000, driftPct: 55, record: true };
+  const run = {
+    trackId: 'minato',
+    mode: 'run',
+    score: 30000,
+    grade: 'A',
+    clips: 6,
+    zones: 10,
+    maxAngle: 55,
+    bestCombo: 6000,
+    driftPct: 55,
+    record: true,
+  };
   const pay = E.computePayout(run);
   const sum = pay.lines.reduce((a, l) => a + l.amount, 0);
   assert.equal(pay.total, sum);
@@ -125,10 +140,34 @@ test('gains de run : barème lisible et cohérent', () => {
 
 test('fin de run : crédit, statistiques, défis débloqués une seule fois', () => {
   const p = fresh();
-  const run = { trackId: 'akane', mode: 'run', score: 26000, grade: 'A', clips: 4, zones: 8, maxAngle: 62, bestCombo: 9000, driftPct: 40, record: true };
+  const run = {
+    trackId: 'akane',
+    mode: 'run',
+    score: 26000,
+    grade: 'A',
+    clips: 4,
+    zones: 8,
+    maxAngle: 62,
+    bestCombo: 9000,
+    driftPct: 40,
+    record: true,
+  };
   const res = E.applyRun(p, run);
   const ids = res.challenges.map((c) => c.id).sort();
-  assert.deepEqual(ids, ['angle45', 'angle60', 'clips3', 'combo3k', 'combo8k', 'first', 'gradeA', 'gradeB', 'pts10', 'pts25', 'pts5', 'trackA:akane']);
+  assert.deepEqual(ids, [
+    'angle45',
+    'angle60',
+    'clips3',
+    'combo3k',
+    'combo8k',
+    'first',
+    'gradeA',
+    'gradeB',
+    'pts10',
+    'pts25',
+    'pts5',
+    'trackA:akane',
+  ]);
   const expected = E.START_MONEY + res.payout.total + res.challenges.reduce((a, c) => a + c.reward, 0);
   assert.equal(p.money, expected);
   assert.equal(p.stats.runs, 1);
@@ -138,7 +177,17 @@ test('fin de run : crédit, statistiques, défis débloqués une seule fois', ()
 
 test('défi « 3 pistes » : débloqué au troisième circuit différent', () => {
   const p = fresh();
-  const base = { mode: 'run', score: 100, grade: 'D', clips: 0, zones: 8, maxAngle: 10, bestCombo: 0, driftPct: 5, record: false };
+  const base = {
+    mode: 'run',
+    score: 100,
+    grade: 'D',
+    clips: 0,
+    zones: 8,
+    maxAngle: 10,
+    bestCombo: 0,
+    driftPct: 5,
+    record: false,
+  };
   E.applyRun(p, { ...base, trackId: 'minato' });
   E.applyRun(p, { ...base, trackId: 'minato' });
   assert.ok(!p.done.tour3);
@@ -179,7 +228,19 @@ test('format monétaire', () => {
 
 test('prime du premier run de la journée : une fois par jour, jamais en libre', () => {
   const p = fresh();
-  const run = { trackId: 'minato', mode: 'run', score: 8000, grade: 'C', clips: 1, zones: 8, maxAngle: 30, bestCombo: 1000, driftPct: 30, record: false, day: '2026-10-24' };
+  const run = {
+    trackId: 'minato',
+    mode: 'run',
+    score: 8000,
+    grade: 'C',
+    clips: 1,
+    zones: 8,
+    maxAngle: 30,
+    bestCombo: 1000,
+    driftPct: 30,
+    record: false,
+    day: '2026-10-24',
+  };
   const has = (res) => res.payout.lines.some((l) => l.label === 'Premier run du jour');
   assert.equal(has(E.applyRun(p, { ...run, mode: 'free' })), false);
   assert.equal(has(E.applyRun(p, run)), true);
@@ -190,7 +251,18 @@ test('prime du premier run de la journée : une fois par jour, jamais en libre',
 });
 
 test('gains assouplis : un run moyen paie de quoi s’offrir une pièce', () => {
-  const run = { trackId: 'akane', mode: 'run', score: 12000, grade: 'C', clips: 2, zones: 8, maxAngle: 40, bestCombo: 2500, driftPct: 35, record: false };
+  const run = {
+    trackId: 'akane',
+    mode: 'run',
+    score: 12000,
+    grade: 'C',
+    clips: 2,
+    zones: 8,
+    maxAngle: 40,
+    bestCombo: 2500,
+    driftPct: 35,
+    record: false,
+  };
   assert.ok(E.computePayout(run).total >= 1500, String(E.computePayout(run).total));
   assert.equal(E.dailyAmount(1), 1000);
   assert.equal(E.dailyAmount(7), 4000);
@@ -199,7 +271,8 @@ test('gains assouplis : un run moyen paie de quoi s’offrir une pièce', () => 
 });
 
 test('défis par piste alignés sur les pistes du jeu', () => {
-  const { TRACKS } = require('../src/track.js');
-  const ids = E.CHALLENGES.filter((c) => c.id.startsWith('trackA:')).map((c) => c.id.slice(7)).sort();
+  const ids = E.CHALLENGES.filter((c) => c.id.startsWith('trackA:'))
+    .map((c) => c.id.slice(7))
+    .sort();
   assert.deepEqual(ids, TRACKS.map((t) => t.id).sort());
 });

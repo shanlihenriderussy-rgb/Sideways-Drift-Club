@@ -1,9 +1,9 @@
 // Aventure : progression, objectifs, récompenses uniques, exploration. node --test tests/
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const E = require('../src/economy.js');
-const S = require('../src/story.js');
-const { TRACKS } = require('../src/track.js');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { Economy as E } from '../src/progress/economy.js';
+import { Story as S } from '../src/progress/story.js';
+import { TRACKS } from '../src/sim/track.js';
 
 const fresh = () => E.loadProfile(null, null);
 const ace = { score: 99999, grade: 'S', clips: 20, maxAngle: 80, bestCombo: 50000, driftPct: 90, walls: 0 };
@@ -50,14 +50,22 @@ test('objectifs : chaque critère est vérifié, la récompense n’est payée q
   assert.equal(miss.ok, false);
   assert.equal(p.money, m0);
   const hit = S.finishMission(p, 0, 0, { ...ace, score: 4000 });
-  assert.equal(hit.ok, true); assert.equal(hit.reward, m.reward);
+  assert.equal(hit.ok, true);
+  assert.equal(hit.reward, m.reward);
   assert.equal(p.money, m0 + m.reward);
   const again = S.finishMission(p, 0, 0, ace);
-  assert.equal(again.ok, true); assert.equal(again.reward, 0);
+  assert.equal(again.ok, true);
+  assert.equal(again.reward, 0);
   assert.equal(p.money, m0 + m.reward);
   // contact mur, note, angle, glisse
-  const rows = S.goalRows({ grade: 'B', noWall: true, angle: 50, drift: 40 }, { grade: 'A', walls: 1, maxAngle: 50, driftPct: 39 });
-  assert.deepEqual(rows.map((r) => r.ok), [true, true, false, false]); // note, angle, glisse, mur
+  const rows = S.goalRows(
+    { grade: 'B', noWall: true, angle: 50, drift: 40 },
+    { grade: 'A', walls: 1, maxAngle: 50, driftPct: 39 },
+  );
+  assert.deepEqual(
+    rows.map((r) => r.ok),
+    [true, true, false, false],
+  ); // note, angle, glisse, mur
 });
 
 test('exploration : lieux fermés tant que le chapitre l’est, chaque trouvaille payée une fois', () => {
@@ -70,7 +78,8 @@ test('exploration : lieux fermés tant que le chapitre l’est, chaque trouvaill
   assert.ok(S.collect(p, 'minato', 'npc', 0).reward > 0);
   assert.equal(S.collect(p, 'minato', 'arch', 9), null, 'indice hors bornes');
   assert.deepEqual(S.zoneProgress(p, 'minato'), { arch: 1, street: 1, npc: 1 });
-  winAll(p, 0); winAll(p, 1);
+  winAll(p, 0);
+  winAll(p, 1);
   assert.ok(S.collect(p, 'akane', 'arch', 0));
 });
 
