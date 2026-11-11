@@ -18,7 +18,7 @@ import { finishRun, show, startRun } from './session.js';
 import { QUALITY, camLook, camPos, gy, renderer, resize, scene } from './stage.js';
 import { applyLayout, layouts, openLayoutEditor, tState } from './touch.js';
 import { IsleLife } from '../island/life.js';
-import { Net } from '../net/protocol.js';
+import { Net } from '../net/index.js';
 import { $ } from '../util/dom.js';
 
 function boot() {

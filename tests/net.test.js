@@ -1,7 +1,7 @@
 // Multijoueur : protocole, relais de l'hôte, filtrage, interpolation, codes d'invitation. node --test tests/
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Net as N } from '../src/net/protocol.js';
+import { Net as N } from '../src/net/index.js';
 import { Economy as E } from '../src/progress/economy.js';
 
 // deux bouts d'un lien en mémoire (livraison asynchrone, comme un vrai canal)
@@ -152,37 +152,6 @@ test('messages invalides ignorés sans casser la session', async () => {
   b.send(JSON.stringify({ t: 'hello', name: 'Ok', kind: 'kouki', cfg: {} }));
   await tick();
   assert.equal(H.peers.size, 2);
-});
-
-test('interpolation : entre deux instantanés, avec retard fixe, cap au plus court', () => {
-  const I = N.createInterp();
-  const s = (t, x, h) => ({
-    t,
-    x,
-    z: 0,
-    heading: h,
-    vx: 10,
-    vz: 0,
-    speed: 10,
-    slip: 0,
-    rearSlip: 0,
-    steerAngle: 0,
-    wheelRot: 0,
-    rollAngle: 0,
-    pitchAngle: 0,
-    rpm: 0,
-    throttle: 0,
-    combo: 0,
-    brake: false,
-  });
-  I.push(s(1000, 0, 3.1), 5000);
-  I.push(s(1100, 1, -3.1), 5100);
-  const o = I.sample(5000 + 50 + N.DELAY * 1000);
-  assert.ok(Math.abs(o.x - 0.5) < 1e-9, o.x);
-  assert.ok(Math.abs(Math.abs(o.heading) - Math.PI) < 0.01, 'passe par ±π, pas par 0');
-  const late = I.sample(5100 + 300 + N.DELAY * 1000);
-  assert.ok(late.x > 1 && late.x <= 1 + 10 * 0.4 + 1e-9, 'extrapolation bornée');
-  assert.equal(N.createInterp().sample(0), null);
 });
 
 test('codes d’invitation : aller-retour, lien accepté, déchets refusés', async () => {

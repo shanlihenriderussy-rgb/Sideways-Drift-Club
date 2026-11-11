@@ -17,7 +17,7 @@ import { countdown, resumeGame, screenId, show } from './session.js';
 import { camera, scene } from './stage.js';
 import { fitTag, makeTag } from '../island/actors.js';
 import { IsleLife } from '../island/life.js';
-import { Net } from '../net/protocol.js';
+import { Net } from '../net/index.js';
 import { Economy } from '../progress/economy.js';
 import { buildCar } from '../render/car.js';
 import { $ } from '../util/dom.js';
@@ -350,15 +350,16 @@ export function battleTick(dt) {
     }
   }
 }
-// l'état part 15 fois par seconde, même en pause (les autres voient ta voiture arrêtée)
+// l'état part 30 fois par seconde en roulant, 4 à l'arrêt, même en pause (les autres voient ta voiture arrêtée)
 export function mpSendTick(dt) {
   if (!mp || !mp.S.role || !isle || !game.player) return;
+  const st = game.player;
   game.life.sendT -= dt;
   if (game.life.sendT <= 0) {
-    game.life.sendT = 1 / Net.HZ;
-    mp.S.sendState(
-      Net.encodeState(performance.now(), game.player, score.combo, input.brake > 0.1 || input.handbrake > 0.5),
-    );
+    const moving = st.speed > 0.3 || Math.abs(st.omega || 0) > 0.05;
+    // le reliquat est conservé : la cadence réelle ne dépend pas de la fréquence d'affichage
+    game.life.sendT = Math.max(game.life.sendT, -0.05) + 1 / (moving ? Net.HZ : Net.HZ_IDLE);
+    mp.S.sendState(Net.encodeState(performance.now(), st, score.combo, input.brake > 0.1 || input.handbrake > 0.5));
   }
   if (mp.S.role === 'host') {
     game.life.hostT -= dt;
