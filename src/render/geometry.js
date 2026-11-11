@@ -1,95 +1,4 @@
-// ===== Voitures procédurales : caisse lissée (loft), habitacle vitré, livrée peinte, pièces modulaires =====
-// Repère local : x = avant, y = haut, z = droite. Toutes les pièces statiques sont fusionnées par matériau
-// (une poignée d'appels de dessin) ; les 4 roues sont des InstancedMesh (un appel par matériau pour les 4).
-export const BODY_DEFS = {
-  // fa/ra : essieux ; R : rayon de roue ; rr : rayon de jante ; tw : largeur de pneu ; *Top : hauteurs (m)
-  hachi: {
-    fa: 1.12,
-    ra: -1.18,
-    w: 1.66,
-    nose: 0.86,
-    tail: 0.8,
-    R: 0.31,
-    rr: 0.195,
-    tw: 0.2,
-    sill: 0.27,
-    noseTop: 0.6,
-    hood: 0.79,
-    cowl: 0.86,
-    deck: 0.92,
-    roof: 1.33,
-    wsLen: 0.6,
-    roofEnd: -0.6,
-    gEnd: -1.84,
-    bpil: -0.34,
-    cpil: -1.2,
-    tumble: 0.19,
-    inset: 0.06,
-    bulge: 0.012,
-    crown: 0.02,
-    head: 'popup',
-    tailL: 'twin',
-    wing: 'lip',
-  },
-  kouki: {
-    fa: 1.22,
-    ra: -1.3,
-    w: 1.74,
-    nose: 0.98,
-    tail: 0.88,
-    R: 0.32,
-    rr: 0.21,
-    tw: 0.22,
-    sill: 0.25,
-    noseTop: 0.56,
-    hood: 0.75,
-    cowl: 0.84,
-    deck: 0.93,
-    roof: 1.3,
-    wsLen: 0.78,
-    roofEnd: -0.8,
-    gEnd: -1.42,
-    bpil: -0.3,
-    cpil: -1.0,
-    tumble: 0.22,
-    inset: 0.075,
-    bulge: 0.026,
-    crown: 0.012,
-    head: 'projector',
-    tailL: 'bar',
-    wing: 'gt',
-  },
-  raijin: {
-    fa: 1.3,
-    ra: -1.36,
-    w: 1.8,
-    nose: 1.06,
-    tail: 0.86,
-    R: 0.33,
-    rr: 0.225,
-    tw: 0.25,
-    sill: 0.24,
-    noseTop: 0.53,
-    hood: 0.69,
-    cowl: 0.84,
-    deck: 0.95,
-    roof: 1.25,
-    wsLen: 0.88,
-    roofEnd: -0.55,
-    gEnd: -1.62,
-    bpil: -0.36,
-    cpil: -1.02,
-    tumble: 0.25,
-    inset: 0.1,
-    bulge: 0.036,
-    crown: -0.01,
-    head: 'oval',
-    tailL: 'round',
-    wing: 'hoop',
-  },
-};
-export const KIT_BULGE = { stock: 0, flares: 0.045, wide: 0.1 };
-
+// Outils de géométrie partagés (voitures, décors) : pose, fusion par matière, surfaces réglées.
 // ---------- petits outils géométriques ----------
 const _m4 = new THREE.Matrix4(),
   _q = new THREE.Quaternion(),
@@ -136,6 +45,42 @@ export function mergeGeos(list) {
   out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
   out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return out;
+}
+// Assemble des géométries (indexées ou non) en une seule géométrie indexée : position, normale, uv, couleur.
+// Une géométrie sans couleur reçoit du blanc (l'occlusion par sommet des carrosseries passe par cet attribut).
+export function joinGeos(list) {
+  let nv = 0,
+    ni = 0;
+  for (const g of list) {
+    if (!g.attributes.normal) g.computeVertexNormals();
+    nv += g.attributes.position.count;
+    ni += g.index ? g.index.count : g.attributes.position.count;
+  }
+  const pos = new Float32Array(nv * 3),
+    nor = new Float32Array(nv * 3),
+    uv = new Float32Array(nv * 2),
+    col = new Float32Array(nv * 3).fill(1);
+  const idx = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+  let ov = 0,
+    oi = 0;
+  for (const g of list) {
+    const n = g.attributes.position.count;
+    pos.set(g.attributes.position.array, ov * 3);
+    nor.set(g.attributes.normal.array, ov * 3);
+    if (g.attributes.uv) uv.set(g.attributes.uv.array, ov * 2);
+    if (g.attributes.color) col.set(g.attributes.color.array, ov * 3);
+    if (g.index) for (let i = 0; i < g.index.count; i++) idx[oi++] = g.index.array[i] + ov;
+    else for (let i = 0; i < n; i++) idx[oi++] = ov + i;
+    ov += n;
+    g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  out.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  out.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  out.setIndex(new THREE.BufferAttribute(idx, 1));
   return out;
 }
 // fusionne les maillages enfants d'un groupe par matériau (utilisé aussi par world.js)

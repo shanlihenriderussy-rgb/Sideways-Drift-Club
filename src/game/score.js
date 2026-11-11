@@ -7,7 +7,7 @@ import { isle } from './island/world.js';
 import { lookOf } from './scene.js';
 import { scene } from './stage.js';
 import { Economy } from '../progress/economy.js';
-import { buildCar } from '../render/car.js';
+import { buildCar } from '../render/car/index.js';
 import { Ghost } from '../sim/ghost.js';
 import { inRange } from '../sim/track.js';
 import { $ } from '../util/dom.js';
@@ -87,7 +87,7 @@ export function buildGhost() {
   if (!g) return;
   const model = buildCar(
     g.kind,
-    lookOf(profile.cars[g.kind] || Economy.defaultCar(g.kind), game.world.theme.headlights),
+    lookOf(profile.cars[g.kind] || Economy.defaultCar(g.kind), game.world.theme.headlights, true),
   );
   model.ground = game.track.terrain.at;
   // voiture de verre : tous les matériaux deviennent transparents, l'opacité suit la distance à ta voiture

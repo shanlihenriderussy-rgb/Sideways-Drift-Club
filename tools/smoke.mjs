@@ -88,12 +88,23 @@ check((await seen(page)) && (await seen(guest)), 'multijoueur : les deux onglets
 await page.evaluate(() => {
   window.__sdc.touch.gas = true;
 });
-await page.waitForTimeout(4000);
-const moved = await guest.evaluate(() => {
-  const m = window.__sdcDbg.mp();
-  const R = [...m.remotes.values()][0];
-  return R && R.view ? Math.hypot(R.view.vx, R.view.vz) : -1;
-});
+const speed = () =>
+  guest.evaluate(() => {
+    const R = [...window.__sdcDbg.mp().remotes.values()][0];
+    return R && R.view ? Math.hypot(R.view.vx, R.view.vz) : -1;
+  });
+// rendu logiciel : le temps de jeu avance moins vite que le temps réel, on attend un état, pas une durée
+await guest
+  .waitForFunction(
+    () => {
+      const R = [...window.__sdcDbg.mp().remotes.values()][0];
+      return R && R.view && Math.hypot(R.view.vx, R.view.vz) > 2;
+    },
+    null,
+    { timeout: 60000 },
+  )
+  .catch(() => {});
+const moved = await speed();
 check(moved > 1, 'multijoueur : la voiture distante roule chez l’invité', `${moved.toFixed(1)} m/s`);
 await snap(page, 'ile-hote');
 await snap(guest, 'ile-invite');

@@ -13,7 +13,7 @@ import { buildIsleSpots, createTrafficLayer, makeTag } from '../../island/actors
 import { IsleLife } from '../../island/life.js';
 import { Economy } from '../../progress/economy.js';
 import { Story } from '../../progress/story.js';
-import { buildCar } from '../../render/car.js';
+import { buildCar } from '../../render/car/index.js';
 import { $ } from '../../util/dom.js';
 
 export function buildLife() {
@@ -83,7 +83,7 @@ function addRival(def) {
     throttle: 1,
     rpm: 5000,
   });
-  const model = buildCar(def.car, lookOf(Object.assign(Economy.defaultCar(def.car), def.look), false));
+  const model = buildCar(def.car, lookOf(Object.assign(Economy.defaultCar(def.car), def.look), false, true));
   model.ground = I.terrain.at;
   envOn(model);
   scene.add(model.root);

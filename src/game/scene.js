@@ -1,12 +1,13 @@
 // ---------- environnement de reflets (ciel) ----------
-// reflets : cubemap peinte (dégradé du ciel), sans rendu flottant → fiable sur tous les GPU mobiles
+// reflets : cubemap peinte texel par texel (ciel, soleil à sa place, sol, lumières de nuit), sans rendu flottant
+// → fiable sur tous les GPU mobiles
 import { game } from './state.js';
 import { isTouch, profile } from './base.js';
 import { drawMinimapBase } from './hud.js';
 import { dropGhost } from './score.js';
 import { camera, renderer, resize, scene } from './stage.js';
 import { Economy } from '../progress/economy.js';
-import { buildCar } from '../render/car.js';
+import { buildCar } from '../render/car/index.js';
 import { createParticles, createSkids, puffTexture } from '../render/fx.js';
 import { buildWorld } from '../render/world.js';
 import { buildDriftLine, createLeader } from '../sim/leader.js';
@@ -16,43 +17,81 @@ import { TRACKS, buildTrackData } from '../sim/track.js';
 export function buildEnv() {
   if (game.envMap) game.envMap.dispose();
   const T = game.world.theme;
-  const hex = (n) => '#' + n.toString(16).padStart(6, '0');
-  const face = (kind) => {
+  const N = 96;
+  const top = new THREE.Color(T.skyTop),
+    hor = new THREE.Color(T.skyHorizon),
+    sun = new THREE.Color(T.sunColor),
+    ground = new THREE.Color(T.ground),
+    road = new THREE.Color(T.road);
+  const sd = new THREE.Vector3(...T.sun).normalize();
+  const night = !!T.headlights;
+  // direction du texel (u, v ∈ [−1, 1]) pour chaque face, dans l'ordre +x, −x, +y, −y, +z, −z
+  const DIRS = [
+    (u, v) => [1, -v, -u],
+    (u, v) => [-1, -v, u],
+    (u, v) => [u, 1, v],
+    (u, v) => [u, -1, -v],
+    (u, v) => [u, -v, 1],
+    (u, v) => [-u, -v, -1],
+  ];
+  const hash = (a, b) => {
+    const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
+    return h - Math.floor(h);
+  };
+  const face = (dirOf) => {
     const c = document.createElement('canvas');
-    c.width = c.height = 64;
+    c.width = c.height = N;
     const g = c.getContext('2d');
-    if (kind === 'top') {
-      g.fillStyle = hex(T.skyTop);
-      g.fillRect(0, 0, 64, 64);
-    } else if (kind === 'bottom') {
-      g.fillStyle = T.ground;
-      g.fillRect(0, 0, 64, 64);
-    } else {
-      const gr = g.createLinearGradient(0, 0, 0, 64);
-      gr.addColorStop(0, hex(T.skyTop));
-      gr.addColorStop(0.48, hex(T.skyHorizon));
-      gr.addColorStop(0.52, T.road);
-      gr.addColorStop(1, T.ground);
-      g.fillStyle = gr;
-      g.fillRect(0, 0, 64, 64);
-      if (kind === 'sun') {
-        const r = g.createRadialGradient(32, 26, 0, 32, 26, 26);
-        r.addColorStop(0, hex(T.sunColor));
-        r.addColorStop(1, 'rgba(255,255,255,0)');
-        g.fillStyle = r;
-        g.fillRect(0, 0, 64, 64);
+    const img = g.createImageData(N, N);
+    for (let j = 0; j < N; j++)
+      for (let i = 0; i < N; i++) {
+        let [x, y, z] = dirOf(((i + 0.5) / N) * 2 - 1, ((j + 0.5) / N) * 2 - 1);
+        const l = Math.hypot(x, y, z);
+        x /= l;
+        y /= l;
+        z /= l;
+        let r, gg, b;
+        if (y >= 0) {
+          // ciel : horizon clair et brumeux, zénith plus dense
+          const t = Math.pow(y, 0.55),
+            haze = 0.3 * Math.exp(-y * 10);
+          r = hor.r + (top.r - hor.r) * t + hor.r * haze;
+          gg = hor.g + (top.g - hor.g) * t + hor.g * haze;
+          b = hor.b + (top.b - hor.b) * t + hor.b * haze;
+        } else {
+          // sol : la piste près de l'horizon, le terrain en dessous
+          const t = Math.min(1, -y * 3.5);
+          r = (road.r + (ground.r - road.r) * t) * 0.85;
+          gg = (road.g + (ground.g - road.g) * t) * 0.85;
+          b = (road.b + (ground.b - road.b) * t) * 0.85;
+        }
+        // soleil (ou lune) : cœur vif et halo large, à sa vraie place dans le ciel
+        const s = Math.max(0, x * sd.x + y * sd.y + z * sd.z);
+        const glow = Math.pow(s, 90) * 1.6 + Math.pow(s, 8) * 0.28;
+        r += sun.r * glow;
+        gg += sun.g * glow;
+        b += sun.b * glow;
+        // de nuit : fenêtres et lampadaires au ras de l'horizon, qui filent en reflets sur la carrosserie
+        if (night && y > 0.015 && y < 0.3) {
+          const a = Math.atan2(z, x);
+          const h = hash(Math.floor(a * 22), Math.floor(y * 46));
+          if (h > 0.84) {
+            const warm = hash(Math.floor(a * 22) + 7, 3) > 0.4;
+            r += warm ? 1.0 : 0.55;
+            gg += warm ? 0.72 : 0.75;
+            b += warm ? 0.38 : 1.0;
+          }
+        }
+        const o = (j * N + i) * 4;
+        img.data[o] = Math.min(255, r * 255);
+        img.data[o + 1] = Math.min(255, gg * 255);
+        img.data[o + 2] = Math.min(255, b * 255);
+        img.data[o + 3] = 255;
       }
-    }
+    g.putImageData(img, 0, 0);
     return c;
   };
-  game.envMap = new THREE.CubeTexture([
-    face('sun'),
-    face('side'),
-    face('top'),
-    face('bottom'),
-    face('side'),
-    face('side'),
-  ]);
+  game.envMap = new THREE.CubeTexture(DIRS.map(face));
   game.envMap.encoding = THREE.sRGBEncoding;
   game.envMap.needsUpdate = true;
 }
@@ -124,7 +163,8 @@ const hexOf = (list, id, d) => {
   const it = list.find((x) => x.id === id);
   return it ? it.hex : d;
 };
-export function lookOf(cfg, night) {
+// light : niveau de détail léger (voitures des autres : rivaux, joueurs distants, fantôme)
+export function lookOf(cfg, night, light) {
   const paint = hexOf(Economy.PAINTS, cfg.paint, 0xf1efe9);
   const accent =
     cfg.accent === 'auto' ? (isDark(paint) ? 0xffd23f : 0x16161a) : hexOf(Economy.PAINTS, cfg.accent, 0xffd23f);
@@ -156,7 +196,7 @@ export function lookOf(cfg, night) {
     tune: cfg.tune,
     brakes: cfg.perf.brakes,
     night,
-    lod: game.qLevel === 'low' ? 0 : 1,
+    lod: light || game.qLevel === 'low' ? 0 : 1,
   };
 }
 export const smokeCol = { P: new THREE.Color(), L: new THREE.Color() };
@@ -196,7 +236,7 @@ export function buildCars(playerOnly) {
   if (!playerOnly) {
     const lk = profile.current === 'raijin' ? 'kouki' : 'raijin';
     const lc = leaderCfg(lk);
-    game.leaderModel = buildCar(lk, lookOf(lc, night));
+    game.leaderModel = buildCar(lk, lookOf(lc, night, game.qLevel !== 'high')); // de près en tandem : fin en qualité haute
     game.leaderModel.ground = game.track.terrain.at;
     setSmoke('L', lc);
     scene.add(game.leaderModel.root);

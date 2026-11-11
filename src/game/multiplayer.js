@@ -19,7 +19,7 @@ import { fitTag, makeTag } from '../island/actors.js';
 import { IsleLife } from '../island/life.js';
 import { Net } from '../net/index.js';
 import { Economy } from '../progress/economy.js';
-import { buildCar } from '../render/car.js';
+import { buildCar } from '../render/car/index.js';
 import { $ } from '../util/dom.js';
 
 export let mp = null;
@@ -129,7 +129,7 @@ function ensureRemote(id, p) {
 }
 export function remoteModel(R) {
   if (R.model || !isle || !game.life) return;
-  R.model = buildCar(R.kind, lookOf(R.cfg, false));
+  R.model = buildCar(R.kind, lookOf(R.cfg, false, true));
   R.model.ground = isleData.terrain.at;
   envOn(R.model);
   scene.add(R.model.root);
