@@ -115,10 +115,17 @@ button { font: inherit; color: inherit; }
 .best b { display: block; color: var(--fg); font-size: 16px; font-weight: 700; letter-spacing: 0; text-transform: none; }
 .opt[aria-pressed="true"] .best b { color: var(--accent); }
 .row-end { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
-/* choix de session : Retour / Départ restent visibles, la liste des pistes défile dessous */
-#select .row-end { position: sticky; bottom: -24px; margin: 0 -24px -24px; padding: 12px 24px max(14px, env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(12,14,17,0), rgba(12,14,17,.97) 28%); z-index: 2; }
+/* Pied de carte : la rangée d'actions (Retour, Départ, Compris…) reste collée en bas de la carte quand le contenu
+   dépasse l'écran ; le contenu défile dessous. Sans cela, en paysage sur téléphone, le bouton de sortie est hors écran. */
+.screen.dim .card > .row-end:last-child, #select .row-end, #adventure .adv-back { position: sticky; bottom: -24px; margin: 0 -24px -24px; padding: 12px 24px max(14px, env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(12,14,17,0), rgba(12,14,17,.98) 12px); z-index: 2; }
 #select .track-list { margin-bottom: 6px; }
-@media (orientation: landscape) and (max-height: 560px) { #select .row-end { bottom: -16px; margin: 0 -20px -16px 0; padding: 10px 20px 14px 0; } }
+@media (orientation: landscape) and (max-height: 560px) {
+  .screen.dim .card > .row-end:last-child, #adventure .adv-back { bottom: -16px; margin: 0 -20px -16px; padding: 10px 20px 14px; }
+  #select .row-end { bottom: -16px; margin: 0 -20px -16px 0; padding: 10px 20px 14px 0; }
+  #adventure .adv-back { bottom: -14px; margin: 0 -18px -14px; padding: 10px 18px 12px; }
+}
+/* la une des résultats est sur papier clair : son pied garde son propre fond */
+#results .card .row-end { position: static; margin: 0; padding: 0; background: none; }
 
 /* ---------- atelier ---------- */
 #garage { justify-content: flex-end; align-items: stretch; }

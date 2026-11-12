@@ -6,6 +6,14 @@ import fs from 'node:fs';
 import { build } from 'esbuild';
 
 const local = process.argv.includes('--local');
+// build local : Three.js servi depuis vendor/ (hors ligne). Copié depuis la dépendance de développement s'il manque.
+if (local && !fs.existsSync(new URL('./vendor/three.min.js', import.meta.url))) {
+  fs.mkdirSync(new URL('./vendor/', import.meta.url), { recursive: true });
+  fs.copyFileSync(
+    new URL('./node_modules/three/build/three.min.js', import.meta.url),
+    new URL('./vendor/three.min.js', import.meta.url),
+  );
+}
 const read = (f, enc = 'utf8') => fs.readFileSync(new URL(f, import.meta.url), enc);
 
 const bundle = await build({

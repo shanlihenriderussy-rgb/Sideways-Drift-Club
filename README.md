@@ -116,6 +116,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 
 **Qualité et livraison**
 - Tests `node:test` (133) : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, aventure
+- **22 tests de bout en bout** (`e2e/`) : parcours joueur complets dans un vrai navigateur, en CI
 - ESLint (tout nom utilisé est importé), Prettier, CI GitHub Actions
 - Bancs d'essai **Playwright** : fumée de bout en bout, bot pilote, perf, CPU ralenti
 - Build : **esbuild** suit les imports depuis `src/main.js` et produit **un seul `index.html`**
@@ -183,6 +184,7 @@ curl -o vendor/three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128
 npm run build:local            # test.html, Three.js depuis vendor/
 npm test                       # 133 tests
 npm run smoke                  # fumée de bout en bout (Playwright) : run, atelier, île, multijoueur
+npm run e2e                    # 22 parcours joueur de bout en bout (≈ 5 min en rendu logiciel)
 ```
 
 ## 🔄 Mettre à jour le jeu
@@ -193,6 +195,7 @@ npm run smoke                  # fumée de bout en bout (Playwright) : run, atel
    ```bash
    npm run check                 # lint + tests + build : tout doit passer
    npm run smoke                 # le jeu démarre, un run se joue, deux onglets se voient en multijoueur
+   npm run e2e                   # parcours joueur complets : accueil, premier run, run noté, atelier, île, multijoueur
    ```
    Nouveau tracé → `tests/tracks.test.js` impose : pas de recoupement, ≥ 5 virages, 900–1 900 m, un seul type de clip par virage.
 4. **Committer** `src/` **et** `index.html` ensemble (conventional commits : `feat(piste): …`, `fix(atelier): …`). La CI refuse un `index.html` qui n'est pas à jour.
@@ -255,6 +258,7 @@ Modules ES, imports explicites. `src/main.js` initialise les modules du jeu dans
 | `.claude/skills/impeccable/` | Skill de design d'interface [Impeccable](https://github.com/pbakaus/impeccable) (Apache 2.0) : `/impeccable critique`, `polish`, `audit`… pour le travail sur l'UI avec Claude Code |
 | `tools/` | `smoke.mjs` (fumée de bout en bout), `bench-physics.mjs`, `bench-perf.mjs`, `bot-run.mjs`, `shots-cars.mjs`, visuels du README ; `lib/harness.mjs` (Playwright, pilote automatique) |
 | `tests/` | `npm test` : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, fantôme, moments forts, aventure |
+| `e2e/` | `npm run e2e` : tests de bout en bout (Playwright + `node:test`), un joueur neuf par test. `accueil` (titre, navigation), `premier-run` (aide, choix de session, départ au doigt), `run` (glisse, pause, résultats, gains conservés), `atelier` (aperçu, achat, refus), `ile-multijoueur` (monde ouvert, carte, deux joueurs) |
 | `build.mjs` | esbuild + assemblage du fichier unique (`index.html`, ou `test.html` hors ligne) |
 
 </details>

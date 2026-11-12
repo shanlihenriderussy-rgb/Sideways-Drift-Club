@@ -4,7 +4,7 @@ import globals from 'globals';
 export default [
   { ignores: ['index.html', 'test.html', 'vendor/**', 'node_modules/**'] },
   {
-    files: ['src/**/*.js', 'tests/**/*.js', 'tools/**/*.{js,mjs}', '*.{js,mjs}'],
+    files: ['src/**/*.js', 'tests/**/*.js', 'e2e/**/*.js', 'tools/**/*.{js,mjs}', '*.{js,mjs}'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',

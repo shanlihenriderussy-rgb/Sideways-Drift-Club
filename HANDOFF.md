@@ -17,7 +17,14 @@ En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `ma
 - **Ailerons et rétroviseurs dans Blender** (`tools/models/parts.py`) : becquet, GT, col de cygne, arche, lèvre de toit ; rétros d'origine, aéro, d'aile. Chaque voiture porte ses pièces dans son `.bin` (`meta.parts`), posées sur sa caisse et ombrées contre elle. Côté jeu : `addPart('wing_gt')` dans `render/car/index.js`. Restent en formes simples côté jeu : lames, canards, jupes, diffuseur, écope, galerie, arceau, sièges.
 - **Skill Impeccable** (`.claude/skills/impeccable/`, v4.8.2, Apache 2.0) : chargé au démarrage d'une session Claude Code, puis `/impeccable <commande> <cible>`. Installé sans ses hooks. Son lanceur (`scripts/impeccable`) télécharge un binaire à la première utilisation : il n'a pas été exécuté ; sans lui le skill fonctionne en lisant `PRODUCT.md` / `DESIGN.md` directement (à créer : `/impeccable init`, `/impeccable document`).
 
+## Tests de bout en bout (2026-11-12)
+- `e2e/*.e2e.js`, lancés par `npm run e2e` (build local puis `node --test`, un fichier à la fois). Un contexte de navigation neuf par test : chaque test est un joueur qui n'a jamais ouvert le jeu. Job `e2e` dans la CI.
+- `e2e/helpers.js` : `useBrowser()`, `press()` (clic), `assertInViewport()` (visible sans défiler), `revisit()` (recharge en gardant la progression).
+- Ils ont trouvé trois défauts réels, corrigés : boutons « Retour » de l'Aventure et du Multijoueur hors écran en paysage (d'où la règle générale « pied de carte collant » dans `styles.css`), et un oubli dans mon propre correctif de l'aide.
+- Non couverts : mode Aventure (missions), duels de rue, replay, éditeur de commandes tactiles, connexion WebRTC réelle (le multijoueur passe par le lien local entre onglets).
+
 ## Pièges nouveaux
+- **Tests e2e sous rendu logiciel** : fermer le contexte après chaque test (un jeu laissé ouvert divise la vitesse des suivants). Ne pas utiliser `page.click` : son attente de stabilité peut ne jamais aboutir à quelques images par seconde ; `press()` vérifie visibilité et état, puis clique. Attendre des états (`waitForFunction`), jamais des durées.
 - **Pièce qui traverse l'axe** (aileron) : la construire avec un anneau de sommets en z = 0, sinon l'export garde des faces à cheval et le miroir les double.
 - **Sens des faces à l'export Blender** : Cycles ne masque pas les faces arrière, le jeu si. Un bouclier à l'envers est invisible dans le rendu de contrôle et troue la voiture en jeu. `tests/models.test.js` vérifie l'orientation : le lancer après tout changement de `carlib.py`.
 - **Déterminisme Blender** : ne jamais dédoublonner des arêtes avec `set()` avant un `bevel` (l'ordre des sommets change d'une exécution à l'autre). `dict.fromkeys`.
