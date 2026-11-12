@@ -27,14 +27,14 @@ export async function launch() {
   return loadPlaywright().chromium.launch({ args: GL_ARGS });
 }
 
+// Contexte de navigation : densité de pixels et tactile se règlent ici (pas au niveau de la page).
+export const newContext = (browser, { scale = 1, touch = false } = {}) =>
+  browser.newContext({ deviceScaleFactor: scale, hasTouch: touch, isMobile: touch });
+
 // Ouvre le jeu et attend l'écran titre. `errors` reçoit les erreurs de page.
-export async function openGame(ctx, { width = 844, height = 390, scale = 1, touch = false, errors = [] } = {}) {
-  const page = await ctx.newPage({
-    viewport: { width, height },
-    deviceScaleFactor: scale,
-    hasTouch: touch,
-    isMobile: touch,
-  });
+export async function openGame(ctx, { width = 844, height = 390, errors = [] } = {}) {
+  const page = await ctx.newPage();
+  await page.setViewportSize({ width, height });
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push('console: ' + m.text());

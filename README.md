@@ -16,7 +16,8 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-f7d154?style=flat-square&logo=javascript&logoColor=black)
 ![Web Audio](https://img.shields.io/badge/Web%20Audio-son%20synth%C3%A9tis%C3%A9-7b8cff?style=flat-square)
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?style=flat-square&logo=pwa)
-![Tests](https://img.shields.io/badge/tests-80%2F80-2ea44f?style=flat-square&logo=nodedotjs&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-130%2F130-2ea44f?style=flat-square&logo=nodedotjs&logoColor=white)
+![Blender](https://img.shields.io/badge/Blender-carrosseries-e87d0d?style=flat-square&logo=blender&logoColor=white)
 ![Vercel](https://img.shields.io/badge/d%C3%A9ploy%C3%A9-Vercel-000000?style=flat-square&logo=vercel)
 ![Données](https://img.shields.io/badge/donn%C3%A9es%20perso-aucune-2ea44f?style=flat-square)
 
@@ -58,14 +59,14 @@ Aucune installation, aucun compte, aucune pub. Tout reste sur ton appareil.
 |---|---|
 | 🛣️ **6 pistes** | Docks de Minato (nuit), Col d'Akane (coucher de soleil), Piton Volcan (jour), Quai de Shiohama (aube), Col de Yukimi (neige, adhérence ×0,88), Corniche de Kaigan (crépuscule). |
 | 🏝️ **L'île, monde ouvert** | 2,1 × 1,5 km, 15 routes, 10 carrefours, 9 km de bitume, relief jusqu'à 110 m. Circulation (5 modèles, roulage à gauche), 4 pilotes rivaux à défier (touge, tandem de rue), 6 habitants à qui parler, radars, zones de glisse, belvédères photo, 12 daruma dorés, carte et GPS. |
-| 👥 **Multijoueur** | Jusqu'à 4 pilotes sur l'île, pair à pair (WebRTC), sans compte ni serveur de jeu : invitation par code ou lien, messages rapides, course et battle de drift lancées par l'hôte. |
+| 👥 **Multijoueur** | Jusqu'à 4 pilotes sur l'île, pair à pair (WebRTC), sans compte ni serveur de jeu : invitation par code ou lien, messages rapides, course et battle de drift lancées par l'hôte. Voitures distantes lissées (30 envois par seconde, retard adapté à la qualité du réseau). |
 | 📖 **Aventure** | « Le Tour de l'Île » : 6 chapitres × 3 missions, 7 personnages, archives à collectionner, défis de rue. |
 | 🎯 **3 modes** | Run noté (note de S à D), Tandem (chasse le leader), Libre (entraînement). En run noté, ton **fantôme** (meilleur run de la piste) roule en transparence et le HUD affiche l'écart de points en direct. |
 | 🔧 **Atelier** | 3 voitures, carrosserie, 12 peintures × 5 finitions, 6 livrées, 5 jantes, fumée colorée, 6 pièces de perf × 3 niveaux, réglages freins et suspension. |
 | 🎬 **Moments forts** | En fin de run, les 3 meilleurs instants (gros combo, clip, frôlé, angle record) ; replay cinématique (poursuite, travelling, bord de piste, ralenti sur les clips et les frôlés). Les 8 derniers enregistrements des pistes se revoient depuis la Carrière. |
 | 💴 **Carrière** | Yens fictifs (aucun achat réel), 36 défis, bonus quotidien, records par piste. |
 | 📱 **Tactile d'abord** | Boutons déplaçables et redimensionnables, miroir gauche/droite, clavier et manette aussi. |
-| ⚡ **Fluide sur petit Android** | Physique à 120 Hz interpolée, résolution dynamique, 65–68 appels de dessin par image. |
+| ⚡ **Fluide sur petit Android** | Physique à 120 Hz interpolée, résolution dynamique, 64–67 appels de dessin par image, deux niveaux de détail par voiture. |
 
 ## 🎮 Commandes
 
@@ -91,8 +92,8 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 
 **Moteur et rendu**
 - **Three.js r128** (cdnjs) : scène, `InstancedMesh`, shaders précompilés
-- Voitures, décors et ciels **100 % procéduraux** (aucun modèle 3D importé)
-- Reflets par cubemap peinte sur canvas, pas de PMREM
+- Carrosseries **modélisées dans Blender par script** (surface de subdivision, occlusion ambiante par sommet, 2 niveaux de détail) ; décors et ciels procéduraux
+- Peinture vernie (clearcoat), reflets par cubemap peinte texel par texel
 - Résolution dynamique et paliers de qualité auto
 
 </td><td>
@@ -114,20 +115,23 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 </td><td>
 
 **Qualité et livraison**
-- Tests `node:test` (106) : économie, physique, tracés, île, vie de l'île, multijoueur, aventure
-- Bancs d'essai **Playwright** : bot pilote, perf, CPU ralenti ×6, audio
-- Build : `build.mjs` assemble `src/*` en **un seul `index.html`**
+- Tests `node:test` (130) : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, aventure
+- ESLint (tout nom utilisé est importé), Prettier, CI GitHub Actions
+- Bancs d'essai **Playwright** : fumée de bout en bout, bot pilote, perf, CPU ralenti
+- Build : **esbuild** suit les imports depuis `src/main.js` et produit **un seul `index.html`**
 - Hébergement **Vercel**, déployé depuis `main`
 
 </td></tr>
 </table>
 
-**Zéro dépendance npm en production.** Pas de framework, pas de bundler : un script Node concatène les sources, le navigateur fait le reste.
+**Zéro dépendance à l'exécution.** Pas de framework. esbuild (build) et Blender (modèles) ne servent qu'en développement : le navigateur ne charge que `index.html` et Three.js.
 
 ```mermaid
 flowchart LR
-  A["src/*.js<br>src/head.html<br>src/body.html"] -->|node build.mjs| B["index.html<br>(fichier unique)"]
-  L["assets/logo.webp<br>assets/favicon.svg"] -->|intégrés en data URI| B
+  M["tools/models/*.py<br>(Blender, bpy)"] -->|npm run models| G["assets/models/*.bin"]
+  A["src/**/*.js<br>(modules ES)"] -->|esbuild| B["index.html<br>(fichier unique)"]
+  G -->|intégrés en base64| B
+  U["src/ui/*.html, styles.css<br>assets/logo.webp, favicon.svg"] --> B
   B -->|push sur main| V["Vercel"]
   V --> P["sideways-drift-club.vercel.app"]
   C["Three.js r128<br>cdnjs"] -.chargé au runtime.-> P
@@ -137,7 +141,9 @@ flowchart LR
 
 | Outil | Usage |
 |---|---|
-| Node.js ≥ 18 | Build (`build.mjs`) et tests (`node --test`) |
+| Node.js ≥ 20 | Build (`build.mjs`, esbuild) et tests (`node --test`) |
+| Blender 5 (`pip install bpy`) | Carrosseries : `tools/models/build_cars.py` → `assets/models/*.bin` |
+| ESLint, Prettier | Garde-fou d'imports, mise en forme |
 | Playwright + Chromium | Captures, bot expert, mesures de perf et d'audio (`tools/`) |
 | Vercel | Hébergement statique, déploiement à chaque merge sur `main` |
 | Claude (Anthropic) | Conception et code assistés par IA (mention dans l'écran d'aide) |
@@ -162,7 +168,8 @@ Le jeu est une **PWA** : il s'installe comme une appli, en plein écran, sans st
 ```bash
 git clone https://github.com/shanlihenriderussy-rgb/Sideways-Drift-Club.git
 cd Sideways-Drift-Club
-node build.mjs                 # régénère index.html
+npm install                    # esbuild, ESLint, Prettier (développement seulement)
+npm run build                  # régénère index.html
 npx serve .                    # ou : python3 -m http.server 8000
 ```
 
@@ -173,8 +180,9 @@ Ouvre `http://localhost:3000` (ou `:8000`). Un simple double-clic sur `index.htm
 ```bash
 mkdir -p vendor
 curl -o vendor/three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
-node build.mjs --local         # test.html, Three.js depuis vendor/
-node --test tests/*.test.js    # 80 tests
+npm run build:local            # test.html, Three.js depuis vendor/
+npm test                       # 130 tests
+npm run smoke                  # fumée de bout en bout (Playwright) : run, atelier, île, multijoueur
 ```
 
 ## 🔄 Mettre à jour le jeu
@@ -183,17 +191,24 @@ node --test tests/*.test.js    # 80 tests
 2. **Coder** dans `src/` (jamais dans `index.html`, il est généré).
 3. **Vérifier** :
    ```bash
-   node --test tests/*.test.js   # tout doit passer
-   node build.mjs                # régénère index.html
+   npm run check                 # lint + tests + build : tout doit passer
+   npm run smoke                 # le jeu démarre, un run se joue, deux onglets se voient en multijoueur
    ```
    Nouveau tracé → `tests/tracks.test.js` impose : pas de recoupement, ≥ 5 virages, 900–1 900 m, un seul type de clip par virage.
-4. **Committer** `src/` **et** `index.html` ensemble (conventional commits : `feat(piste): …`, `fix(atelier): …`).
+4. **Committer** `src/` **et** `index.html` ensemble (conventional commits : `feat(piste): …`, `fix(atelier): …`). La CI refuse un `index.html` qui n'est pas à jour.
 5. **Ouvrir une PR** vers `main`. Au merge, Vercel redéploie en ligne en ~1 min.
-6. **Rafraîchir les visuels** de cette page si l'interface a changé :
+6. **Retoucher une voiture** : les lignes de caisse sont dans `tools/models/cars.py`.
    ```bash
-   node build.mjs --local
-   node tools/readme-shots.js    # docs/screenshots/*.jpg (bot au volant)
-   node tools/readme-banner.js   # docs/brand/banner.jpg
+   pip install bpy                                         # Blender en module Python
+   python3 tools/models/build_cars.py kouki --preview out/ # une voiture + rendus Cycles de contrôle
+   python3 tools/models/build_cars.py --blend out/         # les .blend, pour une retouche à la main
+   npm run models && npm test                              # les trois voitures, puis tests/models.test.js
+   ```
+7. **Rafraîchir les visuels** de cette page si l'interface a changé :
+   ```bash
+   npm run build:local
+   node tools/readme-shots.mjs   # docs/screenshots/*.jpg (bot au volant)
+   node tools/readme-banner.mjs  # docs/brand/banner.jpg
    ```
 
 ## 🎨 Kit de marque
@@ -222,28 +237,23 @@ Direction : « Télémétrie de nuit ». La 3D est le sujet, l'interface s'effac
 <details>
 <summary><b>📂 Structure du code</b></summary>
 
-| Fichier | Rôle |
+Modules ES, imports explicites. `src/main.js` initialise les modules du jeu dans l'ordre ; tout ce qui est « pur » (sans DOM ni Three.js) est testé sous Node.
+
+| Dossier | Rôle |
 |---|---|
-| `src/physics.js` | Modèle bicyclette, pneus saturés, régulateur d'angle de drift (assistance) ; lit les champs de fiche tunée (`steerRate`, `driftSteer`, `angleBoost`, `rollK`, `brakeK`, `brakeRear`, `hbK`, `latBal`, `damp`, `camber`) et l'adhérence de piste (`grip`) |
-| `src/economy.js` | Portefeuille en yens, catalogue de l'atelier, gains de fin de run, défis, bonus quotidien, fiche tunée. Logique pure, testée |
-| `src/track.js` | 6 tracés, échantillonnage, virages et clips (un type par virage, règle des tracés officiels), barème (`par`), adhérence (`grip`, neige) |
-| `src/world.js` | Ciel (nuages, étoiles), crêtes, route et murs par lieu, décor instancié par thème, tribune, eau animée. Thèmes `dawn`, `snow`, `dusk` = palettes posées sur une famille de décor (`decor`) |
-| `src/car.js` | Voitures procédurales : caisse lissée (loft), habitacle, livrée peinte, pièces modulaires, roues instanciées |
-| `src/fx.js` | Fumée colorée (points), traces de gomme (envoi GPU partiel), étincelles |
-| `src/audio.js` | Moteur, turbo, crissement synthétisés (Web Audio) |
-| `src/ai.js` | Leader tandem sur trajectoire précalculée |
-| `src/story.js` | Aventure « Le Tour de l'Île » : 6 chapitres × 3 missions, dialogues, objectifs, exploration (archives, défis de rue, rencontres). Logique pure, testée |
-| `src/island.js` | L'île : monde ouvert continu (9 km de routes, carrefours, relief, volcan, mer), recherche de route, terrain (partie pure, testée) et rendu Three.js, dont circulation instanciée (~15 appels de dessin pour tout le trafic), habitants, radars, arches de zone, étiquettes flottantes |
-| `src/isleai.js` | Vie de l'île : GPS (plus court chemin), circulation (suivi de voie, distance d'arrêt, klaxon, dépassement), rivaux en glisse, activités à étoiles, habitants et belvédères. Logique pure, testée |
-| `src/ghost.js` | Fantôme du record : échantillon toutes les 0,1 s (position, cap, dérive, points), stockage compact vérifié (`sdc:ghosts`), relecture interpolée. Logique pure, testée |
-| `src/replay.js` | Moments forts : choix des 3 meilleurs instants sans chevauchement, découpe de la trajectoire, enregistrements vérifiés (`sdc:recs`, 8 au plus), lecture interpolée. Logique pure, testée |
-| `src/net.js` | Multijoueur pair à pair : session hôte/invités avec relais, état compact à 15 Hz, interpolation 120 ms, filtrage de tout ce qui vient du réseau, codes d'invitation compressés, transport WebRTC. Partie pure testée |
-| `src/shop.js` | Atelier : 6 rayons, aperçu avant achat, barre d'achat |
-| `src/game.js` | Boucle (pas fixe 120 Hz + interpolation), caméra, score, collisions, entrées, interface, carrière |
-| `assets/favicon.svg`, `icons/`, `manifest.webmanifest` | Favicon (intégré au build), icônes d'application, manifeste PWA |
-| `docs/` | Visuels de cette page : `screenshots/`, `brand/` (bannière, logos PNG, boutons) |
-| `tests/` | `node --test tests/*.test.js` : économie, effets physiques des réglages, tracés, île, vie de l'île, multijoueur, aventure |
-| `tools/` | Bancs d'essai : physique (Node), captures, tour complet, bot expert, perf, CPU ralenti, analyse audio, visuels du README (Playwright) |
+| `src/sim/` | **Simulation pure** : `physics.js` (modèle bicyclette, pneus saturés, assistance d'angle), `track.js` (6 tracés, virages, clips), `leader.js` (ligne de drift et leader tandem), `ghost.js` (fantôme du record), `replay.js` (moments forts) |
+| `src/progress/` | **Progression pure** : `economy.js` (portefeuille, atelier, gains, défis, fiche tunée), `story.js` (aventure : 6 chapitres × 3 missions) |
+| `src/net/` | **Multijoueur** : `state.js` (état compact), `sanitize.js` (filtrage de tout ce qui vient du réseau), `session.js` (étoile, l'hôte relaie), `interp.js` (lissage des voitures distantes), `invite.js` (codes d'invitation), `links.js` (WebRTC, lien local entre onglets) |
+| `src/island/` | **L'île** : `map.js` (réseau routier, terrain ; pur), `life.js` (GPS, circulation, rivaux, activités ; pur), `scenery.js` et `actors.js` (rendu) |
+| `src/render/` | **Rendu** : `world.js` (ciel, décors par thème), `fx.js` (fumée, gomme, étincelles), `geometry.js` (outils), `car/` : `format.js` (lecture des modèles, pur), `index.js` (caisse + pièces de l'atelier), `livery.js` (livrée peinte), `wheels.js` |
+| `src/game/` | **Le jeu** : `state.js` (état partagé), `stage.js` (rendu, qualité), `scene.js` (piste, voitures, reflets), `loop.js` (pas fixe 120 Hz), `camera.js`, `score.js`, `collide.js`, `hud.js`, `input.js`, `touch.js`, `session.js`, `menus.js`, `adventure.js`, `multiplayer.js`, `moments.js`, `island/` (monde, vie, interactions, épreuves, carte), `boot.js` |
+| `src/ui/` | `page.html` (gabarit), `styles.css`, `markup.html`, `shop.js` (atelier) |
+| `src/audio/` | `sound.js` : moteur, turbo, crissement synthétisés (Web Audio) |
+| `assets/models/` | Carrosseries exportées de Blender (`*.bin` : demi-modèle, 2 niveaux de détail, lignes de caisse) |
+| `tools/models/` | Générateur Blender : `carlib.py` (cage, vitrages, joints, optiques, occlusion, export), `cars.py` (fiches de style), `build_cars.py` |
+| `tools/` | `smoke.mjs` (fumée de bout en bout), `bench-physics.mjs`, `bench-perf.mjs`, `bot-run.mjs`, `shots-cars.mjs`, visuels du README ; `lib/harness.mjs` (Playwright, pilote automatique) |
+| `tests/` | `npm test` : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, fantôme, moments forts, aventure |
+| `build.mjs` | esbuild + assemblage du fichier unique (`index.html`, ou `test.html` hors ligne) |
 
 </details>
 
@@ -290,7 +300,8 @@ Direction : « Télémétrie de nuit ». La 3D est le sujet, l'interface s'effac
 - Menu → « Multijoueur » : un hôte crée la session, invite jusqu'à 3 pilotes. Pas de compte, pas de serveur de jeu : l'hôte envoie un **code ou un lien d'invitation** (copier, ou partager), l'invité colle l'invitation et renvoie un **code de réponse**, l'hôte le valide. Ouvrir le lien d'invitation ouvre directement l'écran pour rejoindre.
 - Réseau : **même Wi-Fi** (par défaut, aucun serveur tiers) ou **Internet** (serveur STUN public, qui voit l'adresse IP).
 - Sur l'île : voitures des autres avec pseudo et combo en cours, contacts, messages rapides (klaxon, salut, GG, suis-moi qui règle ton GPS sur l'autre joueur, en feu). L'hôte lance une **course** (grille de départ derrière lui, premier arrivé à un lieu) ou une **battle de drift** de 90 s. Gagnant : ¥800.
-- Technique : topologie en étoile (l'hôte relaie), deux canaux (état à 15 Hz non fiable, évènements fiables), interpolation avec 120 ms de retard, tout message reçu est filtré (taille, types, bornes, pseudo nettoyé, voiture validée). La circulation et les rivaux sont propres à chaque appareil.
+- Technique : topologie en étoile (l'hôte relaie), deux canaux (état non fiable à 30 Hz en roulant et 4 Hz à l'arrêt, évènements fiables), tout message reçu est filtré (taille, types, bornes, pseudo nettoyé, voiture validée). La circulation et les rivaux sont propres à chaque appareil.
+- Fluidité (`src/net/interp.js`, `tests/interp.test.js`) : trajectoire en courbe de Hermite (la vitesse reçue sert de tangente), retard d'affichage adapté à la gigue mesurée (70 ms sur un réseau propre, jusqu'à 400 ms), horloge de lecture sans saut, extrapolation le long de l'arc quand un paquet tarde, écart résorbé en 120 ms à la reprise. Mesuré en simulation : avec 40 ms de gigue et 10 % de pertes, aucun recul et moins de 3 cm d'écart à la trajectoire. **Non mesuré sur de vrais téléphones.**
 
 </details>
 
@@ -302,12 +313,13 @@ Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + tai
 </details>
 
 <details>
-<summary><b>📊 Mesures de référence (2026-10-14)</b></summary>
+<summary><b>📊 Mesures de référence (2026-11-12, rendu logiciel)</b></summary>
 
-- Appels de dessin : 65–68 par image en tandem. JS : 0,4–0,5 ms/image ; 1,9–2,8 ms avec CPU ralenti ×6.
-- Saccade d'affichage (écart image à image du déplacement) : 0,1 % à 60, 90, 120 et 144 Hz (avant : 14 à 60 % au-delà de 60 Hz).
-- Chargement d'une piste avec CPU ×6 : 0,38–0,52 s (décor bien plus riche ; hors partie).
-- Audio : fondamentale moteur = régime/60×2 ; crissement +12 dB au-dessus du moteur en glisse ; pas de saturation.
+- Appels de dessin : 64–67 par image en tandem (inchangé). Script : 0,5–0,8 ms/image.
+- Triangles par image en tandem : 86–104 k (qualité basse), 122–153 k (moyenne), 159–200 k (haute). Les carrosseries Blender comptent ~38 k triangles au niveau fin, ~9,5 k au niveau léger.
+- Poids de `index.html` : 1,7 Mo (0,47 Mo avant les modèles 3D ; les trois carrosseries pèsent ~0,96 Mo en binaire).
+- Banc physique (`tools/bench-physics.mjs`) : chiffres identiques à la version précédente.
+- **Non mesuré ici** : images par seconde et temps de chargement sur un vrai téléphone (l'environnement de développement n'a pas de carte graphique).
 
 </details>
 
@@ -315,7 +327,7 @@ Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + tai
 
 - **Hors multijoueur, aucune donnée personnelle ne quitte l'appareil.** Réglages, records et profil de jeu (`sdc:profile` : solde, voitures, pièces, défis, 40 derniers mouvements) restent en `localStorage` sur l'appareil du joueur.
 - **Multijoueur (à l'initiative du joueur) :** pseudo, voiture et position sont envoyés aux seuls joueurs de la session, le temps de la session, sans stockage en ligne. La connexion est directe : chaque joueur voit l'adresse IP des autres. Mode « même Wi-Fi » par défaut, sans serveur tiers ; le mode « Internet » utilise un serveur STUN public de Google (hors UE), qui voit l'adresse IP. L'écran l'explique avant toute connexion et conseille un pseudo qui n'est pas le vrai nom. Analyse à faire valider par le DPO / conseil avant une diffusion large.
-- **Contenu assisté par IA :** jeu conçu et codé avec l'assistance d'une IA (Claude) ; logo et visuels créés avec des outils d'IA. Mention affichée dans l'écran d'aide du jeu.
+- **Contenu assisté par IA :** jeu conçu et codé avec l'assistance d'une IA (Claude), carrosseries générées par script dans Blender ; logo et visuels créés avec des outils d'IA. Mention affichée dans l'écran d'aide du jeu.
 - Monnaie du jeu fictive, sans achat réel.
 
 <div align="center">

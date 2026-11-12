@@ -8,16 +8,19 @@
     "build": "node build.mjs",
     "build:local": "node build.mjs --local",
     "test": "node --test tests/*.test.js",
-    "check": "npm test && npm run build"
+    "lint": "eslint src tests tools build.mjs",
+    "format": "prettier --write \"src/**/*.js\" \"tests/*.js\" \"tools/**/*.mjs\" build.mjs",
+    "check": "npm run lint && npm test && npm run build",
+    "smoke": "node build.mjs --local && node tools/smoke.mjs",
+    "models": "python3 tools/models/build_cars.py"
   },
   "devDependencies": {
-    "acorn": "^8.19.0",
-    "acorn-walk": "^8.3.5",
     "esbuild": "^0.28.2",
     "eslint": "^10.14.0",
-    "eslint-scope": "^9.1.2",
     "globals": "^17.14.0",
-    "magic-string": "^1.4.5",
     "prettier": "^3.10.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

@@ -696,8 +696,12 @@ export function buildCar(kind, look) {
   const kit = look.brakes | 0;
   const wg = wheelGeos(look.rimStyle || 'six', R, d.rr, d.tw, lod, kit);
   const wMats = {
-    tire: keep(new THREE.MeshStandardMaterial({ color: 0x19191b, roughness: 0.92, metalness: 0 })),
-    rim: keep(new THREE.MeshStandardMaterial({ color: look.rim, metalness: 0.8, roughness: 0.26 })),
+    tire: keep(
+      new THREE.MeshStandardMaterial({ color: 0x0e0e10, roughness: 0.88, metalness: 0, envMapIntensity: 0.35 }),
+    ),
+    rim: keep(
+      new THREE.MeshStandardMaterial({ color: look.rim, metalness: 0.9, roughness: 0.24, envMapIntensity: 1.3 }),
+    ),
     dark: mats.trim,
     // disques : rougeoient quand ils chauffent (state.brakeTemp)
     disc: keep(
