@@ -18,6 +18,7 @@ En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `ma
 - **Déterminisme Blender** : ne jamais dédoublonner des arêtes avec `set()` avant un `bevel` (l'ordre des sommets change d'une exécution à l'autre). `dict.fromkeys`.
 - **`game` masqué** : ne pas nommer une variable locale `game` dans `src/game/`.
 - **Playwright** : le tactile et la densité de pixels se règlent sur le contexte (`newContext`), pas sur la page.
+- **Vercel** : le site est statique. `vercel.json` désactive l'installation et le build (sinon Vercel lance `npm run build` et cherche un dossier `public` : déploiement en erreur). `index.html` commité fait foi.
 - **Poids** : `index.html` passe de 0,47 à 1,7 Mo (modèles en base64). Piste d'allègement non faite : compresser les `.bin` (deflate, −34 %) et les décompresser au démarrage.
 
 ## Non vérifié (hors de portée de l'environnement)
