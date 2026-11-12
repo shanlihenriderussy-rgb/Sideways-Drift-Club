@@ -18,7 +18,7 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 # emplacements de matériau : l'indice est écrit par sommet dans le fichier exporté
-MATS = ['paint_side', 'paint_top', 'paint_plain', 'glass', 'trim', 'chrome', 'head', 'tail', 'lens', 'amber']
+MATS = ['paint_side', 'paint_top', 'paint_plain', 'glass', 'trim', 'chrome', 'head', 'tail', 'lens', 'amber', 'carbon']
 MI = {n: i for i, n in enumerate(MATS)}
 
 
@@ -624,8 +624,9 @@ def hemisphere(n, seed=7):
     return out
 
 
-def bake_ao(objects, S, samples=40, reach=1.1):
-    """Écrit l'attribut 'ao' (0 = caché, 1 = dégagé) sur chaque sommet des objets."""
+def bake_ao(objects, S, samples=40, reach=1.1, targets=None):
+    """Écrit l'attribut 'ao' (0 = caché, 1 = dégagé) sur chaque sommet des cibles (par défaut : tous les objets).
+    objects : tout ce qui fait de l'ombre."""
     occ = bmesh.new()
     for ob in objects:
         base = len(occ.verts)
@@ -654,7 +655,7 @@ def bake_ao(objects, S, samples=40, reach=1.1):
     tree = BVHTree.FromBMesh(occ)
     occ.free()
     dirs = hemisphere(samples)
-    for ob in objects:
+    for ob in (targets or objects):
         me = ob.data
         attr = me.attributes.get('ao') or me.attributes.new('ao', 'FLOAT', 'POINT')
         for v in me.vertices:
@@ -719,31 +720,37 @@ def pack_lod(objects):
     return info, vb, ib
 
 
-def export_car(path, lods, meta):
-    """Écrit le fichier : « SDCM », longueur de l'en-tête, en-tête JSON, puis les blocs de chaque niveau de détail.
-    lods : listes d'objets, du niveau le plus fin au plus léger."""
-    blob, infos = bytearray(), []
-    for objects in lods:
+def export_car(path, lods, meta, parts=None):
+    """Écrit le fichier : « SDCM », longueur de l'en-tête, en-tête JSON, puis les blocs.
+    lods : listes d'objets, du niveau le plus fin au plus léger. parts : { nom: objet } (pièces de l'atelier)."""
+    blob = bytearray()
+
+    def block(objects):
         info, vb, ib = pack_lod(objects)
-        info['vOff'] = len(blob); blob += vb
-        info['iOff'] = len(blob); blob += ib
-        infos.append(info)
+        info['vOff'] = len(blob)
+        blob.extend(vb)
+        info['iOff'] = len(blob)
+        blob.extend(ib)
+        return info
+
+    infos = [block(objects) for objects in lods]
+    pinfo = {name: block([ob]) for name, ob in (parts or {}).items()}
     head = dict(meta)
-    head.update({'v': 2, 'mats': MATS, 'lods': infos})
+    head.update({'v': 3, 'mats': MATS, 'lods': infos, 'parts': pinfo})
     js = json.dumps(head, separators=(',', ':')).encode('utf8')
     js += b' ' * ((4 - len(js) % 4) % 4)
     with open(path, 'wb') as f:
         f.write(struct.pack('<4sI', b'SDCM', len(js)))
         f.write(js)
         f.write(blob)
-    return infos, 8 + len(js) + len(blob)
+    return infos, pinfo, 8 + len(js) + len(blob)
 
 
 # ---------- aperçu (rendu Cycles) ----------
 PREVIEW_MATS = {
     'paint_side': ((0.82, 0.83, 0.80, 1), 0.0, 0.32, 1.0), 'paint_top': ((0.82, 0.83, 0.80, 1), 0.0, 0.32, 1.0), 'paint_plain': ((0.82, 0.83, 0.80, 1), 0.0, 0.32, 1.0),
     'glass': ((0.015, 0.02, 0.025, 1), 1.0, 0.04, 0.0), 'trim': ((0.02, 0.02, 0.02, 1), 0.1, 0.6, 0.0), 'chrome': ((0.8, 0.8, 0.82, 1), 1.0, 0.15, 0.0),
-    'head': ((1.0, 0.97, 0.9, 1), 0.2, 0.15, 0.0), 'tail': ((0.55, 0.02, 0.02, 1), 0.2, 0.2, 0.0), 'lens': ((0.6, 0.65, 0.7, 1), 0.9, 0.08, 0.0), 'amber': ((1.0, 0.45, 0.05, 1), 0.2, 0.2, 0.0),
+    'carbon': ((0.03, 0.03, 0.035, 1), 0.4, 0.3, 0.6), 'head': ((1.0, 0.97, 0.9, 1), 0.2, 0.15, 0.0), 'tail': ((0.55, 0.02, 0.02, 1), 0.2, 0.2, 0.0), 'lens': ((0.6, 0.65, 0.7, 1), 0.9, 0.08, 0.0), 'amber': ((1.0, 0.45, 0.05, 1), 0.2, 0.2, 0.0),
 }
 
 

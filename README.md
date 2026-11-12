@@ -16,7 +16,7 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-vanilla-f7d154?style=flat-square&logo=javascript&logoColor=black)
 ![Web Audio](https://img.shields.io/badge/Web%20Audio-son%20synth%C3%A9tis%C3%A9-7b8cff?style=flat-square)
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?style=flat-square&logo=pwa)
-![Tests](https://img.shields.io/badge/tests-130%2F130-2ea44f?style=flat-square&logo=nodedotjs&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-133%2F133-2ea44f?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Blender](https://img.shields.io/badge/Blender-carrosseries-e87d0d?style=flat-square&logo=blender&logoColor=white)
 ![Vercel](https://img.shields.io/badge/d%C3%A9ploy%C3%A9-Vercel-000000?style=flat-square&logo=vercel)
 ![Données](https://img.shields.io/badge/donn%C3%A9es%20perso-aucune-2ea44f?style=flat-square)
@@ -92,7 +92,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 
 **Moteur et rendu**
 - **Three.js r128** (cdnjs) : scène, `InstancedMesh`, shaders précompilés
-- Carrosseries **modélisées dans Blender par script** (surface de subdivision, occlusion ambiante par sommet, 2 niveaux de détail) ; décors et ciels procéduraux
+- Carrosseries, ailerons et rétroviseurs **modélisés dans Blender par script** (surface de subdivision, arêtes biseautées, occlusion ambiante par sommet, 2 niveaux de détail) ; décors et ciels procéduraux
 - Peinture vernie (clearcoat), reflets par cubemap peinte texel par texel
 - Résolution dynamique et paliers de qualité auto
 
@@ -115,7 +115,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 </td><td>
 
 **Qualité et livraison**
-- Tests `node:test` (130) : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, aventure
+- Tests `node:test` (133) : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, aventure
 - ESLint (tout nom utilisé est importé), Prettier, CI GitHub Actions
 - Bancs d'essai **Playwright** : fumée de bout en bout, bot pilote, perf, CPU ralenti
 - Build : **esbuild** suit les imports depuis `src/main.js` et produit **un seul `index.html`**
@@ -181,7 +181,7 @@ Ouvre `http://localhost:3000` (ou `:8000`). Un simple double-clic sur `index.htm
 mkdir -p vendor
 curl -o vendor/three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js
 npm run build:local            # test.html, Three.js depuis vendor/
-npm test                       # 130 tests
+npm test                       # 133 tests
 npm run smoke                  # fumée de bout en bout (Playwright) : run, atelier, île, multijoueur
 ```
 
@@ -202,6 +202,7 @@ npm run smoke                  # fumée de bout en bout (Playwright) : run, atel
    pip install bpy                                         # Blender en module Python
    python3 tools/models/build_cars.py kouki --preview out/ # une voiture + rendus Cycles de contrôle
    python3 tools/models/build_cars.py --blend out/         # les .blend, pour une retouche à la main
+   python3 tools/models/build_cars.py kouki --preview out/ --show wing_swan,mirror_aero   # choisir les pièces montrées
    npm run models && npm test                              # les trois voitures, puis tests/models.test.js
    ```
 7. **Rafraîchir les visuels** de cette page si l'interface a changé :
@@ -250,7 +251,8 @@ Modules ES, imports explicites. `src/main.js` initialise les modules du jeu dans
 | `src/ui/` | `page.html` (gabarit), `styles.css`, `markup.html`, `shop.js` (atelier) |
 | `src/audio/` | `sound.js` : moteur, turbo, crissement synthétisés (Web Audio) |
 | `assets/models/` | Carrosseries exportées de Blender (`*.bin` : demi-modèle, 2 niveaux de détail, lignes de caisse) |
-| `tools/models/` | Générateur Blender : `carlib.py` (cage, vitrages, joints, optiques, occlusion, export), `cars.py` (fiches de style), `build_cars.py` |
+| `tools/models/` | Générateur Blender : `carlib.py` (cage, vitrages, joints, optiques, occlusion, export), `cars.py` (fiches de style), `parts.py` (ailerons, rétroviseurs), `build_cars.py` |
+| `.claude/skills/impeccable/` | Skill de design d'interface [Impeccable](https://github.com/pbakaus/impeccable) (Apache 2.0) : `/impeccable critique`, `polish`, `audit`… pour le travail sur l'UI avec Claude Code |
 | `tools/` | `smoke.mjs` (fumée de bout en bout), `bench-physics.mjs`, `bench-perf.mjs`, `bot-run.mjs`, `shots-cars.mjs`, visuels du README ; `lib/harness.mjs` (Playwright, pilote automatique) |
 | `tests/` | `npm test` : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, fantôme, moments forts, aventure |
 | `build.mjs` | esbuild + assemblage du fichier unique (`index.html`, ou `test.html` hors ligne) |

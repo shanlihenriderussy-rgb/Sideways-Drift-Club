@@ -10,3 +10,4 @@ package.json
 package-lock.json
 build.mjs
 eslint.config.js
+.claude
