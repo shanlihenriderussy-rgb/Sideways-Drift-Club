@@ -1,7 +1,38 @@
 # Handoff — Sideways Drift Club
 
-Date : 2026-10-25 · Branche : `claude/fervent-goldberg-dpmk48` (île vivante, multijoueur) · précédente : `claude/affectionate-cerf-wzgah4` (précédente : `claude/optimistic-fermi-xni0xz`) (dépôt `shanlihenriderussy-rgb/Sideways-Drift-Club`)
-En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `main`, commit `d02ae0d`) · Artifact privé : https://claude.ai/artifact/GWQqXoGW5RECCCmMESYCtL (v3, même build)
+Date : 2026-11-12 · Branche : `claude/keen-fermat-6ff9bz` (refactor en modules ES, multijoueur fluide, carrosseries Blender) (dépôt `shanlihenriderussy-rgb/Sideways-Drift-Club`)
+En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `main`)
+
+## Refonte du 2026-11-12 (à lire d'abord)
+- **Modules ES** : `src/` n'est plus une concaténation de scripts à noms globaux. 53 modules, imports explicites, bundle esbuild depuis `src/main.js`. L'ancien `game.js` (2 746 lignes) est découpé en 22 modules sous `src/game/`.
+- **Deux règles de structure dans `src/game/`** :
+  1. chaque module exporte `init()` pour son code de démarrage ; `main.js` les appelle dans l'ordre. Rien ne s'exécute à l'import (les imports peuvent donc être circulaires sans risque).
+  2. une variable réaffectée depuis plusieurs modules vit dans `game/state.js` (`game.phase`, `game.player`…). Un `export let` n'est écrit que par son propre module.
+- **Correspondance des anciens fichiers** : physics/track/ai/ghost/replay → `sim/` ; economy/story → `progress/` ; net → `net/` ; island/isleai → `island/` ; world/car/fx → `render/` ; audio → `audio/` ; shop + head.html + body.html → `ui/`.
+- **Voitures** : la caisse vient de `assets/models/<voiture>.bin`, produit par `tools/models/build_cars.py` (Blender en module Python : `pip install bpy`). Les pièces de l'atelier restent posées par `render/car/index.js`, à partir des lignes de caisse stockées dans le fichier (`bodyLines`). Le kit large est une déformation calculée au chargement (`kitShift`), pas une donnée du fichier.
+- **Multijoueur** : `net/interp.js` remplace l'interpolation linéaire à retard fixe. Envoi à 30 Hz en roulant.
+- **Outils** : `tools/*.mjs` partagent `tools/lib/harness.mjs`. `npm run smoke` = fumée de bout en bout. L'ancien banc audio n'a pas été porté (il lisait `Sound._debug` en global).
+
+## Pièges nouveaux
+- **Sens des faces à l'export Blender** : Cycles ne masque pas les faces arrière, le jeu si. Un bouclier à l'envers est invisible dans le rendu de contrôle et troue la voiture en jeu. `tests/models.test.js` vérifie l'orientation : le lancer après tout changement de `carlib.py`.
+- **Déterminisme Blender** : ne jamais dédoublonner des arêtes avec `set()` avant un `bevel` (l'ordre des sommets change d'une exécution à l'autre). `dict.fromkeys`.
+- **`game` masqué** : ne pas nommer une variable locale `game` dans `src/game/`.
+- **Playwright** : le tactile et la densité de pixels se règlent sur le contexte (`newContext`), pas sur la page.
+- **Vercel** : le site est statique. `vercel.json` désactive l'installation et le build (sinon Vercel lance `npm run build` et cherche un dossier `public` : déploiement en erreur). `index.html` commité fait foi.
+- **Poids** : `index.html` passe de 0,47 à 1,7 Mo (modèles en base64). Piste d'allègement non faite : compresser les `.bin` (deflate, −34 %) et les décompresser au démarrage.
+
+## Non vérifié (hors de portée de l'environnement)
+- Images par seconde et temps de chargement des nouvelles carrosseries sur un Android milieu de gamme (rendu logiciel ici).
+- Multijoueur sur de vrais téléphones (Wi-Fi puis 4G) : la fluidité est mesurée en simulation de réseau seulement.
+- Bannière du README : rendue avec la police de repli si Google Fonts est bloqué (vérifier le message de `readme-banner.mjs`).
+
+## Prochaine tranche
+1. Essai réel à deux téléphones : fps avec les carrosseries fines, fluidité des voitures distantes, temps de chargement en 4G.
+2. Si le chargement est trop long : compression des modèles (voir Pièges), ou niveau fin allégé.
+3. Voitures : rétroviseurs, ailerons et lames encore posés en formes simples côté jeu ; les modéliser dans Blender comme la caisse.
+
+---
+*Ce qui suit date d'avant la refonte : les décisions de jeu restent valables, les chemins de fichiers sont les anciens (voir la correspondance ci-dessus).*
 
 ## État
 Jeu de drift mobile en 3D, inspiré de FR Legends. Une seule page HTML autonome, avec Three.js r128 chargé depuis cdnjs.

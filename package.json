@@ -1,0 +1,26 @@
+{
+  "name": "sideways-drift-club",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Jeu de drift 3D dans le navigateur — un seul fichier HTML, zéro dépendance en production.",
+  "scripts": {
+    "build": "node build.mjs",
+    "build:local": "node build.mjs --local",
+    "test": "node --test tests/*.test.js",
+    "lint": "eslint src tests tools build.mjs",
+    "format": "prettier --write \"src/**/*.js\" \"tests/*.js\" \"tools/**/*.mjs\" build.mjs",
+    "check": "npm run lint && npm test && npm run build",
+    "smoke": "node build.mjs --local && node tools/smoke.mjs",
+    "models": "python3 tools/models/build_cars.py"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

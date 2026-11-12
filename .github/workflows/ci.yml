@@ -1,0 +1,24 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint (imports, noms non définis)
+        run: npm run lint
+      - name: Tests
+        run: npm test
+      - name: Build et vérification que index.html est à jour
+        run: |
+          npm run build
+          git diff --exit-code index.html || (echo "index.html n'est pas à jour : lancer « npm run build » et committer" && exit 1)

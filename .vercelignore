@@ -1,0 +1,12 @@
+node_modules
+src
+tests
+tools
+docs
+vendor
+assets/models
+*.md
+package.json
+package-lock.json
+build.mjs
+eslint.config.js
