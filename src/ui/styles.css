@@ -115,6 +115,10 @@ button { font: inherit; color: inherit; }
 .best b { display: block; color: var(--fg); font-size: 16px; font-weight: 700; letter-spacing: 0; text-transform: none; }
 .opt[aria-pressed="true"] .best b { color: var(--accent); }
 .row-end { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+/* choix de session : Retour / Départ restent visibles, la liste des pistes défile dessous */
+#select .row-end { position: sticky; bottom: -24px; margin: 0 -24px -24px; padding: 12px 24px max(14px, env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(12,14,17,0), rgba(12,14,17,.97) 28%); z-index: 2; }
+#select .track-list { margin-bottom: 6px; }
+@media (orientation: landscape) and (max-height: 560px) { #select .row-end { bottom: -16px; margin: 0 -20px -16px 0; padding: 10px 20px 14px 0; } }
 
 /* ---------- atelier ---------- */
 #garage { justify-content: flex-end; align-items: stretch; }
@@ -218,6 +222,15 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
 .help-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
 .help-grid div { background: var(--s2); border: 1px solid var(--hair); border-radius: var(--r); padding: 14px; font-size: 13.5px; line-height: 1.5; color: var(--fg-2); }
 .help-grid b { display: block; color: var(--fg); font-stretch: 115%; font-weight: 800; font-size: 15px; margin-bottom: 4px; }
+/* aide : version courte au premier lancement (trois gestes, une ligne chacun, sans défiler en paysage) ; le détail à la demande */
+#help:not(.brief) .short, #help:not(.brief) #helpMore { display: none; }
+#help.brief .long, #help.brief .more, #help.brief .help-grid .more, #help.brief .sub { display: none; }
+#help.brief .help-grid { grid-template-columns: 1fr; gap: 0; margin: 14px 0 16px; }
+#help.brief .help-grid div { background: none; border: 0; border-radius: 0; border-top: 1px solid var(--hair); padding: 10px 0; display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 12px; align-items: baseline; font-size: 14.5px; color: var(--fg); }
+#help.brief .help-grid div:nth-last-child(2) { border-bottom: 1px solid var(--hair); }
+#help.brief .help-grid b { margin: 0; }
+.help-acts { display: flex; gap: 10px; margin-left: auto; }
+@media (max-width: 460px) { #help.brief .help-grid div { grid-template-columns: 1fr; gap: 2px; } }
 .k-clip { color: var(--clip); font-weight: 650; } .k-apex { color: var(--apex); font-weight: 650; }
 @media (max-width: 460px) { .help-grid { grid-template-columns: 1fr; } }
 
@@ -555,6 +568,9 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
 .mp .step h3 { margin: 0; font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
 
 /* en jeu : les messages prennent la place du bandeau d'objectif le temps de s'afficher, au lieu de le recouvrir */
+/* écran titre : sous le solde en paysage, sous le bloc de titre en portrait — jamais sur le logotype */
+#toasts[data-screen="menu"] { left: auto; right: max(16px, env(safe-area-inset-right)); transform: none; justify-items: end; width: auto; max-width: 46vw; top: calc(max(14px, env(safe-area-inset-top)) + 46px); }
+@media (orientation: portrait) { #toasts[data-screen="menu"] { left: 50%; right: auto; transform: translateX(-50%); justify-items: center; width: min(92vw, 520px); max-width: none; top: calc(max(12px, env(safe-area-inset-top)) + 208px); } }
 #hud:not([hidden]) ~ #toasts { top: calc(max(12px, env(safe-area-inset-top)) + 80px); }
 .hud-goal { transition: opacity .2s; }
 body.toasting .hud-goal { opacity: 0; }

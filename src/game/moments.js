@@ -272,6 +272,12 @@ const go = (id) => () => {
   Sound.ui();
   show(id);
 };
+// brief : premier lancement, trois gestes sur un écran puis le choix de session ; sinon l'aide complète
+function openHelp(brief) {
+  $('help').classList.toggle('brief', brief);
+  $('helpGo').textContent = brief ? 'Choisir ma session' : 'Compris';
+  show('help');
+}
 function openSelect() {
   buildTrackList();
   pressGroup(document.querySelector('#select .modes'), 'data-mode', game.mode);
@@ -340,7 +346,7 @@ export function init() {
       game.helpSeen = true;
       store.set('seenHelp', true);
       game.helpThenSelect = true;
-      show('help');
+      openHelp(true);
       return;
     }
     openSelect();
@@ -368,7 +374,14 @@ export function init() {
     show('settings');
   });
   $('layoutBtn').addEventListener('click', openLayoutEditor);
-  $('helpBtn').addEventListener('click', go('help'));
+  $('helpBtn').addEventListener('click', () => {
+    Sound.ui();
+    openHelp(false);
+  });
+  $('helpMore').addEventListener('click', () => {
+    Sound.ui();
+    $('help').classList.remove('brief');
+  });
   $('advBtn').addEventListener('click', () => {
     Sound.ui();
     ensureAudio();

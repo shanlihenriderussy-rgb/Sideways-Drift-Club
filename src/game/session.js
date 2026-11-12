@@ -34,6 +34,7 @@ export function show(id) {
   screenId = id;
   if (id) $('prompt').hidden = true;
   for (const s of document.querySelectorAll('.screen')) s.hidden = s.id !== id;
+  $('toasts').dataset.screen = id || ''; // la place des toasts dépend de l'écran (jamais sur le logotype du titre)
   const scr = id && $(id);
   if (scr) {
     const f = scr.querySelector('.btn.primary, button');
