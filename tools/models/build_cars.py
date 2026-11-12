@@ -4,6 +4,7 @@
     python tools/models/build_cars.py                 # les trois voitures
     python tools/models/build_cars.py kouki --preview out/   # une voiture + rendus Cycles de contrôle
     python tools/models/build_cars.py --blend out/    # enregistre aussi les .blend pour retouche à la main
+    python tools/models/build_cars.py kouki --preview out/ --show wing_swan,mirror_aero   # choisir les pièces montrées
 """
 import math
 import os
@@ -14,10 +15,12 @@ import bpy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import carlib as C  # noqa: E402
 from cars import CARS, details  # noqa: E402
+from parts import build_parts  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 OUT = os.path.join(ROOT, 'assets', 'models')
 N_PROFILE, N_SURF_Z = 56, 14
+SHOW = None
 
 
 def tables(S, bvh):
@@ -85,14 +88,22 @@ def build(kind, preview=None, blend=None):
         if levels == 2:
             keep = (S, objs, lamps)
     S, objs, lamps = keep
+    parts = build_parts(S, objs[0])
+    for ob in parts.values():
+        C.bake_ao(objs + [ob], S, samples=32, targets=[ob])
     meta = {k: v for k, v in d.items() if isinstance(v, (int, float, str, bool))}
     meta.update({'X0': round(S.X0, 4), 'X1': round(S.X1, 4), 'ws0': round(S.ws0, 4), 'ws1': round(S.ws1, 4), 'AR': round(S.AR, 4), 'lamps': lamps})
     meta.update(tables(S, C.bvh_of([objs[0]])))
-    infos, size = C.export_car(os.path.join(OUT, kind + '.bin'), lods, meta)
+    infos, pinfo, size = C.export_car(os.path.join(OUT, kind + '.bin'), lods, meta, parts)
     print(f"{kind}: " + ' | '.join(f"{i['verts']} sommets, {i['tris'] * 2} triangles" for i in infos) + f" · {size / 1024:.0f} Ko")
+    print('  pièces : ' + ', '.join(f"{n} {i['tris'] * 2}" for n, i in pinfo.items()))
     for o in lods[1:]:  # ne garder dans la scène que le niveau fin (aperçu, .blend)
         for ob in o:
             bpy.data.objects.remove(ob)
+    shown = set(SHOW.split(',')) if SHOW else {'wing_' + d['wing'], 'mirror_stock'}
+    for name, ob in parts.items():
+        if name not in shown:
+            ob.hide_render = True
     if blend:
         os.makedirs(blend, exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(os.path.join(blend, kind + '.blend')))
@@ -105,6 +116,7 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     opt = lambda k: args[args.index(k) + 1] if k in args else None
     preview, blend = opt('--preview'), opt('--blend')
+    SHOW = opt('--show')  # pièces visibles dans l'aperçu, ex. wing_swan,mirror_aero
     kinds = [a for a in args if a in CARS] or list(CARS)
     os.makedirs(OUT, exist_ok=True)
     for kind in kinds:

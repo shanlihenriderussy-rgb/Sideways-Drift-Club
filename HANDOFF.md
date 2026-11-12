@@ -13,7 +13,12 @@ En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `ma
 - **Multijoueur** : `net/interp.js` remplace l'interpolation linéaire à retard fixe. Envoi à 30 Hz en roulant.
 - **Outils** : `tools/*.mjs` partagent `tools/lib/harness.mjs`. `npm run smoke` = fumée de bout en bout. L'ancien banc audio n'a pas été porté (il lisait `Sound._debug` en global).
 
+## Ajouts du 2026-11-12 (suite)
+- **Ailerons et rétroviseurs dans Blender** (`tools/models/parts.py`) : becquet, GT, col de cygne, arche, lèvre de toit ; rétros d'origine, aéro, d'aile. Chaque voiture porte ses pièces dans son `.bin` (`meta.parts`), posées sur sa caisse et ombrées contre elle. Côté jeu : `addPart('wing_gt')` dans `render/car/index.js`. Restent en formes simples côté jeu : lames, canards, jupes, diffuseur, écope, galerie, arceau, sièges.
+- **Skill Impeccable** (`.claude/skills/impeccable/`, v4.8.2, Apache 2.0) : chargé au démarrage d'une session Claude Code, puis `/impeccable <commande> <cible>`. Installé sans ses hooks. Son lanceur (`scripts/impeccable`) télécharge un binaire à la première utilisation : il n'a pas été exécuté ; sans lui le skill fonctionne en lisant `PRODUCT.md` / `DESIGN.md` directement (à créer : `/impeccable init`, `/impeccable document`).
+
 ## Pièges nouveaux
+- **Pièce qui traverse l'axe** (aileron) : la construire avec un anneau de sommets en z = 0, sinon l'export garde des faces à cheval et le miroir les double.
 - **Sens des faces à l'export Blender** : Cycles ne masque pas les faces arrière, le jeu si. Un bouclier à l'envers est invisible dans le rendu de contrôle et troue la voiture en jeu. `tests/models.test.js` vérifie l'orientation : le lancer après tout changement de `carlib.py`.
 - **Déterminisme Blender** : ne jamais dédoublonner des arêtes avec `set()` avant un `bevel` (l'ordre des sommets change d'une exécution à l'autre). `dict.fromkeys`.
 - **`game` masqué** : ne pas nommer une variable locale `game` dans `src/game/`.

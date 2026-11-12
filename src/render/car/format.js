@@ -3,6 +3,7 @@
 // Fichier : « SDCM », longueur de l'en-tête (uint32), en-tête JSON, puis pour chaque niveau de détail
 //   sommets  : 12 octets — position 3 × uint16 (dans la boîte min/size), normale 3 × int8, occlusion uint8, matière uint8
 //   indices  : uint16 (ou uint32)
+// Après les niveaux de détail viennent les pièces de l'atelier (ailerons, rétroviseurs), une par nom, même format.
 // Seule la moitié droite (z ≥ 0) est stockée : expand() refait le miroir. Le kit large n'est pas stocké : c'est une
 // déformation calculée ici à partir des lignes de la caisse (les flancs s'écartent autour des passages de roue).
 
@@ -16,7 +17,7 @@ export function decodeModel(buffer) {
   const headLen = view.getUint32(4, true);
   const meta = JSON.parse(new TextDecoder().decode(bytes.subarray(8, 8 + headLen)));
   const base = 8 + headLen;
-  const lods = meta.lods.map((L) => {
+  const block = (L) => {
     const n = L.verts;
     const pos = new Float32Array(n * 3),
       nor = new Float32Array(n * 3),
@@ -36,8 +37,12 @@ export function decodeModel(buffer) {
     for (let i = 0; i < count; i++)
       index[i] = L.index32 ? view.getUint32(base + L.iOff + i * 4, true) : view.getUint16(base + L.iOff + i * 2, true);
     return { verts: n, pos, nor, ao, mat, index, groups: L.groups };
-  });
-  return { meta, lods };
+  };
+  const lods = meta.lods.map(block);
+  // pièces de l'atelier (ailerons, rétroviseurs) : un bloc par nom
+  const parts = {};
+  for (const [name, L] of Object.entries(meta.parts || {})) parts[name] = block(L);
+  return { meta, lods, parts };
 }
 
 // Écartement du kit large en un point de la caisse (m) : plein sur les flancs, 30 % au-dessus de la ligne d'épaule
@@ -54,8 +59,19 @@ export function kitShift(lines, kit, x, y, z) {
 // Demi-modèle → modèle complet : sommets dupliqués en z → −z, triangles retournés. kit : élargissement (m).
 // Renvoie un bloc par matière : { pos, nor, ao, mat (indice de matière par sommet), index }.
 export function expand(model, lodIndex, kit = 0) {
-  const L = model.lods[Math.min(lodIndex, model.lods.length - 1)];
-  const lines = kit ? bodyLines(model.meta, kit) : null;
+  return expandBlock(
+    model.lods[Math.min(lodIndex, model.lods.length - 1)],
+    kit ? bodyLines(model.meta, kit) : null,
+    kit,
+  );
+}
+
+// Une pièce de l'atelier, par son nom (« wing_gt », « mirror_stock »…) ; null si la voiture ne l'a pas.
+export function expandPart(model, name) {
+  return model.parts[name] ? expandBlock(model.parts[name], null, 0) : null;
+}
+
+function expandBlock(L, lines, kit) {
   const out = {};
   for (const g of L.groups) {
     // sommets utilisés par ce groupe, renumérotés

@@ -7,3 +7,4 @@ src/ui/page.html
 docs/
 *.md
 package-lock.json
+.claude/

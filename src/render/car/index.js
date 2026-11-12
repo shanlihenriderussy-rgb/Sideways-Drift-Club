@@ -8,7 +8,7 @@ import hachiBin from '../../../assets/models/hachi.bin';
 import koukiBin from '../../../assets/models/kouki.bin';
 import raijinBin from '../../../assets/models/raijin.bin';
 import { bake, isDarkHex, joinGeos, loft, quadGeo, tube } from '../geometry.js';
-import { bodyLines, decodeModel, expand } from './format.js';
+import { bodyLines, decodeModel, expand, expandPart } from './format.js';
 import { ATLAS, atlasUV, carbonTexture, glowTexture, paintLivery } from './livery.js';
 import { wheelGeos } from './wheels.js';
 
@@ -32,8 +32,7 @@ const DECO = { lens: [0.62, 0.66, 0.72], amber: [1.0, 0.42, 0.04] };
 const AO_FLOOR = 0.32; // l'occlusion ne descend pas au noir : le sol renvoie toujours un peu de lumière
 
 // Caisse du modèle → géométries par matière du jeu, avec les coordonnées de livrée et l'occlusion en couleur de sommet.
-function bodyGeos(model, lodIndex, kit, X0, L, wT0) {
-  const blocks = expand(model, lodIndex, kit);
+function blockGeos(blocks, X0, L, wT0) {
   const out = new Map();
   const push = (key, g) => {
     if (!out.has(key)) out.set(key, []);
@@ -54,6 +53,9 @@ function bodyGeos(model, lodIndex, kit, X0, L, wT0) {
       } else if (name === 'paint_top') {
         uv[i * 2] = (x - X0) / L;
         uv[i * 2 + 1] = 0.5 + 0.2 * Math.max(-1, Math.min(1, z / wT0));
+      } else if (name === 'carbon') {
+        uv[i * 2] = x * 4; // trame de carbone : motif répété
+        uv[i * 2 + 1] = z * 4;
       } else {
         uv[i * 2] = ATLAS.plain[0];
         uv[i * 2 + 1] = ATLAS.plain[1];
@@ -106,7 +108,7 @@ export function buildCar(kind, look) {
   const sF = section(X1 - 0.08),
     sR = section(X0 + 0.08);
 
-  const parts = bodyGeos(model, lod ? 0 : 1, wide, X0, L, wT0); // matière → géométries
+  const parts = blockGeos(expand(model, lod ? 0 : 1, wide), X0, L, wT0); // matière → géométries
   const add = (key, geo) => {
     if (!parts.has(key)) parts.set(key, []);
     parts.get(key).push(geo);
@@ -217,37 +219,16 @@ export function buildCar(kind, look) {
     for (const [a, b] of tubes) add('cage', tube(a, b, 0.022, 6));
   }
 
-  // ---------- rétroviseurs : coque profilée sur un pied, au coin de la vitre de porte ----------
-  for (const sz of [-1, 1]) {
-    const shell = (rx, ry, rz) => {
-      const g = new THREE.SphereGeometry(1, lod ? 14 : 8, lod ? 10 : 6);
-      g.scale(rx, ry, rz);
-      return g;
-    };
-    if (look.mirror === 'fender') {
-      // rétros d'aile JDM : petit miroir noir sur tige fine, au-dessus de la roue avant
-      const x = fa + 0.18,
-        z = sz * (section(x).wT - 0.04),
-        y = surfY(x, z);
-      add('trim', bake(new THREE.CylinderGeometry(0.007, 0.01, 0.15, 6), x, y + 0.07, z, 0, 0, -0.2));
-      add('trim', bake(shell(0.035, 0.034, 0.05), x - 0.015, y + 0.165, z));
-      continue;
-    }
-    const x = ws0 - 0.2,
-      s = section(x),
-      zf = s.wB - 0.085; // pied de vitre
-    if (look.mirror === 'aero') {
-      // rétro aéro : goutte de carbone sur un bras fin
-      add('carbon', bake(shell(0.085, 0.036, 0.05), x - 0.03, s.yS + 0.1, sz * (zf + 0.15), 0, sz * 0.12, 0));
-      add('trim', bake(new THREE.BoxGeometry(0.05, 0.012, 0.13), x, s.yS + 0.085, sz * (zf + 0.07), sz * 0.25, 0, 0));
-    } else {
-      add(
-        'paint',
-        plainUV(bake(shell(0.07, 0.048, 0.062), x - 0.02, s.yS + 0.085, sz * (zf + 0.105), 0, sz * 0.15, 0)),
-      );
-      add('trim', bake(new THREE.BoxGeometry(0.05, 0.03, 0.07), x + 0.005, s.yS + 0.05, sz * (zf + 0.045)));
-    }
-  }
+  // pièce de l'atelier modélisée dans Blender (aileron, rétroviseurs), rangée par matière avec le reste
+  const addPart = (name) => {
+    const blocks = expandPart(model, name);
+    if (!blocks) return false;
+    for (const [key, list] of blockGeos(blocks, X0, L, wT0)) for (const g of list) add(key, g);
+    return true;
+  };
+
+  // ---------- rétroviseurs ----------
+  addPart('mirror_' + (look.mirror || 'stock')) || addPart('mirror_stock');
 
   // ---------- phares : position des faisceaux ; blocs escamotables relevés la nuit ----------
   const headLamps = [];
@@ -468,133 +449,7 @@ export function buildCar(kind, look) {
 
   // ---------- aileron ----------
   const wing = look.wing === 'stock' || !look.wing ? d.wing : look.wing;
-  const deckAt = (x) => surfY(x, 0);
-  if (wing === 'lip') {
-    const s = section(d.roofEnd);
-    add(
-      'paint',
-      bake(new THREE.BoxGeometry(0.24, 0.035, (s.wT - d.tumble) * 2), d.roofEnd - 0.06, d.roof + 0.0, 0, 0, 0, -0.18),
-    );
-  } else if (wing === 'duck') {
-    const x = X0 + 0.16,
-      s = section(x);
-    const sh = new THREE.Shape();
-    sh.moveTo(0.18, 0);
-    sh.lineTo(-0.16, 0);
-    sh.lineTo(-0.2, 0.09);
-    sh.lineTo(-0.12, 0.08);
-    sh.closePath();
-    const g = new THREE.ExtrudeGeometry(sh, { depth: s.wT * 1.9, bevelEnabled: false });
-    add('paint', g.translate(x, deckAt(x) - 0.01, -s.wT * 0.95));
-  } else if (wing === 'gt' || wing === 'hoop' || wing === 'swan') {
-    const swan = wing === 'swan',
-      hoop = wing === 'hoop';
-    const chord = swan ? 0.36 : 0.32,
-      aoa = -0.12; // incidence : bord de fuite relevé (appui)
-    const x = X0 + (swan ? 0.22 : 0.3),
-      y = d.deck + (swan ? 0.36 : hoop ? 0.24 : 0.3);
-    const span = hoop ? W * 2 - 0.08 : W * 2 - (swan ? 0.04 : 0.25);
-    const bladeMat = hoop ? 'paint' : swan ? 'carbon' : 'trim';
-    const put = (g) => (bladeMat === 'paint' ? plainUV(g) : g);
-    // profil d'aile inversé : extrados plat en haut, ventre bombé en dessous ; bord d'attaque vers l'avant (+x)
-    const foil = (c, t) => {
-      const sh = new THREE.Shape();
-      sh.moveTo(c / 2, 0);
-      for (let i = 1; i <= 12; i++) {
-        const u = i / 12;
-        sh.lineTo(c / 2 - u * c, 0.004 * Math.sin(Math.PI * u));
-      }
-      for (let i = 11; i >= 1; i--) {
-        const u = i / 12;
-        sh.lineTo(c / 2 - u * c, -t * Math.sin(Math.PI * Math.pow(u, 0.6)));
-      }
-      sh.closePath();
-      return new THREE.ExtrudeGeometry(sh, { depth: span, bevelEnabled: false, curveSegments: 4 }).translate(
-        0,
-        0,
-        -span / 2,
-      );
-    };
-    add(bladeMat, put(bake(foil(chord, 0.035), x, y, 0, 0, 0, aoa)));
-    // volet (deuxième élément) au-dessus du bord de fuite, plus incliné
-    const fx = x - chord / 2 + 0.03,
-      fy = y + 0.055;
-    add(bladeMat, put(bake(foil(0.13, 0.016), fx, fy, 0, 0, 0, -0.55)));
-    // dérives : plaques fines qui ferment les extrémités de la lame et du volet
-    const ep = new THREE.Shape();
-    ep.moveTo(chord / 2 + 0.02, -0.045);
-    ep.lineTo(-chord / 2 - 0.02, -0.06);
-    ep.lineTo(-chord / 2 - 0.04, 0.1);
-    ep.lineTo(-chord / 2 + 0.08, 0.1);
-    ep.lineTo(chord / 2 + 0.03, 0.012);
-    ep.closePath();
-    const epMat = hoop ? 'paint' : swan ? 'carbon' : 'trim';
-    for (const sz of [-1, 1]) {
-      const g = new THREE.ExtrudeGeometry(ep, { depth: 0.012, bevelEnabled: false }).translate(
-        0,
-        0,
-        sz > 0 ? 0 : -0.012,
-      );
-      add(epMat, epMat === 'paint' ? plainUV(bake(g, x, y, (sz * span) / 2)) : bake(g, x, y, (sz * span) / 2));
-    }
-    for (const sz of [-1, 1]) {
-      const zs = sz * (span / 2 - (hoop ? 0.02 : swan ? 0.24 : 0.2));
-      if (swan) {
-        // col de cygne : plaque qui part du coffre devant la lame, monte au-dessus et redescend
-        // s'accrocher sur l'extrados (la lame pend sous ses supports)
-        const xb = x + 0.26,
-          yb = surfY(xb, zs) - 0.01;
-        const P0 = [xb, yb],
-          P1 = [xb + 0.02, y + 0.16],
-          P2 = [x + 0.14, y + 0.2],
-          P3 = [x - 0.02, y + 0.012];
-        const bez = (t) => {
-          const u = 1 - t;
-          return [0, 1].map(
-            (k) => u * u * u * P0[k] + 3 * u * u * t * P1[k] + 3 * u * t * t * P2[k] + t * t * t * P3[k],
-          );
-        };
-        const L = [],
-          Rr = [],
-          n = 14;
-        for (let i = 0; i <= n; i++) {
-          const t = i / n,
-            p = bez(t),
-            q = bez(Math.min(1, t + 0.01)),
-            o = bez(Math.max(0, t - 0.01));
-          let tx = q[0] - o[0],
-            ty = q[1] - o[1];
-          const l = Math.hypot(tx, ty) || 1;
-          tx /= l;
-          ty /= l;
-          const w = 0.026 + 0.022 * (1 - t) * (1 - t); // plus large au pied
-          L.push([p[0] - ty * w, p[1] + tx * w]);
-          Rr.push([p[0] + ty * w, p[1] - tx * w]);
-        }
-        const sh = new THREE.Shape();
-        sh.moveTo(...L[0]);
-        for (const q of L.slice(1)) sh.lineTo(...q);
-        for (const q of Rr.reverse()) sh.lineTo(...q);
-        sh.closePath();
-        add(
-          'carbon',
-          new THREE.ExtrudeGeometry(sh, { depth: 0.016, bevelEnabled: false, curveSegments: 2 }).translate(
-            0,
-            0,
-            zs - 0.008,
-          ),
-        );
-        // platine de fixation sur le coffre
-        add('trim', bake(new THREE.BoxGeometry(0.12, 0.012, 0.06), xb, yb + 0.006, zs));
-      } else {
-        const base = surfY(x + 0.02, zs) - 0.01;
-        add(
-          bladeMat,
-          put(bake(new THREE.BoxGeometry(0.12, y - base, 0.035), x + 0.02, (y + base) / 2, zs, 0, 0, hoop ? -0.15 : 0)),
-        );
-      }
-    }
-  }
+  if (wing !== 'none') addPart('wing_' + wing);
 
   // bavettes derrière chaque roue
   if (look.flaps === 'flaps') {
