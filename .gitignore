@@ -2,3 +2,6 @@ node_modules/
 vendor/
 test.html
 shots/
+.impeccable/config.local.json
+.claude/settings.local.json
+__pycache__/

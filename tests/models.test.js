@@ -154,5 +154,21 @@ for (const kind of Object.keys(CAR_SPECS)) {
       }
     }
     assert.equal(expandPart(M, 'wing_inconnu'), null);
+    // phares escamotables relevés : seulement sur la voiture qui en a, posés sur le capot, optique vers l'avant
+    const pop = expandPart(M, 'popup_up');
+    assert.equal(!!pop, d.head === 'popup', 'popup_up');
+    if (pop) {
+      assert.ok(pop.head && pop.paint_plain, 'bloc peint et optique');
+      let xmin = 9,
+        ymin = 9;
+      for (let i = 0; i < pop.head.pos.length; i += 3) {
+        xmin = Math.min(xmin, pop.head.pos[i]);
+        ymin = Math.min(ymin, pop.head.pos[i + 1]);
+      }
+      assert.ok(
+        xmin > d.fa && ymin > B0.surfY(d.lamps[0][0], d.lamps[0][2]) - 0.02,
+        `optique en x ${xmin.toFixed(2)}, y ${ymin.toFixed(2)}`,
+      );
+    }
   });
 }

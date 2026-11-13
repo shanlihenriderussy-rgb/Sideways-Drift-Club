@@ -233,13 +233,7 @@ export function buildCar(kind, look) {
   // ---------- phares : position des faisceaux ; blocs escamotables relevés la nuit ----------
   const headLamps = [];
   for (const [x, y, z] of d.lamps) for (const sz of [1, -1]) headLamps.push({ x, y, z: sz * z });
-  if (d.head === 'popup' && look.night) {
-    for (const h of headLamps) {
-      const y = surfY(h.x, h.z);
-      add('paint', plainUV(bake(new THREE.BoxGeometry(0.3, 0.15, 0.4), h.x, y + 0.04, h.z)));
-      add('head', bake(new THREE.BoxGeometry(0.02, 0.11, 0.32), h.x + 0.155, y + 0.045, h.z));
-    }
-  }
+  if (d.head === 'popup' && look.night) addPart('popup_up');
   if (look.front === 'canard') {
     // canards : deux ailettes carbone par coin de bouclier, sous les phares, inclinées vers l'avant
     for (const sz of [-1, 1])

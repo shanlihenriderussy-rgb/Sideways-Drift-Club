@@ -100,6 +100,7 @@ export function createShop(api) {
       b.setAttribute('aria-selected', String(on));
       b.tabIndex = on ? 0 : -1;
     }
+    requestAnimationFrame(fadeTabs);
     let h = '';
     if (tab === 'car') {
       for (const [k, s] of Object.entries(CAR_SPECS)) {
@@ -185,8 +186,8 @@ export function createShop(api) {
     // toujours une sortie : bouton compact pendant un achat en attente (l'aperçu non payé est abandonné)
     const done = $('shopDone');
     done.classList.toggle('compact', !!info);
-    done.firstElementChild.textContent = info ? '✕' : 'Valider';
-    done.setAttribute('aria-label', info ? 'Fermer l’atelier sans acheter' : 'Valider et fermer l’atelier');
+    done.firstElementChild.textContent = info ? '✕' : 'Reprendre la route';
+    done.setAttribute('aria-label', info ? 'Fermer l’atelier sans acheter' : 'Fermer l’atelier et reprendre la route');
     if (info) {
       const can = P().money >= info.price;
       buy.disabled = !can;
@@ -235,6 +236,14 @@ export function createShop(api) {
   }
 
   // ---------- évènements ----------
+  // rayons hors écran : fondu du côté où il en reste
+  function fadeTabs() {
+    const t = $('shopTabs');
+    t.classList.toggle('more-left', t.scrollLeft > 4);
+    t.classList.toggle('more-right', t.scrollLeft + t.clientWidth < t.scrollWidth - 4);
+  }
+  $('shopTabs').addEventListener('scroll', fadeTabs, { passive: true });
+  addEventListener('resize', fadeTabs);
   $('shopTabs').addEventListener('click', (e) => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;

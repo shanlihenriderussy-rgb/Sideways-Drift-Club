@@ -232,7 +232,20 @@ def mirror_fender(S, M):
     return bm
 
 
-def build_parts(S, body):
+def popup_lamps(S, M, lamps):
+    """Phares escamotables relevés (de nuit) : un bloc profilé par phare, optique encadrée tournée vers l'avant."""
+    bm = bmesh.new()
+    for x, _, z in lamps:
+        y = M.y(x, z)
+        size = (0.30, 0.125, 0.40)
+        c = Vector((x, y + 0.045, z))
+        merge(bm, rounded_box(size, c, 'paint_plain', 0.028, pitch=-0.06))
+        merge(bm, rounded_box((0.014, 0.098, 0.34), Vector((x + 0.146, y + 0.05, z)), 'trim', 0.004))
+        merge(bm, rounded_box((0.012, 0.074, 0.30), Vector((x + 0.153, y + 0.05, z)), 'head', 0.004))
+    return bm
+
+
+def build_parts(S, body, lamps=()):
     """Toutes les pièces d'une voiture : { nom: objet Blender }."""
     M = Mounts(body)
     wings = {'duck': wing_duck, 'gt': wing_gt, 'swan': lambda S, M: wing_gt(S, M, swan=True), 'hoop': wing_hoop, 'lip': wing_lip}
@@ -240,6 +253,8 @@ def build_parts(S, body):
     out = {}
     for name in wanted:
         out['wing_' + name] = wings[name](S, M)
+    if S.d.get('head') == 'popup' and lamps:
+        out['popup_up'] = popup_lamps(S, M, lamps)
     out['mirror_stock'] = mirror_door(S, M)
     out['mirror_aero'] = mirror_door(S, M, aero=True)
     out['mirror_fender'] = mirror_fender(S, M)
