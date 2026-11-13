@@ -64,3 +64,11 @@ test('« Comment jouer » depuis le menu montre l’aide complète, avec la ment
   assert.ok(await page.isVisible('#help .help-grid .more'), 'étape « Encaisser » absente');
   assert.match(await page.textContent('#help .hint'), /assistance d'une IA/);
 });
+
+test('nouveau joueur : le bandeau n’annonce qu’une fois l’absence de record, et tutoie', async () => {
+  const { page } = await B.play();
+  const ticker = await page.textContent('#ticker');
+  assert.equal(ticker.split('Aucun record encore').length - 1, 2, 'une invitation, doublée pour le défilement');
+  assert.doesNotMatch(ticker, /vous|votre/i);
+  assert.match(ticker, /Ta cagnotte/);
+});

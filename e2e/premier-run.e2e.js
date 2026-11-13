@@ -37,6 +37,8 @@ for (const [name, size] of [
     await page.tap('#help [data-back]');
     await page.waitForSelector('#select:not([hidden])');
     await assertInViewport(page, '#goBtn', 'bouton Départ');
+    // nouveau joueur : pas de colonne « Record » vide sur chaque piste
+    assert.equal(await page.$$eval('#trackList .best', (els) => els.length), 0);
     // et il le reste quand on fait défiler la liste des pistes jusqu'en bas
     await page.$eval('#select .card', (el) => el.scrollTo(0, el.scrollHeight));
     await assertInViewport(page, '#goBtn', 'bouton Départ après défilement');

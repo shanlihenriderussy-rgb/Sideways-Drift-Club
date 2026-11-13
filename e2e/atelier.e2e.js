@@ -23,6 +23,24 @@ test('les six rayons s’ouvrent', async () => {
   noErrors(errors);
 });
 
+test('sur téléphone, les rayons hors écran sont signalés par un fondu ; le bouton de sortie dit ce qu’il fait', async () => {
+  const { page } = await B.play();
+  await open(page);
+  await page.waitForFunction(() => document.querySelector('#shopTabs').classList.contains('more-right'), null, {
+    timeout: 5000,
+  });
+  await page.$eval('#shopTabs', (el) => el.scrollTo(el.scrollWidth, 0));
+  await page.waitForFunction(
+    () => {
+      const c = document.querySelector('#shopTabs').classList;
+      return c.contains('more-left') && !c.contains('more-right');
+    },
+    null,
+    { timeout: 5000 },
+  );
+  assert.equal((await page.textContent('#shopDone')).trim(), 'Reprendre la route');
+});
+
 test('acheter des jantes : aperçu, prix annoncé, solde débité, achat conservé à la visite suivante', async () => {
   const { page } = await B.play();
   await open(page);

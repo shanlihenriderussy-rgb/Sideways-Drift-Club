@@ -88,7 +88,7 @@ def build(kind, preview=None, blend=None):
         if levels == 2:
             keep = (S, objs, lamps)
     S, objs, lamps = keep
-    parts = build_parts(S, objs[0])
+    parts = build_parts(S, objs[0], lamps)
     for ob in parts.values():
         C.bake_ao(objs + [ob], S, samples=32, targets=[ob])
     meta = {k: v for k, v in d.items() if isinstance(v, (int, float, str, bool))}
@@ -100,7 +100,7 @@ def build(kind, preview=None, blend=None):
     for o in lods[1:]:  # ne garder dans la scène que le niveau fin (aperçu, .blend)
         for ob in o:
             bpy.data.objects.remove(ob)
-    shown = set(SHOW.split(',')) if SHOW else {'wing_' + d['wing'], 'mirror_stock'}
+    shown = set(SHOW.split(',')) if SHOW else {'wing_' + d['wing'], 'mirror_stock', 'popup_up'}
     for name, ob in parts.items():
         if name not in shown:
             ob.hide_render = True

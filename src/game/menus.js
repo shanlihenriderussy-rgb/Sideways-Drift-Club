@@ -24,7 +24,7 @@ export function buildTrackList() {
     b.className = 'opt track-opt';
     b.dataset.track = i;
     const best = bests[t.id + ':' + game.mode];
-    b.innerHTML = `<span class="swatch sw-${t.id}" aria-hidden="true"></span><span><b>${t.name}</b><br><small>${t.time} · ${t.jp}</small></span><span class="best">Record<b>${best ? best.toLocaleString('fr-FR') : '—'}</b></span>`;
+    b.innerHTML = `<span class="swatch sw-${t.id}" aria-hidden="true"></span><span><b>${t.name}</b><br><small>${t.time} · ${t.jp}</small></span>${best ? `<span class="best">Record<b>${best.toLocaleString('fr-FR')}</b></span>` : ''}`;
     b.setAttribute('aria-pressed', String(i === game.trackIdx));
     b.addEventListener('click', () => {
       game.trackIdx = i;
@@ -69,14 +69,13 @@ function refreshFrontPage() {
   $('mastDate').textContent = d.charAt(0).toUpperCase() + d.slice(1);
   $('mastNo').textContent = 'N° ' + String(profile.stats.runs + 1).padStart(3, '0');
   const esc = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-  const items = TRACKS.map((t) => {
-    const b = bests[t.id + ':run'];
-    return b
-      ? `<b>${esc(t.name)}</b> · record <i>${b.toLocaleString('fr-FR')} pts</i>`
-      : `<b>${esc(t.name)}</b> · <i>aucun record, la piste vous attend</i>`;
-  });
+  // un record par piste qui en a un ; tant qu'il n'y en a aucun, une seule invitation (pas six fois la même)
+  const items = TRACKS.filter((t) => bests[t.id + ':run']).map(
+    (t) => `<b>${esc(t.name)}</b> · record <i>${bests[t.id + ':run'].toLocaleString('fr-FR')} pts</i>`,
+  );
+  if (!items.length) items.push(`<b>Aucun record encore</b> · <i>ton premier run noté l’écrira ici</i>`);
   items.push(
-    `Votre cagnotte · <i>${Economy.fmt(profile.money)}</i>`,
+    `Ta cagnotte · <i>${Economy.fmt(profile.money)}</i>`,
     `<b>Col de Yukimi</b> · neige tassée, adhérence réduite`,
   );
   const row = items.map((h) => `<span>${h}</span>`).join('');

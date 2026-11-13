@@ -116,7 +116,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 
 **Qualité et livraison**
 - Tests `node:test` (133) : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, aventure
-- **22 tests de bout en bout** (`e2e/`) : parcours joueur complets dans un vrai navigateur, en CI
+- **24 tests de bout en bout** (`e2e/`) : parcours joueur complets dans un vrai navigateur, en CI
 - ESLint (tout nom utilisé est importé), Prettier, CI GitHub Actions
 - Bancs d'essai **Playwright** : fumée de bout en bout, bot pilote, perf, CPU ralenti
 - Build : **esbuild** suit les imports depuis `src/main.js` et produit **un seul `index.html`**
@@ -184,7 +184,7 @@ curl -o vendor/three.min.js https://cdnjs.cloudflare.com/ajax/libs/three.js/r128
 npm run build:local            # test.html, Three.js depuis vendor/
 npm test                       # 133 tests
 npm run smoke                  # fumée de bout en bout (Playwright) : run, atelier, île, multijoueur
-npm run e2e                    # 22 parcours joueur de bout en bout (≈ 5 min en rendu logiciel)
+npm run e2e                    # 24 parcours joueur de bout en bout (≈ 5 min en rendu logiciel)
 ```
 
 ## 🔄 Mettre à jour le jeu
