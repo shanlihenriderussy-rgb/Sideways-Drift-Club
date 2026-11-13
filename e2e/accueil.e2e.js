@@ -1,7 +1,7 @@
 // Écran titre et navigation : le jeu démarre, chaque rubrique s'ouvre et se referme, rien ne masque la marque.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PHONE, PORTRAIT, assertInViewport, box, noErrors, overlap, phase, press, useBrowser } from './helpers.js';
+import { PHONE, PORTRAIT, assertInViewport, noErrors, overlap, phase, press, useBrowser } from './helpers.js';
 
 const B = useBrowser();
 
@@ -21,11 +21,34 @@ for (const [name, size] of [
 ]) {
   test(`écran titre (${name}) : le toast du bonus ne recouvre ni le logotype ni le solde`, async () => {
     const { page } = await B.play({ size });
-    await page.waitForSelector('#toasts .toast', { timeout: 5000 });
-    const toast = await box(page, '#toasts .toast');
-    assert.ok(!overlap(toast, await box(page, '#logoTitle')), 'le toast recouvre le logotype');
-    assert.ok(!overlap(toast, await box(page, '#menuWallet')), 'le toast recouvre le solde');
-    await assertInViewport(page, '#toasts .toast', 'toast');
+    // le toast ne vit que 3 s : on relève les trois rectangles en une seule lecture, à l'instant où il est affiché
+    // (le mesurer en plusieurs appels laisse le temps au toast de disparaître entre deux)
+    const h = await page.waitForFunction(
+      () => {
+        const t = document.querySelector('#toasts .toast');
+        if (!t || getComputedStyle(t).opacity < 0.9) return null;
+        const r = (el) => {
+          const q = el.getBoundingClientRect();
+          return { x: q.left, y: q.top, right: q.right, bottom: q.bottom };
+        };
+        return {
+          toast: r(t),
+          logo: r(document.querySelector('#logoTitle')),
+          wallet: r(document.querySelector('#menuWallet')),
+          w: innerWidth,
+          h: innerHeight,
+        };
+      },
+      null,
+      { timeout: 5000, polling: 50 },
+    );
+    const { toast, logo, wallet, w, h: vh } = await h.jsonValue();
+    assert.ok(!overlap(toast, logo), 'le toast recouvre le logotype');
+    assert.ok(!overlap(toast, wallet), 'le toast recouvre le solde');
+    assert.ok(
+      toast.x >= 0 && toast.y >= 0 && toast.right <= w && toast.bottom <= vh,
+      `toast hors écran : ${JSON.stringify(toast)}`,
+    );
   });
 }
 
