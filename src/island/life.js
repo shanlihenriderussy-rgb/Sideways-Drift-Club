@@ -448,7 +448,7 @@ const RIVALS = [
     e: 14,
     look: { paint: 'bordeaux', livery: 'kanji', number: 3, rimStyle: 'dish', rim: 'gun' },
     hello: [['tetsu', 'Tetsu. Vingt ans de col. Mika m’a dit de te tester. Je teste.']],
-    win: [['tetsu', '… Le club a retrouvé un pilote. Sayo serait contente.']],
+    win: [['tetsu', 'Hm. Le hangar 4 a retrouvé un pilote. Ça faisait longtemps.']],
     lose: [['tetsu', 'Pas encore. Mais tu as de l’angle.']],
   },
   {
@@ -573,13 +573,16 @@ const NPC_LINES = {
       done = S && S.chapterDone(p, S.CHAPTERS.length - 1);
     if (done)
       return [
-        ['kenji', 'Le garage est sauvé, et tu traînes encore sur les quais ? Va donc voir si Mika a envie de perdre.'],
+        [
+          'kenji',
+          'Le hangar est sauvé et tu traînes encore sur les quais ? Mika t’attend sur son col. Elle dit qu’elle s’est entraînée.',
+        ],
       ];
     return [
       [
         'kenji',
         ci === 0
-          ? 'Tu ne tiens pas en place, hein ? L’île est grande. Garde un œil sur le compte-tours et un autre sur les camions.'
+          ? 'Tu ne tiens pas en place, toi. L’île est grande : un œil sur le compte-tours, l’autre sur les camions.'
           : `Prochaine étape : ${S.CHAPTERS[ci].title}. Je t’indique la route si tu veux.`,
       ],
     ];
@@ -587,26 +590,26 @@ const NPC_LINES = {
   lou: () => [
     [
       'lou',
-      'Il me faut des photos de l’île pour le supplément du dimanche. Les belvédères, au bord de la route : arrête-toi, et clic.',
+      'Il me faut des photos pour le supplément du dimanche. Les belvédères, au bord de la route. Tu t’arrêtes, tu cadres, clic.',
     ],
   ],
   zelie: () => [
     [
       'zelie',
-      'Ou lé là, marmay ! Les daruma dorés, c’est Sayo qui les a posés partout sur l’île. Elle aimait les chasses au trésor.',
+      'Ou lé là, marmay ! Les daruma dorés sur l’île, c’est Sayo. Elle les cachait pour les gamins. Et pour quelqu’un d’autre, je crois.',
     ],
   ],
   ume: () => [
-    ['ume', 'Le radar de la corniche, il flashe tout le monde. Moi, je compte les passages : le record, c’est 160.'],
-  ],
-  sora: () => [
     [
-      'sora',
-      'Le thé est chaud. Les Kuro Kumo descendent par ici le soir. Fais attention à la neige, elle ne prévient pas.',
+      'ume',
+      'Le radar de la corniche flashe tout le monde. Moi, je note dans mon cahier. Le record, c’est 160. Je dis pas qui.',
     ],
   ],
+  sora: () => [
+    ['sora', 'Thé chaud ? Les Kuro Kumo descendent par ici le soir. Et méfie-toi de la neige : elle ne prévient pas.'],
+  ],
   hoshi: () => [
-    ['hoshi', 'Je connais toutes les routes ! Enfin presque. Tu veux que je te montre où il y a un daruma ?'],
+    ['hoshi', 'Je connais toutes les routes ! Enfin, presque toutes. Tu veux savoir où il y a un daruma ?'],
   ],
 };
 const NPC_CHOICES = [
@@ -663,7 +666,7 @@ const PHOTO_SPOTS = [
     side: 1,
     look: [1300, 0],
     reward: 500,
-    line: 'L’océan à perte de vue. On sent le vent jusque dans le journal.',
+    line: 'De l’eau jusqu’à l’horizon. Mon rédacteur va dire qu’il n’y a rien dessus. Il a tort.',
   },
   {
     id: 'col',
@@ -673,7 +676,7 @@ const PHOTO_SPOTS = [
     side: -1,
     look: [-700, 360],
     reward: 500,
-    line: 'La neige, les pins, le silence. On dirait une carte postale de 1996.',
+    line: 'De la neige sur les pins. Sayo avait la même photo au-dessus de son établi. Prise d’ici, je parie.',
   },
 ];
 function photoTaken(p, id) {
