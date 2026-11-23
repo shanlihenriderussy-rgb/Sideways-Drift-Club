@@ -3,6 +3,7 @@
 import { mergeGeos } from '../render/geometry.js';
 import { THEMES, blotches, canvasTex, makeSky, makeWater, noiseFill, ridgeGeo, rng } from '../render/world.js';
 import { TRACKS } from '../sim/track.js';
+import { cargoGeometry, CARGO_COLORS, craneGeometry, portLayout, shedGeometry } from './port.js';
 
 export function buildIslandWorld(scene, I, quality) {
   const T = Object.assign({}, THEMES.day, { fogNear: 320, fogFar: 1700, fog: 0xc4dceb, exposure: 1.0 });
@@ -300,8 +301,6 @@ export function buildIslandWorld(scene, I, quality) {
       palm: [],
       rock: [],
       basalt: [],
-      cont: [],
-      ware: [],
       house: [],
       cane: [],
     };
@@ -324,26 +323,33 @@ export function buildIslandWorld(scene, I, quality) {
       if (rd < half + 4) continue;
       const dv = Math.hypot(x - V.x, z - V.z);
       let type;
-      if (hub === 'minato' && hd < 300) type = big ? 'cont' : R() < 0.75 ? 'cont' : 'ware';
-      else if ((x < -330 && z > 140 && y > 34) || y > 90) type = R() < 0.85 ? 'snowpine' : 'rock';
+      if (hub === 'minato' && hd < 300) continue;
+      if ((x < -330 && z > 140 && y > 34) || y > 90) type = R() < 0.85 ? 'snowpine' : 'rock';
       else if (dv < 170 && y > 50) type = R() < 0.7 ? 'basalt' : 'rock';
       else if (y < 7 && e > 0.66) type = R() < 0.8 ? 'palm' : 'rock';
       else if ((hub === 'shiohama' || hub === 'kaigan') && hd < 260) type = big || R() < 0.4 ? 'house' : 'palm';
       else if (hub === 'piton' && y < 45 && !big && R() < 0.35) type = 'cane';
       else if (hub === 'akane') type = R() < 0.35 ? 'maple' : 'pine';
       else type = y > 26 ? (R() < 0.8 ? 'pine' : 'rock') : R() < 0.5 ? 'palm' : R() < 0.5 ? 'maple' : 'pine';
-      if ((type === 'ware' || type === 'cane' || type === 'house') && rd < half + 14) continue;
+      if ((type === 'cane' || type === 'house') && rd < half + 14) continue;
       lists[type].push([x, z]);
       n++;
     }
-    const sc = (lo, hi) => (d) => {
-      const s2 = lo + R() * (hi - lo);
-      d.scale.set(s2, s2 * (0.9 + R() * 0.25), s2);
-    };
     const trees = [...lists.pine, ...lists.snowpine, ...lists.maple];
+    const matched = (list, lo, hi) => {
+      const transforms = new Map(
+        list.map((p) => {
+          p[2] = R() * Math.PI * 2;
+          const s = lo + R() * (hi - lo);
+          return [p, [s, s * (0.9 + R() * 0.25), s]];
+        }),
+      );
+      return (d, i, p) => d.scale.fromArray(transforms.get(p));
+    };
+    const treeScale = matched(trees, 0.8, 1.5);
     const trunk = new THREE.CylinderGeometry(0.25, 0.38, 3.4, 5);
     trunk.translate(0, 1.7, 0);
-    instanced(trunk, new THREE.MeshLambertMaterial({ color: 0x4a3326 }), trees, sc(0.8, 1.5));
+    instanced(trunk, new THREE.MeshLambertMaterial({ color: 0x4a3326 }), trees, treeScale);
     const pine = (() => {
       const parts = [];
       for (let k = 0; k < 4; k++) {
@@ -354,22 +360,23 @@ export function buildIslandWorld(scene, I, quality) {
       return mergeGeos(parts);
     })();
     const flat = () => new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true, shininess: 0 });
-    instanced(pine, flat(), lists.pine, sc(0.8, 1.5), [0x2f5a3a, 0x3c6e45, 0x28503a, 0x456f3e]);
-    instanced(pine.clone(), flat(), lists.snowpine, sc(0.8, 1.4), [0xdfe8ee, 0xc8d6de, 0x8aa094, 0xeef2f6]);
+    instanced(pine, flat(), lists.pine, treeScale, [0x2f5a3a, 0x3c6e45, 0x28503a, 0x456f3e]);
+    instanced(pine.clone(), flat(), lists.snowpine, treeScale, [0xdfe8ee, 0xc8d6de, 0x8aa094, 0xeef2f6]);
     const maple = new THREE.IcosahedronGeometry(3, 1);
     maple.translate(0, 5.2, 0);
-    instanced(maple, flat(), lists.maple, sc(0.8, 1.4), [0xc8352a, 0xe0612b, 0xd9902e, 0x6f9a3a, 0xe8b13a]);
+    instanced(maple, flat(), lists.maple, treeScale, [0xc8352a, 0xe0612b, 0xd9902e, 0x6f9a3a, 0xe8b13a]);
     // palmiers : tronc courbe + palmes
     const tc = new THREE.QuadraticBezierCurve3(
       new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(0.2, 4.5, 0),
       new THREE.Vector3(1.5, 8.4, 0),
     );
+    const palmScale = matched(lists.palm, 0.75, 1.3);
     instanced(
       new THREE.TubeGeometry(tc, 6, 0.26, 5, false),
       new THREE.MeshLambertMaterial({ color: 0x7a5a3c }),
       lists.palm,
-      sc(0.75, 1.3),
+      palmScale,
     );
     const fronds = [];
     for (let k = 0; k < 8; k++) {
@@ -388,7 +395,7 @@ export function buildIslandWorld(scene, I, quality) {
       mergeGeos(fronds),
       new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide, flatShading: true, shininess: 0 }),
       lists.palm,
-      sc(0.75, 1.3),
+      palmScale,
       [0x2f8a3e, 0x3b9a47, 0x2a7a3a],
     );
     instanced(
@@ -411,28 +418,34 @@ export function buildIslandWorld(scene, I, quality) {
       },
       [0x24221f, 0x2e2a26, 0x1b1a19],
     );
-    const cont = new THREE.BoxGeometry(12, 2.6, 2.5);
-    cont.translate(0, 1.3, 0);
-    instanced(
-      cont,
-      new THREE.MeshLambertMaterial({ color: 0xffffff }),
-      lists.cont,
-      (d) => {
-        if (R() < 0.3) d.position.y += 2.6;
-        d.rotation.y = (Math.round(R() * 4) * Math.PI) / 2;
-      },
-      [0xc0392b, 0x1f6fb2, 0x2e8b57, 0xe0a526, 0x7a3fb0, 0xd35400, 0x5d6d7e],
-    );
-    const ware = new THREE.BoxGeometry(36, 12, 22);
-    ware.translate(0, 6, 0);
-    instanced(ware, new THREE.MeshLambertMaterial({ color: 0x4a4d56 }), lists.ware);
+    const port = portLayout(I);
+    const placePort = (geo, positions, setup, palette) => {
+      const material = new THREE.MeshLambertMaterial({ vertexColors: true });
+      const mesh = instanced(geo, material, positions, setup, palette);
+      if (!mesh) return;
+      // Three r128 ne calcule pas les cotes globales des instances. Le port est statique.
+      geo.computeBoundingBox();
+      const bounds = new THREE.Box3();
+      const instanceBounds = new THREE.Box3();
+      const matrix = new THREE.Matrix4();
+      for (let i = 0; i < mesh.count; i++) {
+        mesh.getMatrixAt(i, matrix);
+        bounds.union(instanceBounds.copy(geo.boundingBox).applyMatrix4(matrix));
+      }
+      geo.boundingSphere = bounds.getBoundingSphere(new THREE.Sphere());
+      mesh.frustumCulled = true;
+    };
+    placePort(cargoGeometry(quality.scenery > 0.6), port.cargo, (d, i, p) => (d.position.y += p[3]), CARGO_COLORS);
+    placePort(shedGeometry(), port.sheds);
+    placePort(craneGeometry(), port.cranes);
+    const houseScale = matched(lists.house, 0.9, 1.3);
     const house = new THREE.BoxGeometry(7, 4, 6);
     house.translate(0, 2, 0);
     instanced(
       house,
       new THREE.MeshLambertMaterial({ color: 0xffffff }),
       lists.house,
-      sc(0.9, 1.3),
+      houseScale,
       [0xf1efe9, 0xe8dcc8, 0xd8e4ec, 0xf4e2c8],
     );
     const roof = new THREE.ConeGeometry(5.4, 2.4, 4);
@@ -442,7 +455,7 @@ export function buildIslandWorld(scene, I, quality) {
       roof,
       new THREE.MeshLambertMaterial({ color: 0xffffff }),
       lists.house,
-      sc(0.9, 1.3),
+      houseScale,
       [0xc8302c, 0x1d76c2, 0x2f9a5a, 0x6e1424],
     );
     const cane = new THREE.BoxGeometry(30, 2.2, 20);

@@ -1,13 +1,14 @@
 // ===== Voitures : caisse modélisée dans Blender + pièces rapportées, livrée peinte, roues instanciées =====
 // La caisse (tôle, vitrages, optiques, joints d'ouvrants, intérieur) vient de assets/models/<voiture>.bin, produit par
 // tools/models/build_cars.py : cage de subdivision, occlusion ambiante par sommet, deux niveaux de détail, kit large.
-// Les pièces de l'atelier (ailerons, lames, jupes, arceau, sièges…) sont posées ici sur les lignes de la caisse.
+// Les pièces de carrosserie exportées de Blender sont assemblées ici avec les accessoires générés en jeu.
 // Repère local : x = avant, y = haut, z = droite. Tout ce qui est fixe est fusionné par matière ; les 4 roues sont
 // des InstancedMesh (un appel de dessin par matière pour les 4).
 import hachiBin from '../../../assets/models/hachi.bin';
 import koukiBin from '../../../assets/models/kouki.bin';
 import raijinBin from '../../../assets/models/raijin.bin';
-import { bake, isDarkHex, joinGeos, loft, quadGeo, tube } from '../geometry.js';
+import { inflateSync } from 'fflate';
+import { bake, isDarkHex, joinGeos, loft, quadGeo } from '../geometry.js';
 import { bodyLines, decodeModel, expand, expandPart } from './format.js';
 import { ATLAS, atlasUV, carbonTexture, glowTexture, paintLivery } from './livery.js';
 import { wheelGeos } from './wheels.js';
@@ -16,12 +17,7 @@ const KIT_BULGE = { stock: 0, flares: 0.045, wide: 0.1 };
 const SOURCES = { hachi: hachiBin, kouki: koukiBin, raijin: raijinBin };
 const MODELS = {};
 function modelOf(kind) {
-  if (!MODELS[kind]) {
-    const bin = atob(SOURCES[kind]);
-    const bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    MODELS[kind] = decodeModel(bytes);
-  }
+  if (!MODELS[kind]) MODELS[kind] = decodeModel(inflateSync(SOURCES[kind]));
   return MODELS[kind];
 }
 // cotes d'une voiture (essieux, largeur, roues) : celles du fichier modèle
@@ -94,14 +90,13 @@ export function buildCar(kind, look) {
     disposables.push(o);
     return o;
   };
-  const { fa, ra, R, X0, X1, ws0, ws1, AR } = d;
+  const { fa, ra, R, X0, X1, ws0, AR } = d;
   const L = X1 - X0,
     W = d.w / 2;
   const wide = KIT_BULGE[look.wide] || 0;
   const tune = look.tune || { height: 0.5, camber: 0.35, track: 0.5 };
   const { section, surfY } = bodyLines(d, wide);
   const wT0 = W - d.edgeIn;
-  const floorY = d.floor;
   // extrémités réelles de la caisse (boucliers bombés) et sections de référence pour les pièces de bouclier
   const XF = d.noseX,
     XR = d.tailX;
@@ -114,12 +109,6 @@ export function buildCar(kind, look) {
     parts.get(key).push(geo);
     return geo;
   };
-  const plainUV = (g) => {
-    const uv = g.attributes.uv;
-    for (let k = 0; k < uv.count; k++) uv.setXY(k, ATLAS.plain[0], ATLAS.plain[1]);
-    return g;
-  };
-
   // assombrit une pièce par sa couleur de sommet (dessous de caisse, passages de roue : presque pas de lumière)
   const shade = (g, k) => {
     const n = g.attributes.position.count;
@@ -148,24 +137,19 @@ export function buildCar(kind, look) {
     add('trim', shade(bake(g.rotateX(Math.PI / 2), wx, R, 0), 0.35));
   }
 
-  // ---------- intérieur : baquets, tableau de bord, volant à droite (JDM) ----------
+  // Pièce exportée de Blender, rangée par matière avec le reste. Seules les pièces basses suivent les ailes élargies.
+  const addPart = (name, kit = 0) => {
+    const blocks = expandPart(model, name, kit);
+    if (!blocks) return false;
+    for (const [key, list] of blockGeos(blocks, X0, L, wT0)) for (const g of list) add(key, g);
+    return true;
+  };
+
+  // ---------- baquets et harnais, tableau de bord, volant à droite ----------
   if (lod) {
-    const race = look.seat === 'bucket' || look.seat === 'harness';
-    const sm = race ? 'seat' : 'trim';
-    for (const sz of [-1, 1]) {
-      const z = sz * 0.36,
-        x = ws0 - 1.0;
-      add(sm, bake(new THREE.BoxGeometry(0.46, 0.1, 0.44), x, floorY + 0.12, z));
-      if (race) {
-        // baquet enveloppant : dossier haut, joues latérales, passages de harnais
-        add(sm, bake(new THREE.BoxGeometry(0.08, 0.78, 0.44), x - 0.27, floorY + 0.52, z, 0, 0, 0.18));
-        for (const k of [-1, 1])
-          add(sm, bake(new THREE.BoxGeometry(0.3, 0.42, 0.05), x - 0.17, floorY + 0.42, z + k * 0.22, 0, 0, 0.18));
-        if (look.seat === 'harness')
-          for (const k of [-1, 1])
-            add('tow', bake(new THREE.BoxGeometry(0.02, 0.62, 0.05), x - 0.2, floorY + 0.5, z + k * 0.1, 0, 0, 0.32));
-      } else add(sm, bake(new THREE.BoxGeometry(0.1, 0.62, 0.46), x - 0.26, floorY + 0.45, z, 0, 0, 0.22));
-    }
+    const bucket = look.seat === 'bucket' || look.seat === 'harness';
+    addPart(bucket ? 'seat_bucket' : 'seat_stock');
+    if (look.seat === 'harness') addPart('seat_harness');
     add('trim', bake(new THREE.BoxGeometry(0.34, 0.16, (wT0 - 0.1) * 2), ws0 - 0.2, d.cowl - 0.12, 0));
     if (look.wheelS === 'deep') {
       // volant deep dish : jante épaisse, branches creusées, repère jaune à midi
@@ -195,37 +179,7 @@ export function buildCar(kind, look) {
         bake(new THREE.TorusGeometry(0.16, 0.022, 6, 16), ws0 - 0.48, d.cowl - 0.06, 0.36, 0, Math.PI / 2 - 0.35, 0),
       );
   }
-  // arceau
-  if (look.cage === 'cage') {
-    const V = (x, y, z) => new THREE.Vector3(x, y, z);
-    const hx = ws0 - 1.42,
-      top = d.roof - 0.07,
-      zc = wT0 - 0.2,
-      ax = ws1 - 0.05;
-    const tubes = [
-      [V(hx, floorY, -zc), V(hx, top, -zc)],
-      [V(hx, floorY, zc), V(hx, top, zc)],
-      [V(hx, top, -zc), V(hx, top, zc)],
-      [V(hx, floorY, -zc), V(hx, top, zc)],
-      [V(hx, top, -zc), V(ax, top, -zc + 0.08)],
-      [V(hx, top, zc), V(ax, top, zc - 0.08)],
-      [V(ax, top, -zc + 0.08), V(ws0 - 0.2, d.cowl - 0.05, -zc - 0.02)],
-      [V(ax, top, zc - 0.08), V(ws0 - 0.2, d.cowl - 0.05, zc + 0.02)],
-      [V(hx, floorY + 0.1, -zc - 0.03), V(ws0 - 0.25, d.cowl - 0.2, -zc - 0.03)],
-      [V(hx, floorY + 0.1, zc + 0.03), V(ws0 - 0.25, d.cowl - 0.2, zc + 0.03)],
-      [V(hx, top, -zc), V(hx - 0.55, floorY + 0.15, -zc + 0.05)],
-      [V(hx, top, zc), V(hx - 0.55, floorY + 0.15, zc - 0.05)],
-    ];
-    for (const [a, b] of tubes) add('cage', tube(a, b, 0.022, 6));
-  }
-
-  // pièce de l'atelier modélisée dans Blender (aileron, rétroviseurs), rangée par matière avec le reste
-  const addPart = (name) => {
-    const blocks = expandPart(model, name);
-    if (!blocks) return false;
-    for (const [key, list] of blockGeos(blocks, X0, L, wT0)) for (const g of list) add(key, g);
-    return true;
-  };
+  if (look.cage === 'cage') addPart('cage_cage');
 
   // ---------- rétroviseurs ----------
   addPart('mirror_' + (look.mirror || 'stock')) || addPart('mirror_stock');
@@ -234,64 +188,16 @@ export function buildCar(kind, look) {
   const headLamps = [];
   for (const [x, y, z] of d.lamps) for (const sz of [1, -1]) headLamps.push({ x, y, z: sz * z });
   if (d.head === 'popup' && look.night) addPart('popup_up');
-  if (look.front === 'canard') {
-    // canards : deux ailettes carbone par coin de bouclier, sous les phares, inclinées vers l'avant
-    for (const sz of [-1, 1])
-      for (const [dy, dx] of [
-        [0.05, 0.1],
-        [0.12, 0.16],
-      ]) {
-        const x = X1 - dx,
-          s = section(x);
-        add(
-          'carbon',
-          bake(new THREE.BoxGeometry(0.15, 0.01, 0.09), x, s.yBot + dy, sz * (s.wB + 0.02), 0, sz * 0.35, -0.22),
-        );
-      }
-  }
-  if (look.front === 'lip' || look.front === 'aero' || look.front === 'canard') {
-    const depth = look.front === 'aero' ? 0.32 : 0.22;
-    add(
-      'carbon',
-      bake(new THREE.BoxGeometry(depth, 0.025, sF.wL * 2 * 0.98), XF - depth / 2 + 0.05, sF.yBot - 0.025, 0),
-    );
-  }
+  // ---------- bouclier avant et bas de caisse ----------
+  if (look.front === 'lip' || look.front === 'canard') addPart('front_lip', wide);
+  if (look.front === 'canard') addPart('front_canards', wide);
   if (look.front === 'aero') {
-    for (const sz of [-1, 1]) {
-      add(
-        'carbon',
-        bake(new THREE.BoxGeometry(0.2, 0.012, 0.12), XF - 0.1, sF.yBot + 0.09, sz * (sF.wB - 0.02), 0, 0, 0.2),
-      );
-      const s = section((fa + ra) / 2);
-      add(
-        'carbon',
-        bake(
-          new THREE.BoxGeometry(fa - ra - AR * 2 - 0.1, 0.05, 0.07),
-          (fa + ra) / 2,
-          d.sill - 0.01,
-          sz * (s.wL + 0.01),
-        ),
-      );
-    }
+    addPart('front_aero', wide);
+    addPart('front_winglets', wide);
+    addPart('skirt_blade', wide);
   }
-
-  // jupes latérales entre les passages de roue
-  if (look.skirt === 'skirt' || look.skirt === 'carbon') {
-    const x0 = ra + AR + 0.04,
-      x1 = fa - AR - 0.04,
-      xm = (x0 + x1) / 2;
-    for (const sz of [-1, 1]) {
-      const s = section(xm);
-      const g = new THREE.BoxGeometry(x1 - x0, 0.09, 0.06);
-      add(
-        look.skirt === 'carbon' ? 'carbon' : 'paint',
-        look.skirt === 'carbon'
-          ? bake(g, xm, d.sill - 0.005, sz * (s.wL + 0.015))
-          : plainUV(bake(g, xm, d.sill - 0.005, sz * (s.wL + 0.015))),
-      );
-      add('trim', bake(new THREE.BoxGeometry(x1 - x0, 0.012, 0.08), xm, d.sill - 0.05, sz * (s.wL + 0.02)));
-    }
-  }
+  if (look.skirt === 'skirt') addPart('skirt_painted', wide);
+  if (look.skirt === 'carbon') addPart('skirt_carbon', wide);
 
   // ---------- capot ----------
   if (look.hood === 'carbon') {
@@ -327,12 +233,7 @@ export function buildCar(kind, look) {
       atlasUV(ATLAS.plate),
     ),
   );
-  if (look.diffuser === 'fins') {
-    // diffuseur carbone relevé vers l'arrière, ailettes hautes
-    add('carbon', bake(new THREE.BoxGeometry(0.5, 0.02, sR.wL * 1.75), XR + 0.22, sR.yBot - 0.03, 0, 0, 0, -0.16));
-    for (let k = -3; k <= 3; k++)
-      add('carbon', bake(new THREE.BoxGeometry(0.48, 0.13, 0.014), XR + 0.22, sR.yBot - 0.07, k * 0.13, 0, 0, -0.16));
-  }
+  if (look.diffuser === 'fins') addPart('diffuser_fins', wide);
   // sangles de remorquage rouges (avant droit, arrière gauche)
   if (look.tow === 'tow') {
     const strap = (x, y, z, rz) => {
@@ -400,46 +301,8 @@ export function buildCar(kind, look) {
   }
   body.add(flame);
 
-  // ---------- toit : écope, pare-soleil, galerie ----------
-  {
-    const xr = (ws1 + d.roofEnd) / 2,
-      yr = surfY(xr, 0);
-    if (look.roof === 'scoop') {
-      const sh = new THREE.Shape();
-      sh.moveTo(0.36, 0);
-      sh.lineTo(-0.1, 0);
-      sh.lineTo(-0.1, 0.07);
-      sh.lineTo(0.02, 0.075);
-      sh.closePath();
-      const g = new THREE.ExtrudeGeometry(sh, { depth: 0.3, bevelEnabled: false });
-      add('paint', plainUV(g.translate(ws1 - 0.32, surfY(ws1 - 0.1, 0) - 0.01, -0.15)));
-      add(
-        'trim',
-        bake(new THREE.BoxGeometry(0.01, 0.055, 0.26), ws1 + 0.04 - 0.32 + 0.08, surfY(ws1 - 0.1, 0) + 0.03, 0),
-      );
-    } else if (look.roof === 'visor') {
-      const x = ws1 + 0.06,
-        s = section(x);
-      add(
-        'trim',
-        bake(new THREE.BoxGeometry(0.2, 0.012, (s.wT - d.tumble) * 1.9), x + 0.05, surfY(x, 0) + 0.004, 0, 0, 0, -0.32),
-      );
-    } else if (look.roof === 'rack') {
-      // galerie tubulaire et pneu de rechange couché (assistance de drift)
-      const zr = (section(xr).wT - d.tumble) * 0.82,
-        len = (ws1 - d.roofEnd) * 0.85;
-      for (const sz of [-1, 1]) {
-        add('cage', bake(new THREE.BoxGeometry(len, 0.025, 0.025), xr, yr + 0.07, sz * zr));
-        for (const k of [-1, 1])
-          add('trim', bake(new THREE.BoxGeometry(0.04, 0.07, 0.04), xr + k * len * 0.42, yr + 0.035, sz * zr));
-      }
-      for (const k of [-1, 1])
-        add('cage', bake(new THREE.BoxGeometry(0.025, 0.025, zr * 2), xr + k * len * 0.3, yr + 0.085, 0));
-      const tire = new THREE.TorusGeometry(0.24, 0.09, 8, 18);
-      tire.rotateX(Math.PI / 2);
-      add('trim', bake(tire, xr, yr + 0.18, 0));
-    }
-  }
+  // ---------- toit ----------
+  if (look.roof === 'scoop' || look.roof === 'visor' || look.roof === 'rack') addPart('roof_' + look.roof);
 
   // ---------- aileron ----------
   const wing = look.wing === 'stock' || !look.wing ? d.wing : look.wing;
@@ -517,7 +380,8 @@ export function buildCar(kind, look) {
       }),
     ),
     tow: keep(new THREE.MeshStandardMaterial({ color: 0x7c0810, roughness: 0.85, metalness: 0, envMapIntensity: 0.1 })), // rouge sangle : sombre, sinon le ciel le rend rose
-    seat: keep(new THREE.MeshStandardMaterial({ color: 0xb81f2a, roughness: 0.92, metalness: 0 })),
+    seat: keep(new THREE.MeshStandardMaterial({ color: 0xb81f2a, roughness: 0.92, vertexColors: true })),
+    belt: keep(new THREE.MeshStandardMaterial({ color: 0xd9a541, roughness: 0.82, vertexColors: true })),
     tail: keep(
       new THREE.MeshStandardMaterial({
         color: 0xa30b14,

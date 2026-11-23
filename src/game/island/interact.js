@@ -4,26 +4,46 @@ import { Sound } from '../../audio/sound.js';
 import { dlg, renderAdventure, talk, trackIndexOf } from '../adventure.js';
 import { profile, saveProfile } from '../base.js';
 import { setText } from '../hud.js';
-import { rivalTalk, takePhoto } from './events.js';
+import { rivalTalk } from './events.js';
+import { openPhoto } from './photo.js';
+import { sprintBrief, sprintRecord } from './sprint.js';
 import { castOf, fmtDist, isleData } from './world.js';
 import { refreshWallet, toast } from '../menus.js';
 import { resumeGame, show } from '../session.js';
 import { clearTouch } from '../touch.js';
 import { IsleLife } from '../../island/life.js';
+import { fmtSprintTime } from '../../island/sprint.js';
 import { Economy } from '../../progress/economy.js';
 import { Story } from '../../progress/story.js';
 import { TRACKS } from '../../sim/track.js';
 import { $ } from '../../util/dom.js';
+import { mp } from '../multiplayer.js';
 
 export function scanInteract() {
   const L = game.life,
     I = isleData,
     st = game.player;
+  if (L.sprint) {
+    setPrompt(null);
+    return;
+  }
   let best = null;
   const cand = (d, max, o) => {
     if (d < max && (!best || d / max < best.w)) best = Object.assign(o, { w: d / max });
   };
   const slow = st.speed < 7;
+  if (!mp && !L.duel && !L.zone && !L.race && !L.battle) {
+    for (const course of L.spots.sprints) {
+      const best = sprintRecord(course.def);
+      cand(Math.hypot(st.x - course.start.x, st.z - course.start.z), 15, {
+        kind: 'sprint',
+        course,
+        text: course.def.name,
+        sub: slow ? (best ? `Record ${fmtSprintTime(best)}` : 'Contre-la-montre') : 'Ralentis pour prendre le départ',
+        off: !slow,
+      });
+    }
+  }
   for (const [id, hb] of Object.entries(I.hubs)) {
     const open = Story.chapterOpen(profile, Story.zoneIndex(id));
     cand(Math.hypot(st.x - hb.x, st.z - hb.z), 14, {
@@ -59,7 +79,7 @@ export function scanInteract() {
     cand(Math.hypot(st.x - p.x, st.z - p.z), 8, {
       kind: 'photo',
       p,
-      text: done ? 'Reprendre la photo' : 'Prendre la photo',
+      text: done ? 'Refaire la photo' : 'Ouvrir le mode photo',
       sub: st.speed > 2.5 ? 'arrête-toi dans le cercle' : p.def.name,
       off: st.speed > 2.5,
     });
@@ -102,8 +122,9 @@ export function interact() {
     renderAdventure();
     show('adventure');
   } else if (b.kind === 'rival') rivalTalk(b.r);
+  else if (b.kind === 'sprint') sprintBrief(b.course);
   else if (b.kind === 'npc') npcChat(b.n);
-  else if (b.kind === 'photo') takePhoto(b.p);
+  else if (b.kind === 'photo') openPhoto(b.p);
 }
 // dialogue pendant le jeu : la voiture s'arrête le temps de parler
 export function chat(lines, done, choices) {

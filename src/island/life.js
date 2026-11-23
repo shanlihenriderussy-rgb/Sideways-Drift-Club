@@ -477,7 +477,7 @@ function rivalOpen(p, def, StoryM) {
 }
 function isleBag(p) {
   if (!p.isle || typeof p.isle !== 'object') p.isle = { found: {} };
-  for (const k of ['found', 'rivals', 'best', 'met', 'photo'])
+  for (const k of ['found', 'rivals', 'best', 'met', 'photo', 'sprints'])
     if (!p.isle[k] || typeof p.isle[k] !== 'object' || Array.isArray(p.isle[k])) p.isle[k] = {};
   return p.isle;
 }
@@ -640,6 +640,7 @@ const PHOTO_SPOTS = [
     at: 0.12,
     side: -1,
     look: [120, -600],
+    lookHeight: 22,
     reward: 500,
     line: 'Le phare au premier plan, la mer derrière. Ça, c’est une une.',
   },
@@ -650,6 +651,7 @@ const PHOTO_SPOTS = [
     at: 0.12,
     side: 1,
     look: [90, 170],
+    lookHeight: 12,
     reward: 500,
     line: 'Le volcan qui fume au-dessus de ta voiture. Mes lecteurs vont adorer.',
   },

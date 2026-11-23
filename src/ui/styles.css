@@ -547,6 +547,7 @@ small.own { color: var(--ok) !important; } small.price { color: var(--accent) !i
 .imap { width: min(1100px, 100%); display: grid; gap: 12px; }
 .imap-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .imap-head h2 { margin: 6px 0 0; }
+.photo-map-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
 .imap-body { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; min-height: 0; }
 .imap-cv { position: relative; }
 #mapCv { width: 100%; height: auto; display: block; border-radius: 14px; background: #0b2733; border: 1px solid var(--hair); cursor: crosshair; touch-action: manipulation; }
@@ -590,6 +591,23 @@ body.toasting .hud-goal { opacity: 0; }
 .imap-side .gps-on { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--accent-2-soft); border: 1px solid rgba(123,140,255,.35); font-size: 13px; }
 .imap-side .gps-on .btn { min-height: 34px; padding: 0 12px; font-size: 13px; }
 .imap-legend .sq { border-radius: 2px; } .imap-legend .ring { background: transparent !important; box-shadow: 0 0 0 2px #ff4d4f inset; } .imap-legend .tri { width: 0; height: 0; border-radius: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #ff3d3d; background: none !important; }
+.photo-mode { flex-direction: column; justify-content: space-between; gap: 8px; background: linear-gradient(180deg, rgba(7,8,10,.72), transparent 23%, transparent 75%, rgba(7,8,10,.72)); }
+.photographing :is(#hud, #touch, #hudGoal, #gps, #mpHud, #count, #combo, #heat) { display: none; }
+.photo-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.photo-head h2 { margin: 0; font-size: clamp(18px, 4vw, 30px); text-shadow: 0 1px 4px #07080a; }
+.photo-frame { width: min(76vw, 960px); flex: 1; max-height: 65vh; border: 1px solid rgba(242,242,239,.4); }
+.photo-controls { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px 16px; padding: 8px 14px; background: var(--bg); border: 1px solid var(--hair-2); border-radius: 14px; }
+.photo-controls label { display: grid; gap: 2px; font-size: 12px; color: var(--fg-2); }
+.photo-controls input { width: clamp(90px, 16vw, 160px); margin: 0; height: 26px; accent-color: var(--accent); }
+.photo-mode .btn { min-height: 44px; padding-inline: 12px; }
+.photo-album { width: min(720px, 100%); }
+.album-grid { list-style: none; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(205px, 100%), 1fr)); }
+.album-grid li { overflow: hidden; border: 1px solid var(--hair); background: var(--s2); border-radius: 12px; }
+.album-grid img, .album-empty { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: var(--s1); }
+.album-empty { display: grid; place-items: center; color: var(--fg-2); font-size: 13px; }
+.album-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px; font-size: 13px; }
+.album-meta a { color: var(--accent); padding-block: 5px; }
+#careerAlbum { margin-top: 8px; }
 .pause-acts { display: grid; gap: 10px; margin-top: 14px; }
 @media (orientation: landscape) and (max-height: 560px) {
   .imap { gap: 8px; } .imap-head h2 { font-size: 22px; margin-top: 2px; } .imap-head .btn { min-height: 40px; }

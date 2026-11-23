@@ -7,12 +7,14 @@ import { collide, lap, updateProgress } from './collide.js';
 import { updateFavicon, updateHUD } from './hud.js';
 import { input } from './input.js';
 import { lifeCollide, lifeTick } from './island/life.js';
+import { photoCamera, photoMode } from './island/photo.js';
 import { lifeDraw } from './island/render.js';
+import { advanceSprint } from './island/sprint.js';
 import { isle, isleCollide, isleRespawn, isleTick } from './island/world.js';
 import { replayFrame, rp, rv } from './moments.js';
 import { mpSendTick } from './multiplayer.js';
 import { resetPlayer } from './scene.js';
-import { ghostCar, lose, popup, score, updateGhost, updateScore } from './score.js';
+import { drawGhost, ghostCar, lose, popup, score, updateGhost, updateScore } from './score.js';
 import { screenId } from './session.js';
 import { QUALITY, _grad, camera, curTer, gy, renderer, resize, scene, showroom } from './stage.js';
 import { readInput } from './touch.js';
@@ -30,7 +32,8 @@ export function frame(now) {
   let dt = Math.min((now - game.last) / 1000, 0.1);
   game.last = now;
   frameAvg += (dt * 1000 - frameAvg) * 0.05;
-  const t = now / 1000;
+  const t = photoMode?.t ?? now / 1000;
+  const viewCamera = photoMode ? photoCamera() : camera;
 
   if (game.phase === 'replay' && rp) {
     replayFrame(dt);
@@ -78,6 +81,7 @@ export function frame(now) {
         if (isle) {
           isleCollide(game.player);
           if (game.life) lifeCollide(game.player);
+          if (game.life?.sprint) advanceSprint(STEP);
         } else collide(game.player, STEP);
         game.acc -= STEP;
       }
@@ -118,19 +122,22 @@ export function frame(now) {
     // affichage interpolé entre les deux derniers pas physiques : mouvement régulier à 60, 90, 120 ou 144 Hz
     const pv = interp(game.player, game.phase === 'play' ? game.acc / STEP : 1);
     game.playerModel.update(pv, dt, input.brake > 0.1 || input.handbrake > 0.5);
-    if (ghostCar && game.phase === 'play') updateGhost(dt);
+    if (ghostCar && game.phase === 'play') {
+      if (game.life?.sprint) drawGhost(dt, game.life.sprint.ms / 1000);
+      else updateGhost(dt);
+    }
     game.leaderModel.update(game.leader.state, dt, false);
     carFx(pv, game.playerModel, dt, 'P');
     updateCamera(dt, pv, false);
     Sound.update(game.player, profile.current, true);
     updateHUD(dt);
-  } else if (game.phase === 'pause') {
+  } else if (game.phase === 'pause' && !photoMode) {
     updateCamera(0, game.player, false);
   }
 
   if (isle && game.life && game.player) {
     if (game.phase === 'play' || game.phase === 'count') lifeTick(dt);
-    lifeDraw(dt, t);
+    lifeDraw(dt, t, viewCamera);
     mpSendTick(dt);
   }
   if (game.phase !== 'pause') {
@@ -140,7 +147,7 @@ export function frame(now) {
   }
   game.skids.flush();
   updateFavicon(dt);
-  game.world.update(t, camera.position);
+  game.world.update(t, viewCamera.position);
   // ombre qui suit la voiture visible
   const focus =
     game.phase === 'replay' && rp
@@ -159,7 +166,7 @@ export function frame(now) {
     game.dbgTrace.push(now, o.x, o.z, game.player.speed);
   }
   const tB = performance.now();
-  renderer.render(scene, camera);
+  renderer.render(scene, viewCamera);
   perf.js += (tB - tA - perf.js) * 0.05;
   perf.render += (performance.now() - tB - perf.render) * 0.05;
   autoQuality(dt); // après le rendu : un éventuel redimensionnement s'applique à l'image suivante

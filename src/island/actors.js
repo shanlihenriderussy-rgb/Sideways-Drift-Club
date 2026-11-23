@@ -1,6 +1,7 @@
 // ---------- vie de l'île : circulation instanciée, habitants, radars, zones, étiquettes (navigateur seulement) ----------
 // circulation : 3 maillages instanciés par modèle (carrosserie peinte, parties sombres, feux) → ~15 appels de dessin pour tout le trafic
 import { IsleLife } from './life.js';
+import { buildSprint, SPRINTS } from './sprint.js';
 import { mergeGeos } from '../render/geometry.js';
 import { canvasTex } from '../render/world.js';
 
@@ -105,13 +106,13 @@ export function createTrafficLayer(group, agents, ground) {
   }
   const d = new THREE.Object3D(),
     far = 420 * 420;
-  function update(cx, cz) {
+  function update(cx, cz, closedRoad = -1) {
     for (const k in byKind) {
       const { list, ms } = byKind[k];
       list.forEach((a, i) => {
         const dx = a.x - cx,
           dz = a.z - cz;
-        if (dx * dx + dz * dz > far) d.scale.set(0, 0, 0);
+        if (a.e === closedRoad || dx * dx + dz * dz > far) d.scale.set(0, 0, 0);
         else {
           const c = Math.cos(a.heading),
             s = Math.sin(a.heading),
@@ -239,7 +240,7 @@ export function buildIsleSpots(group, I, castOf) {
     },
     at = I.terrain.at,
     L = IsleLife;
-  const out = { npcs: [], photos: [], acts: [] };
+  const out = { npcs: [], photos: [], acts: [], sprints: [] };
   // habitants : silhouette (jambes, buste à la couleur du personnage, bras, tête, cheveux) + étiquette
   const legsG = keep(
     mergeGeos([
@@ -349,6 +350,10 @@ export function buildIsleSpots(group, I, castOf) {
         c.fillText(text + (sub ? '  ·  ' + sub : ''), w / 2, h / 2 + 2);
       }),
     );
+  const positionGantry = (g, x, z, tx, tz) => {
+    g.position.set(x, at(x, z), z);
+    g.rotation.y = -Math.atan2(tz, tx);
+  };
   const gantry = (x, z, tx, tz, tex) => {
     const g = new THREE.Group();
     for (const sd of [-1, 1]) {
@@ -368,8 +373,7 @@ export function buildIsleSpots(group, I, castOf) {
       f.rotation.y = (sd * Math.PI) / 2;
       g.add(f);
     }
-    g.position.set(x, at(x, z), z);
-    g.rotation.y = -Math.atan2(tz, tx);
+    positionGantry(g, x, z, tx, tz);
     group.add(g);
     return g;
   };
@@ -393,12 +397,34 @@ export function buildIsleSpots(group, I, castOf) {
       out.acts.push({ def: a, x: p0.x, z: p0.z, tx: p0.tx, tz: p0.tz, x1: p1.x, z1: p1.z });
     }
   }
-  out.update = (t, cx, cz) => {
+  const sprintInk = '#64e3c1';
+  for (const def of SPRINTS) {
+    const course = buildSprint(I, def);
+    const { x, z, tx, tz } = course.start;
+    gantry(x, z, tx, tz, banner(def.name.toUpperCase(), 'DÉPART', sprintInk));
+    out.sprints.push(course);
+  }
+  // Deux portiques réutilisés : seule la prochaine porte est visible pendant une tentative.
+  const checkpoint = gantry(0, 0, 1, 0, banner('CHRONO', 'PORTE', sprintInk));
+  const finish = gantry(0, 0, 1, 0, banner('CHRONO', 'ARRIVÉE', sprintInk));
+  out.showSprintGate = (pose, last) => {
+    checkpoint.visible = !!pose && !last;
+    finish.visible = !!pose && last;
+    if (pose) positionGantry(last ? finish : checkpoint, pose.x, pose.z, pose.tx, pose.tz);
+  };
+  out.showSprintGate(null);
+  out.update = (t, cx, cz, photo) => {
     for (const n of out.npcs) {
-      fitTag(n.tag.sprite, n.x, n.z, cx, cz, 2.2);
-      n.tag.sprite.position.y += Math.sin(t * 2 + n.x) * 0.06;
+      if (photo) n.tag.sprite.visible = false;
+      else {
+        fitTag(n.tag.sprite, n.x, n.z, cx, cz, 2.2);
+        if (n.tag.sprite.visible) n.tag.sprite.position.y += Math.sin(t * 2 + n.x) * 0.06;
+      }
     }
-    for (const p of out.photos) fitTag(p.tag.sprite, p.x, p.z, cx, cz, 2.4);
+    for (const p of out.photos) {
+      p.obj.visible = !photo;
+      if (!photo) fitTag(p.tag.sprite, p.x, p.z, cx, cz, 2.4);
+    }
     ringM.opacity = 0.4 + 0.25 * Math.sin(t * 2.6);
   };
   out.dispose = () => {

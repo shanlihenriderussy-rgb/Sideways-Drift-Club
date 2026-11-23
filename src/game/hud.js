@@ -5,6 +5,7 @@ import { lap } from './collide.js';
 import { drawIsleMinimap } from './island/events.js';
 import { isle } from './island/world.js';
 import { score } from './score.js';
+import { fmtSprintTime } from '../island/sprint.js';
 import { RPM_MAX } from '../sim/physics.js';
 import { $ } from '../util/dom.js';
 import { clamp } from '../util/math.js';
@@ -89,7 +90,7 @@ export function updateHUD(dt) {
     el('rpmBar').classList.toggle('red', r > 0.88);
   }
   setNum('hudTotal', Math.round(score.total));
-  setText('hudTime', fmtTime(score.runT));
+  setText('hudTime', game.life?.sprint ? fmtSprintTime(game.life.sprint.ms) : fmtTime(score.runT));
   if (!isle)
     setText(
       'hudLap',

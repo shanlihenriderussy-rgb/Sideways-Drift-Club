@@ -4,6 +4,7 @@ import { dlg, esc, openAdventure, playMission, trackIndexOf } from './adventure.
 import { isTouch, profile, saveSettings, settings, store } from './base.js';
 import { carFx, cycleCam, updateCamera } from './camera.js';
 import { closeIsleMap } from './island/map.js';
+import { startSprint } from './island/sprint.js';
 import { enterIsland, isle, isleData } from './island/world.js';
 import { respawn } from './loop.js';
 import { buildTrackList, openCareer, openShop, pressGroup, toast } from './menus.js';
@@ -422,7 +423,8 @@ export function init() {
     countdownShort();
   });
   $('restartBtn').addEventListener('click', () => {
-    if (isle) enterIsland();
+    if (game.life?.sprint) startSprint(game.life.sprint.course);
+    else if (isle) enterIsland();
     else startRun();
   });
   $('quitBtn').addEventListener('click', () => {

@@ -22,6 +22,35 @@ test('« L’île » depuis le menu charge le monde ouvert ; la carte s’ouvre 
   noErrors(errors);
 });
 
+test('touge : défier Nana, gagner et conserver la victoire en rechargeant', async () => {
+  const { page, errors } = await B.play({ size: { width: 640, height: 360 } });
+  await enter(page);
+  await page.evaluate(() => {
+    const { A } = window.__sdcDbg.life().rivals.find(({ def }) => def.id === 'nana');
+    const st = window.__sdc.player;
+    Object.assign(st, { x: A.x - 6, z: A.z, vx: 0, vz: 0, speed: 0 });
+  });
+  await page.waitForFunction(() => {
+    return (
+      !document.querySelector('#prompt').hidden && document.querySelector('#promptText').textContent.includes('Nana')
+    );
+  });
+  await press(page, '#prompt');
+  assert.match(await page.textContent('#dlgChoices [data-choice="0"]'), /Touge/);
+  await press(page, '#dlgChoices [data-choice="0"]');
+  await waitPhase(page, 'play', 60000);
+  await page.evaluate(() => {
+    const { tgt } = window.__sdcDbg.life().duel;
+    Object.assign(window.__sdc.player, { x: tgt.x, z: tgt.z });
+  });
+  await page.waitForFunction(() => window.__sdcDbg.profile.isle.rivals.nana === 1);
+  assert.ok(await page.isVisible('#dialog'));
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await waitPhase(page, 'menu', 120000);
+  assert.equal(await page.evaluate(() => window.__sdcDbg.profile.isle.rivals.nana), 1);
+  noErrors(errors);
+});
+
 test('deux joueurs : ils se voient, la voiture de l’hôte roule chez l’invité, un message passe', async () => {
   const size = { width: 480, height: 270 };
   const { page: host, ctx, errors } = await B.play({ size });
