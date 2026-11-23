@@ -22,7 +22,7 @@
   <div class="banner" id="banner">SENS INTERDIT</div>
   <div class="gps" id="gps" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path id="gpsArrow" d="M12 3 19 20 12 15.5 5 20z"/></svg><span><b id="gpsName"></b><small id="gpsDist"></small></span></div>
   <div class="mp-hud" id="mpHud" hidden><div class="mp-list" id="mpList"></div><div class="emotes" id="emotes" role="group" aria-label="Messages rapides"><button data-emote="horn" aria-label="Klaxon (H)">📯</button><button data-emote="wave" aria-label="Salut (1)">👋</button><button data-emote="gg" aria-label="GG (2)">GG</button><button data-emote="follow" aria-label="Suis-moi (3)">➜</button><button data-emote="fire" aria-label="En feu (4)">🔥</button></div></div>
-  <div class="speedo"><div class="kmh" id="hudSpeed">0</div><div class="unit">KM/H</div><div class="rpm" id="rpmBar"><i id="rpmFill"></i></div><div class="gear" id="hudGear">1</div></div>
+  <div class="speedo"><div class="kmh" id="hudSpeed">0</div><div class="unit" id="hudSpeedUnit">KM/H</div><div class="rpm" id="rpmBar"><i id="rpmFill"></i></div><div class="gear" id="hudGear">1</div></div>
 </div>
 <div id="count" hidden></div>
 <div class="hud-goal" id="hudGoal" hidden aria-live="polite"></div>
@@ -217,17 +217,41 @@
 <section class="screen dim" id="settings" hidden aria-labelledby="setTitle">
   <div class="card">
     <div class="eyebrow"><span>Réglages</span><span class="jp">設定</span></div>
-    <h2 id="setTitle">Pilotage et confort</h2>
-    <div class="setting"><div><label>Assistance de contre-braquage</label><p>« Simulation » coupe toute aide : réservé aux mains sûres.</p></div>
-      <div class="mini-seg" role="group" aria-label="Assistance" id="assistSeg"><button data-v="0">Simu</button><button data-v="1">Normale</button><button data-v="1.3">Forte</button></div></div>
-    <div class="setting"><div><label for="optAutoGas">Accélérateur automatique</label><p>Les gaz restent ouverts. Tu ne gères que la direction et les freins.</p></div><input type="checkbox" class="toggle" id="optAutoGas"></div>
-    <div class="setting"><div><label>Commandes tactiles</label><p>Déplace chaque bouton, change sa taille et sa transparence.</p></div><button class="btn" id="layoutBtn"><span>Personnaliser</span></button></div>
-    <div class="setting"><div><label for="optSound">Son</label><p>Moteur, pneus et effets synthétisés en direct.</p></div><input type="checkbox" class="toggle" id="optSound"></div>
-    <div class="setting"><div><label for="optMotion">Réduire les mouvements</label><p>Supprime les secousses et l'effet de vitesse de la caméra.</p></div><input type="checkbox" class="toggle" id="optMotion"></div>
-    <div class="setting"><div><label for="optVibe">Vibrations</label><p>Retour haptique sur les clips et les chocs (Android).</p></div><input type="checkbox" class="toggle" id="optVibe"></div>
-    <div class="setting"><div><label>Qualité graphique</label><p>« Auto » baisse la qualité si l'appareil rame.</p></div>
-      <div class="mini-seg" role="group" aria-label="Qualité" id="qualSeg"><button data-v="auto">Auto</button><button data-v="low">Basse</button><button data-v="high">Haute</button></div></div>
-    <div class="row-end" style="margin-top:14px"><span class="hint" id="fpsOut"></span><button class="btn primary" data-back><span>OK</span></button></div>
+    <h2 id="setTitle">Réglages du jeu</h2>
+    <nav class="options-nav" aria-label="Catégories de réglages">
+      <button type="button" data-option-tab="audio" aria-controls="optionsAudio" aria-pressed="false">Son</button>
+      <button type="button" data-option-tab="graphics" aria-controls="optionsGraphics" aria-pressed="false">Graphismes</button>
+      <button type="button" data-option-tab="driving" aria-controls="optionsDriving" aria-pressed="true">Pilotage</button>
+      <button type="button" data-option-tab="display" aria-controls="optionsDisplay" aria-pressed="false">Affichage</button>
+    </nav>
+    <div id="optionsAudio" data-option-panel="audio" hidden>
+      <div class="setting"><label for="optSound">Activer le son</label><input type="checkbox" class="toggle" id="optSound" data-pref="sound"></div>
+      <div class="options-grid" id="audioMix"></div>
+      <button class="btn ghost" type="button" id="soundTest">Écouter le mixage</button>
+    </div>
+    <div id="optionsGraphics" data-option-panel="graphics" hidden>
+      <div class="setting option-preset"><label id="qualityLabel">Profil graphique</label>
+        <div class="mini-seg" role="group" aria-labelledby="qualityLabel" id="qualSeg"><button data-v="auto">Auto</button><button data-v="low">Bas</button><button data-v="med">Moyen</button><button data-v="high">Élevé</button><button data-v="ultra">Ultra</button></div>
+      </div>
+      <div class="options-grid" id="graphicsControls"></div>
+      <p class="hint" id="graphicsResolution"></p>
+      <p class="hint" id="graphicsPending" hidden>Les détails du décor, les reflets, le filtrage et la capacité de fumée se chargent avec la prochaine piste ou entrée sur l’île.</p>
+    </div>
+    <div id="optionsDriving" data-option-panel="driving">
+      <div class="setting"><label id="assistLabel">Assistance de contre-braquage</label>
+        <div class="mini-seg" role="group" aria-labelledby="assistLabel" id="assistSeg"><button data-v="0">Simu</button><button data-v="1">Normale</button><button data-v="1.3">Forte</button></div>
+      </div>
+      <div class="setting"><label for="optAutoGas">Accélérateur automatique</label><input type="checkbox" class="toggle" id="optAutoGas" data-pref="autoGas"></div>
+      <div class="setting"><label>Commandes tactiles</label><button class="btn" id="layoutBtn"><span>Personnaliser</span></button></div>
+      <div class="setting"><label for="optVibe">Vibrations</label><input type="checkbox" class="toggle" id="optVibe" data-pref="vibe"></div>
+      <div class="options-grid" id="drivingControls"></div>
+    </div>
+    <div id="optionsDisplay" data-option-panel="display" hidden>
+      <div class="setting"><label for="optMotion">Réduire les mouvements</label><input type="checkbox" class="toggle" id="optMotion" data-pref="reduce"></div>
+      <div class="setting"><label for="optMinimap">Afficher la mini-carte</label><input type="checkbox" class="toggle" id="optMinimap" data-pref="minimap"></div>
+      <div class="options-grid" id="displayControls"></div>
+    </div>
+    <div class="row-end"><button class="btn ghost" type="button" id="resetSettings">Réinitialiser les réglages</button><button class="btn primary" data-back><span>OK</span></button></div>
   </div>
 </section>
 

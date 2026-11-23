@@ -47,18 +47,6 @@ export function buildIslandWorld(scene, I, quality) {
   group.add(new THREE.HemisphereLight(T.hemiSky, T.hemiGround, T.hemi));
   const sun = new THREE.DirectionalLight(T.dirColor, T.dir);
   sun.position.set(...T.sun).multiplyScalar(60);
-  if (quality.shadows) {
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
-    const sc = sun.shadow.camera;
-    sc.left = -14;
-    sc.right = 14;
-    sc.top = 14;
-    sc.bottom = -14;
-    sc.near = 1;
-    sc.far = 160;
-    sun.shadow.bias = -0.0006;
-  }
   group.add(sun);
   group.add(sun.target);
 
@@ -136,7 +124,7 @@ export function buildIslandWorld(scene, I, quality) {
         }),
       ),
     );
-    m.receiveShadow = !!quality.shadows;
+    m.receiveShadow = true;
     group.add(m);
   }
   // mer tout autour (suivie au besoin par le décor lointain)
@@ -181,7 +169,7 @@ export function buildIslandWorld(scene, I, quality) {
         true,
       ),
     );
-    roadTex.anisotropy = 8;
+    roadTex.anisotropy = quality.anisotropy;
     const strips = (o0, o1, lift, vScale) => {
       const pos = [],
         uv = [],
@@ -216,7 +204,7 @@ export function buildIslandWorld(scene, I, quality) {
       strips(-half, half, 0.02, 20),
       keep(new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.9, metalness: 0 })),
     );
-    road.receiveShadow = !!quality.shadows;
+    road.receiveShadow = true;
     group.add(road);
     const shMat = keep(new THREE.MeshLambertMaterial({ color: 0x8a8070 }));
     group.add(new THREE.Mesh(strips(-half - 1.8, -half, 0.012, 6), shMat));
@@ -606,6 +594,7 @@ export function buildIslandWorld(scene, I, quality) {
     }
   }
   function dispose() {
+    sun.shadow.dispose();
     scene.remove(group);
     for (const d of disposables) d.dispose && d.dispose();
   }

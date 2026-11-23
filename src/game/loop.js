@@ -16,7 +16,7 @@ import { mpSendTick } from './multiplayer.js';
 import { resetPlayer } from './scene.js';
 import { drawGhost, ghostCar, lose, popup, score, updateGhost, updateScore } from './score.js';
 import { screenId } from './session.js';
-import { QUALITY, _grad, camera, curTer, gy, renderer, resize, scene, showroom } from './stage.js';
+import { _grad, camera, curTer, gy, preferredQuality, renderer, resize, scene, setQuality, showroom } from './stage.js';
 import { readInput } from './touch.js';
 import { Ghost } from '../sim/ghost.js';
 import { stepCar } from '../sim/physics.js';
@@ -216,25 +216,25 @@ function autoQuality(dt) {
   qCheckT += dt;
   if (qCheckT < 2) return;
   qCheckT = 0;
-  if (frameAvg > 20) {
+  const budget = 1000 / Number(settings.fpsTarget);
+  if (frameAvg > budget * 1.2) {
     // le coût de rendu suit le nombre de pixels (dpr²) : on vise 60 i/s en un ou deux pas, pas en dix
     game.fastT = 0;
-    const want = Math.max(0.6, game.dprScale * Math.sqrt(16.7 / frameAvg));
+    const want = Math.max(0.6, game.dprScale * Math.sqrt(budget / frameAvg));
     if (game.dprScale - want > 0.05) {
       game.dprScale = want;
       resize();
-    } else if (frameAvg > 24 && game.qLevel !== 'low') {
-      game.qLevel = game.qLevel === 'high' ? 'med' : 'low';
-      game.quality = QUALITY[game.qLevel];
-      game.world.sun.castShadow = game.quality.shadows;
+    } else if (frameAvg > budget * 1.44 && game.qLevel !== 'low') {
+      setQuality(game.qLevel === 'high' ? 'med' : 'low');
       game.dprScale = Math.min(1, game.dprScale + 0.2);
       resize();
     }
-  } else if (frameAvg < 14 && game.dprScale < 1) {
+  } else if (frameAvg < budget * 0.84 && (game.dprScale < 1 || game.qLevel !== preferredQuality())) {
     game.fastT += 2;
     if (game.fastT >= 8) {
       game.fastT = 0;
-      game.dprScale = Math.min(1, game.dprScale + 0.1);
+      if (game.dprScale < 1) game.dprScale = Math.min(1, game.dprScale + 0.1);
+      else setQuality(game.qLevel === 'low' ? 'med' : 'high');
       resize();
     }
   } else game.fastT = 0;

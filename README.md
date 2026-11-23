@@ -94,7 +94,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 - **Three.js r128** (cdnjs) : scène, `InstancedMesh`, shaders précompilés
 - Carrosseries, ailerons et rétroviseurs **modélisés dans Blender par script** (surface de subdivision, arêtes biseautées, occlusion ambiante par sommet, 2 niveaux de détail) ; décors et ciels procéduraux
 - Peinture vernie (clearcoat), reflets par cubemap peinte texel par texel
-- Résolution dynamique et paliers de qualité auto
+- Profils graphiques du mode Auto à Ultra, avec résolution de rendu, ombres, reflets, filtrage de la piste, décor, fumée et exposition réglables
 
 </td><td>
 
@@ -109,6 +109,7 @@ Manette compatible. **Le geste de base :** prends de la vitesse, braque, tire le
 
 **Son et interface**
 - **Web Audio API** : moteur, turbo et crissement synthétisés, zéro fichier audio
+- Mixage réglable par catégorie, avec un extrait pour écouter les niveaux depuis le menu Son
 - HTML/CSS vanilla, polices **Archivo**, **Instrument Serif**, **Noto Sans JP** (Google Fonts)
 - PWA : manifeste, icônes, plein écran paysage
 
@@ -316,7 +317,7 @@ Modules ES, imports explicites. `src/main.js` initialise les modules du jeu dans
 <details>
 <summary><b>📱 Commandes tactiles (détail)</b></summary>
 
-Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + taille par bouton, transparence, miroir, réinitialisation. Disposition enregistrée par orientation (`localStorage`, clé `sdc:touchLayout`). Un doigt peut glisser d'un bouton à l'autre sans lâcher (hit-test + hystérésis de 28 px). Zoom : bloqué sur la surface de jeu (`touch-action: none`, garde `touchend`, `gesture*`), autorisé dans les menus (`pan-y pinch-zoom`) ; le viewport ne l'interdit pas (WCAG 1.4.4).
+Réglages → Pilotage → *Personnaliser* : déplacer chaque bouton, taille générale + taille par bouton, transparence, miroir, réinitialisation. Disposition enregistrée par orientation (`localStorage`, clé `sdc:touchLayout`). Un doigt peut glisser d'un bouton à l'autre sans lâcher (hit-test + hystérésis de 28 px). Zoom : bloqué sur la surface de jeu (`touch-action: none`, garde `touchend`, `gesture*`), autorisé dans les menus (`pan-y pinch-zoom`) ; le viewport ne l'interdit pas (WCAG 1.4.4).
 
 </details>
 

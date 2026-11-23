@@ -5,7 +5,7 @@ import { game } from './state.js';
 import { isTouch, profile } from './base.js';
 import { drawMinimapBase } from './hud.js';
 import { dropGhost } from './score.js';
-import { camera, renderer, resize, scene } from './stage.js';
+import { applyWorldGraphics, camera, configureSun, renderer, resize, scene } from './stage.js';
 import { Economy } from '../progress/economy.js';
 import { buildCar } from '../render/car/index.js';
 import { createParticles, createSkids, puffTexture } from '../render/fx.js';
@@ -17,7 +17,7 @@ import { TRACKS, buildTrackData } from '../sim/track.js';
 export function buildEnv() {
   if (game.envMap) game.envMap.dispose();
   const T = game.world.theme;
-  const N = 96;
+  const N = game.quality.reflections;
   const top = new THREE.Color(T.skyTop),
     hor = new THREE.Color(T.skyHorizon),
     sun = new THREE.Color(T.sunColor),
@@ -96,13 +96,20 @@ export function buildEnv() {
   game.envMap.needsUpdate = true;
 }
 
+export function graphicsPending() {
+  const built = game.world?.quality;
+  return built && ['reflections', 'scenery', 'smoke', 'anisotropy'].some((key) => built[key] !== game.quality[key]);
+}
+
 export function loadTrack(i) {
   dropGhost();
   if (game.world) game.world.dispose();
   game.trackIdx = i;
   game.track = buildTrackData(TRACKS[i]);
   game.world = buildWorld(scene, game.track, game.quality);
-  renderer.toneMappingExposure = game.world.theme.exposure;
+  configureSun(game.world.sun);
+  applyWorldGraphics();
+  game.world.quality = game.quality;
   game.line = buildDriftLine(game.track);
   buildEnv();
   buildFx();

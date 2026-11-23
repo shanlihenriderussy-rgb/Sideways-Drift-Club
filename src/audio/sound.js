@@ -1,9 +1,12 @@
+import { MIX } from '../game/preferences.js';
+
 // ===== Son : moteur, crissement, impacts, jingles — 100 % synthétisé (Web Audio) =====
 export const Sound = (() => {
   let ctx = null,
     master = null,
     enabled = true,
-    volume = 0.8;
+    mix = { ...MIX };
+  const buses = {};
   let eng = null,
     screech = null,
     turbo = null,
@@ -18,7 +21,14 @@ export const Sound = (() => {
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = enabled ? volume : 0;
+    master.gain.value = enabled ? mix.volume / 100 : 0;
+    for (const key of Object.keys(mix)) {
+      if (key === 'volume') continue;
+      const bus = ctx.createGain();
+      bus.gain.value = mix[key] / 100;
+      bus.connect(master);
+      buses[key] = bus;
+    }
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14;
     comp.ratio.value = 4;
@@ -85,7 +95,7 @@ export const Sound = (() => {
     ng.connect(lp);
     shaper.connect(lp);
     lp.connect(out);
-    out.connect(master);
+    out.connect(buses.engine);
     o1.start();
     o2.start();
     o3.start();
@@ -114,7 +124,7 @@ export const Sound = (() => {
     bp2.connect(g2);
     g2.connect(g);
     g.connect(makeup);
-    makeup.connect(master);
+    makeup.connect(buses.tires);
     n.start();
     screech = { g, bp, bp2 };
   }
@@ -125,7 +135,7 @@ export const Sound = (() => {
     const g = ctx.createGain();
     g.gain.value = 0;
     o.connect(g);
-    g.connect(master);
+    g.connect(buses.turbo);
     o.start();
     turbo = { o, g, spool: 0 };
   }
@@ -156,7 +166,7 @@ export const Sound = (() => {
     } else turbo.g.gain.setTargetAtTime(0, t, 0.1);
   }
 
-  function burst(dur, freq, q, gain, type) {
+  function burst(dur, freq, q, gain, type, bus = 'effects') {
     if (!ctx || !enabled) return;
     const t = ctx.currentTime;
     const n = noiseSrc();
@@ -169,11 +179,11 @@ export const Sound = (() => {
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     n.connect(f);
     f.connect(g);
-    g.connect(master);
+    g.connect(buses[bus]);
     n.start(t);
     n.stop(t + dur + 0.05);
   }
-  function tone(freq, dur, gain, type, when, slideTo) {
+  function tone(freq, dur, gain, type, when, slideTo, bus = 'signals') {
     if (!ctx || !enabled) return;
     const t = ctx.currentTime + (when || 0);
     const o = ctx.createOscillator();
@@ -185,7 +195,7 @@ export const Sound = (() => {
     g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g);
-    g.connect(master);
+    g.connect(buses[bus]);
     o.start(t);
     o.stop(t + dur + 0.05);
   }
@@ -194,18 +204,21 @@ export const Sound = (() => {
     init,
     update,
     get _debug() {
-      return { ctx, master };
+      return { ctx, master, buses };
     },
     get ready() {
       return !!ctx;
     },
     setEnabled(v) {
       enabled = v;
-      if (master) master.gain.setTargetAtTime(v ? volume : 0, ctx.currentTime, 0.05);
+      if (master) master.gain.setTargetAtTime(v ? mix.volume / 100 : 0, ctx.currentTime, 0.05);
     },
-    setVolume(v) {
-      volume = v;
-      if (master && enabled) master.gain.setTargetAtTime(v, ctx.currentTime, 0.05);
+    setMix(values) {
+      for (const key of Object.keys(MIX)) mix[key] = values[key];
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      master.gain.setTargetAtTime(enabled ? mix.volume / 100 : 0, t, 0.05);
+      for (const [key, bus] of Object.entries(buses)) bus.gain.setTargetAtTime(mix[key] / 100, t, 0.05);
     },
     suspend() {
       if (ctx && eng) {
@@ -216,13 +229,22 @@ export const Sound = (() => {
         turbo.g.gain.setTargetAtTime(0, t, 0.05);
       }
     },
+    preview() {
+      init();
+      tone(105, 0.25, 0.13, 'sawtooth', 0, 155, 'engine');
+      tone(1700, 0.2, 0.025, 'sine', 0.23, 2600, 'turbo');
+      burst(0.27, 1550, 2, 0.13, 'bandpass', 'tires');
+      tone(110, 0.15, 0.12, 'triangle', 0.45, 50, 'effects');
+      tone(880, 0.15, 0.08, 'triangle', 0.62);
+      tone(660, 0.05, 0.06, 'triangle', 0.79, null, 'interface');
+    },
     impact(power) {
       burst(0.35, 420, 1, Math.min(0.9, 0.25 + power * 0.06));
-      tone(70, 0.25, Math.min(0.6, 0.2 + power * 0.03), 'sine', 0, 40);
+      tone(70, 0.25, Math.min(0.6, 0.2 + power * 0.03), 'sine', 0, 40, 'effects');
     },
     backfire() {
       burst(0.09, 700, 1.5, 0.35);
-      tone(90, 0.08, 0.25, 'square');
+      tone(90, 0.08, 0.25, 'square', 0, null, 'effects');
     },
     blowoff() {
       burst(0.4, 2600, 0.7, 0.12, 'bandpass');
@@ -243,21 +265,21 @@ export const Sound = (() => {
       tone(go ? 1046 : 523, go ? 0.45 : 0.18, 0.2, 'square');
     },
     ui() {
-      tone(660, 0.05, 0.08, 'triangle');
+      tone(660, 0.05, 0.08, 'triangle', 0, null, 'interface');
     },
     // klaxon : deux notes désaccordées ; vol 0..1 (distance), pitch (petite voiture aiguë, bus grave)
     horn(vol, pitch) {
       const v = 0.11 * (vol == null ? 1 : vol),
         f = 420 * (pitch || 1);
       if (v < 0.006) return;
-      tone(f, 0.34, v, 'square');
-      tone(f * 1.26, 0.34, v * 0.8, 'square');
-      tone(f * 0.5, 0.3, v * 0.5, 'sawtooth');
+      tone(f, 0.34, v, 'square', 0, null, 'effects');
+      tone(f * 1.26, 0.34, v * 0.8, 'square', 0, null, 'effects');
+      tone(f * 0.5, 0.3, v * 0.5, 'sawtooth', 0, null, 'effects');
     },
     shutter() {
       burst(0.05, 3200, 0.8, 0.3, 'highpass');
       burst(0.07, 1800, 1.2, 0.22, 'bandpass');
-      tone(2400, 0.04, 0.05, 'triangle', 0.09);
+      tone(2400, 0.04, 0.05, 'triangle', 0.09, null, 'effects');
     },
     ping() {
       tone(988, 0.1, 0.1, 'triangle');

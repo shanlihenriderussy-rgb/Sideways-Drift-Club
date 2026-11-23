@@ -14,6 +14,7 @@ import { init as islandInteract } from './game/island/interact.js';
 import { init as islandMap } from './game/island/map.js';
 import { init as islandPhoto } from './game/island/photo.js';
 import { init as multiplayer } from './game/multiplayer.js';
+import { init as options } from './game/options.js';
 import { init as moments } from './game/moments.js';
 import { init as boot } from './game/boot.js';
 
@@ -33,6 +34,7 @@ for (const init of [
   islandMap,
   islandPhoto,
   multiplayer,
+  options,
   moments,
   boot,
 ])

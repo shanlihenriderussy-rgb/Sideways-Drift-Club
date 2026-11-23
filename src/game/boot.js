@@ -10,12 +10,12 @@ import { openIsleMap } from './island/map.js';
 import { enterIsland, isleData } from './island/world.js';
 import { frame, frameAvg, perf } from './loop.js';
 import { claimDaily, refreshWallet } from './menus.js';
-import { syncSettingsUI } from './moments.js';
+import { syncSettingsUI } from './options.js';
 import { mp, mpStart, openMulti } from './multiplayer.js';
 import { buildCars, loadTrack } from './scene.js';
 import { lossLog, score } from './score.js';
 import { finishRun, show, startRun } from './session.js';
-import { QUALITY, camLook, camPos, gy, renderer, resize, scene } from './stage.js';
+import { camLook, camPos, gy, renderer, resize, scene, setQuality } from './stage.js';
 import { applyLayout, layouts, openLayoutEditor, tState } from './touch.js';
 import { IsleLife } from '../island/life.js';
 import { Economy } from '../progress/economy.js';
@@ -25,6 +25,7 @@ import { $ } from '../util/dom.js';
 function boot() {
   syncSettingsUI();
   applyLayout();
+  Sound.setMix(settings);
   Sound.setEnabled(settings.sound);
   loadTrack(game.trackIdx);
   resize();
@@ -60,10 +61,10 @@ function boot() {
     scene,
     envMap: () => game.envMap,
     renderer,
+    audio: () => Sound._debug,
     perf,
     setQuality: (q) => {
-      game.qLevel = q;
-      game.quality = QUALITY[q];
+      setQuality(q);
       loadTrack(game.trackIdx);
     },
     carRoot: () => game.playerModel.root,

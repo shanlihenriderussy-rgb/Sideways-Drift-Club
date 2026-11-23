@@ -470,18 +470,6 @@ export function buildWorld(scene, track, quality) {
   group.add(hemi);
   const sun = new THREE.DirectionalLight(T.dirColor, T.dir);
   sun.position.set(...T.sun).multiplyScalar(60);
-  if (quality.shadows) {
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
-    const sc = sun.shadow.camera;
-    sc.left = -14;
-    sc.right = 14;
-    sc.top = 14;
-    sc.bottom = -14;
-    sc.near = 1;
-    sc.far = 160;
-    sun.shadow.bias = -0.0006;
-  }
   group.add(sun);
   group.add(sun.target);
 
@@ -551,7 +539,7 @@ export function buildWorld(scene, track, quality) {
     g.setIndex(idx);
     g.computeVertexNormals();
     const relief = new THREE.Mesh(keep(g), groundMat);
-    relief.receiveShadow = !!quality.shadows;
+    relief.receiveShadow = true;
     relief.userData.fixed = true;
     group.add(relief);
     const fg = new THREE.PlaneGeometry(3200, 3200);
@@ -627,7 +615,7 @@ export function buildWorld(scene, track, quality) {
       true,
     ),
   );
-  roadTex.anisotropy = 8;
+  roadTex.anisotropy = quality.anisotropy;
   const N = track.count;
   const { px, pz, tx, tz, half, wall } = track;
   function strip(off0, off1, y, vScale, uFlip) {
@@ -663,7 +651,7 @@ export function buildWorld(scene, track, quality) {
       }),
     ),
   );
-  road.receiveShadow = !!quality.shadows;
+  road.receiveShadow = true;
   group.add(road);
   const shTex = keep(
     canvasTex(
@@ -1855,6 +1843,7 @@ export function buildWorld(scene, track, quality) {
     }
   }
   function dispose() {
+    sun.shadow.dispose();
     scene.remove(group);
     for (const d of disposables) d.dispose && d.dispose();
   }

@@ -672,3 +672,19 @@ body.toasting .hud-goal { opacity: 0; }
 #replay .rp-ctl .icon-btn.big { width: 52px; height: 52px; background: var(--accent); } #replay .rp-ctl .icon-btn.big svg { fill: var(--accent-ink); }
 #replay .rp-ctl .btn { min-height: 40px; position: absolute; right: max(16px, env(safe-area-inset-right)); }
 #rpPause .i-play { display: none; } #rpPause.paused .i-play { display: block; } #rpPause.paused .i-pause { display: none; }
+
+#settings .card { width: min(700px, 100%); }
+.options-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin: 12px 0 8px; border-bottom: 1px solid var(--hair); }
+.options-nav button { min-width: 0; min-height: 44px; padding: 4px; font: inherit; font-size: clamp(12px, 3vw, 15px); font-weight: 700; color: var(--fg-2); background: transparent; border: 0; border-bottom: 2px solid transparent; cursor: pointer; }
+.options-nav button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.options-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; padding: 12px 0; }
+.options-grid .rng output { white-space: nowrap; }
+.option-select { display: grid; align-content: start; gap: 6px; font-size: 13px; font-weight: 650; }
+.option-select select { width: 100%; min-height: 42px; padding-inline: 8px; border: 1px solid var(--hair-2); border-radius: 8px; background: var(--s2); color: var(--fg); font: inherit; color-scheme: dark; }
+.option-select select:disabled { opacity: .5; }
+.option-preset { grid-template-columns: 1fr; gap: 6px; }
+#qualSeg { width: max-content; max-width: 100%; }
+#qualSeg button { padding-inline: clamp(6px, 2vw, 12px); }
+#settings .row-end { gap: 8px; }
+#settings .row-end .btn { min-height: 44px; padding-inline: 12px; }
+@media (max-width: 430px) { .options-grid { gap: 10px; } }
