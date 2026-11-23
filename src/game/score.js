@@ -82,14 +82,17 @@ export function dropGhost() {
   }
 }
 export function buildGhost() {
-  dropGhost();
   const g = game.mode === 'run' && !isle ? Ghost.unpack(ghosts[game.track.def.id]) : null;
+  return spawnGhost(g, game.track.terrain.at);
+}
+export function spawnGhost(g, terrain) {
+  dropGhost();
   if (!g) return;
   const model = buildCar(
     g.kind,
     lookOf(profile.cars[g.kind] || Economy.defaultCar(g.kind), game.world.theme.headlights, true),
   );
-  model.ground = game.track.terrain.at;
+  model.ground = terrain;
   // voiture de verre : tous les matériaux deviennent transparents, l'opacité suit la distance à ta voiture
   const mats = [];
   model.root.traverse((o) => {
@@ -106,11 +109,12 @@ export function buildGhost() {
     if (o.isMesh) o.castShadow = false;
   });
   scene.add(model.root);
+  model.root.visible = false;
   ghostCar = { g, model, mats, fade: -1 };
 }
-export function updateGhost(dt) {
+export function drawGhost(dt, time) {
   const G = ghostCar,
-    s = Ghost.at(G.g, score.runT, ghostView);
+    s = Ghost.at(G.g, time, ghostView);
   ghostView.wheelRot += dt * 50;
   ghostView.steerAngle = -s.rearSlip * 0.5;
   G.model.update(ghostView, dt, false);
@@ -121,6 +125,10 @@ export function updateGhost(dt) {
     for (const m of G.mats) m.opacity = m.userData.o * f;
     G.model.root.visible = f > 0.01;
   }
+  return s;
+}
+export function updateGhost(dt) {
+  const s = drawGhost(dt, score.runT);
   ghostT -= dt;
   if (ghostT <= 0) {
     ghostT = 0.25;

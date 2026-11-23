@@ -9,6 +9,7 @@ import { el } from '../hud.js';
 import { drawIsleMinimapBase, renderIsleGoal } from './events.js';
 import { clearGps } from './interact.js';
 import { buildLife, clearLife } from './life.js';
+import { clearSprint } from './sprint.js';
 import { STEP } from '../loop.js';
 import { refreshWallet, toast } from '../menus.js';
 import { mp } from '../multiplayer.js';
@@ -173,6 +174,7 @@ export function isleCollide(st) {
   } else st.wetT = 0;
 }
 export function isleRespawn() {
+  const aborted = clearSprint();
   const q = isleData.nearestRoad(game.player.x, game.player.z, {});
   let i = q.i;
   const wet = game.player.wetT > 0.5;
@@ -194,7 +196,10 @@ export function isleRespawn() {
   if (Math.abs(dh) > Math.PI / 2) h += Math.PI; // garde le sens dans lequel on roulait
   lose('Replacement');
   placePlayer(I.X[i], I.Z[i], h, 8);
-  popup(wet ? 'Plouf · replacé sur la route' : 'Replacé sur la route', 'apex');
+  popup(
+    aborted ? 'Chrono annulé · voiture replacée' : wet ? 'Plouf · replacé sur la route' : 'Replacé sur la route',
+    'apex',
+  );
 }
 export function isleTick(dt) {
   const st = game.player,
@@ -221,6 +226,7 @@ export function isleTick(dt) {
     $('hudLap').textContent = label;
   }
   // daruma dorés
+  if (game.life?.sprint) return;
   I.daruma.forEach((d, k) => {
     const g = game.world.daruma[k];
     if (!g.visible || Math.hypot(st.x - d.x, st.z - d.z) > 3) return;

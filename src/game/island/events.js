@@ -7,7 +7,7 @@ import { chat, clearGps, setGps } from './interact.js';
 import { fmtDist, isle, isleData, isleQ, nodeName, placePlayer, starsTxt } from './world.js';
 import { refreshWallet, toast } from '../menus.js';
 import { mp } from '../multiplayer.js';
-import { announce, bank, popup, score, vibrate } from '../score.js';
+import { announce, bank, popup, score } from '../score.js';
 import { countdown, resumeGame, show } from '../session.js';
 import { camPos, gy } from '../stage.js';
 import { IsleLife } from '../../island/life.js';
@@ -195,25 +195,7 @@ function endDuel(win, why) {
   });
 }
 
-// ---------- belvédères, radars, zones de glisse ----------
-export function takePhoto(p) {
-  const f = $('flash');
-  f.hidden = true;
-  void f.offsetWidth;
-  f.hidden = settings.reduce;
-  setTimeout(() => {
-    f.hidden = true;
-  }, 650);
-  Sound.shutter();
-  vibrate(20);
-  const r = IsleLife.photoTaken(profile, p.def.id);
-  if (r) {
-    saveProfile();
-    refreshWallet();
-    game.life.stats.photos++;
-    toast(`Lou : « ${p.def.line} » · +${Economy.fmt(r)}`, 'chal');
-  } else toast(`Belle photo : ${p.def.name}`, 'apex');
-}
+// ---------- radars et zones de glisse ----------
 export function actsTick(dt) {
   const L = game.life,
     st = game.player,
@@ -307,7 +289,11 @@ export function renderIsleGoal() {
   if (!el || !isle) return;
   let t,
     cls = 'hud-goal';
-  if (L && L.duel) {
+  if (L?.sprint) {
+    const { course, next, off } = L.sprint;
+    cls += ' street';
+    t = `${course.def.name} · ${next}/${course.gates.length} portes${off > 0.25 ? ' · Reviens sur la route !' : ''}`;
+  } else if (L && L.duel) {
     const D = L.duel,
       n = D.r.c.name;
     cls += ' street';

@@ -254,7 +254,7 @@ Modules ES, imports explicites. `src/main.js` initialise les modules du jeu dans
 | `src/ui/` | `page.html` (gabarit), `styles.css`, `markup.html`, `shop.js` (atelier) |
 | `src/audio/` | `sound.js` : moteur, turbo, crissement synthétisés (Web Audio) |
 | `assets/models/` | Carrosseries exportées de Blender (`*.bin` : demi-modèle, 2 niveaux de détail, lignes de caisse) |
-| `tools/models/` | Générateur Blender : `carlib.py` (cage, vitrages, joints, optiques, occlusion, export), `cars.py` (fiches de style), `parts.py` (ailerons, rétroviseurs), `build_cars.py` |
+| `tools/models/` | Générateur Blender : `carlib.py` (cage, vitrages, joints, optiques, occlusion, export), `cars.py` (fiches de style), `parts.py` (pièces d’atelier), `build_cars.py` |
 | `.claude/skills/impeccable/` | Skill de design d'interface [Impeccable](https://github.com/pbakaus/impeccable) (Apache 2.0) : `/impeccable critique`, `polish`, `audit`… pour le travail sur l'UI avec Claude Code |
 | `tools/` | `smoke.mjs` (fumée de bout en bout), `bench-physics.mjs`, `bench-perf.mjs`, `bot-run.mjs`, `shots-cars.mjs`, visuels du README ; `lib/harness.mjs` (Playwright, pilote automatique) |
 | `tests/` | `npm test` : économie, physique, tracés, île, vie de l'île, multijoueur, fluidité réseau, modèles 3D, fantôme, moments forts, aventure |
@@ -294,7 +294,9 @@ Modules ES, imports explicites. `src/main.js` initialise les modules du jeu dans
 - **Rivaux** : Nana (dès le début), Kai (chapitre 2), Tetsu (chapitre 4), Mika (chapitre 5). Ils sillonnent l'île en glisse ; approche-toi, ils se rangent et t'attendent. Défis : touge (premier arrivé à un lieu à 0,7–1,8 km) ou tandem de rue (rester à moins de 15 m pendant 45 s, 50 % du temps). Prime pleine à la première victoire, un cinquième ensuite.
 - **Habitants** : Kenji, Lou, Zélie, Ume, Sora, Hoshi. Chacun a quelque chose à dire et propose de régler le GPS (prochaine étape de l'aventure, daruma le plus proche, rival, défi à tenter).
 - **Frôlé !** : passer en glisse à moins d'un mètre d'une voiture de la circulation sans la toucher : +300 × multiplicateur, une fois par voiture et par passage.
-- **Activités** : 3 radars (vitesse) et 4 zones de glisse (points entre deux arches), 3 étoiles chacune, payées une fois. 4 belvédères : arrête-toi dans le cercle bleu et prends la photo.
+- **Activités** : 3 radars (vitesse) et 4 zones de glisse (points entre deux arches), 3 étoiles chacune, payées une fois.
+- **Contre-la-montre** : trois sprints solo aux quais, sur la corniche et au col. Suis le GPS puis franchis les portes dans l’ordre. Les médailles rapportent chacune une prime à la première obtention. Ton meilleur chrono est enregistré avec un fantôme et les temps de passage.
+- **Belvédères** : arrête-toi dans l’un des quatre cercles bleus, règle le cadrage puis prends la photo. L’album est accessible depuis la carte de l’île ou le palmarès. Les JPEG sont stockés sur l’appareil et téléchargeables.
 - **Carte et GPS** : carte complète (lieux, rivaux en direct, activités et étoiles, habitants, belvédères, daruma) ; toucher un repère règle le GPS (flèche, distance par la route, tracé sur la mini-carte).
 - 12 daruma dorés à trouver (¥500 chacun). Fin de balade : gains du mode libre et bilan de l'île. Progression dans `sdc:profile.isle`.
 
@@ -323,7 +325,7 @@ Réglages → *Personnaliser* : déplacer chaque bouton, taille générale + tai
 
 - Appels de dessin : 64–67 par image en tandem (inchangé). Script : 0,5–0,8 ms/image.
 - Triangles par image en tandem : 86–104 k (qualité basse), 122–153 k (moyenne), 159–200 k (haute). Les carrosseries Blender comptent ~38 k triangles au niveau fin, ~9,5 k au niveau léger.
-- Poids de `index.html` : 1,7 Mo (0,47 Mo avant les modèles 3D ; les trois carrosseries pèsent ~0,96 Mo en binaire).
+- Poids de `index.html` au 23 novembre 2026 : environ 1,76 Mo. Les modèles 3D sont compressés au build et décompressés lorsqu’une voiture est chargée pour la première fois.
 - Banc physique (`tools/bench-physics.mjs`) : chiffres identiques à la version précédente.
 - **Non mesuré ici** : images par seconde et temps de chargement sur un vrai téléphone (l'environnement de développement n'a pas de carte graphique).
 

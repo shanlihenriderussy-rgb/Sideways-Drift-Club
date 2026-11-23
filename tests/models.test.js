@@ -3,8 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import * as THREE from 'three';
 import { decodeModel, expand, expandPart, bodyLines } from '../src/render/car/format.js';
 import { CAR_SPECS } from '../src/sim/physics.js';
+
+globalThis.THREE = THREE;
+const { wheelGeos } = await import('../src/render/car/wheels.js');
 
 const dir = path.join(import.meta.dirname, '../assets/models');
 const load = (kind) => decodeModel(fs.readFileSync(path.join(dir, kind + '.bin')));
@@ -99,6 +103,22 @@ for (const kind of Object.keys(CAR_SPECS)) {
     assert.ok(B.surfY(d.fa, 0) < B.surfY(0, 0) - 0.25, 'capot nettement sous le toit');
   });
 
+  test(`${kind} : la bande de roulement des pneus est visible aux deux niveaux de détail`, () => {
+    for (const lod of [0, 1]) {
+      const wheels = wheelGeos('six', d.R, d.rr, d.tw, lod, 0);
+      const { position, normal } = wheels.tire.attributes;
+      let treadVertices = 0;
+      for (let i = 0; i < position.count; i++) {
+        const x = position.getX(i),
+          y = position.getY(i);
+        if (Math.hypot(x, y) < d.R - 1e-6) continue;
+        treadVertices++;
+        assert.ok(x * normal.getX(i) + y * normal.getY(i) > 0, 'normale du pneu tournée vers le moyeu');
+      }
+      assert.ok(treadVertices > 0);
+    }
+  });
+
   test(`${kind} : le kit large écarte les ailes sans toucher au toit`, () => {
     const base = expand(M, 0).paint_side,
       wide = expand(M, 0, 0.1).paint_side;
@@ -110,6 +130,68 @@ for (const kind of Object.keys(CAR_SPECS)) {
     let dy = 0;
     for (let i = 1; i < top.pos.length; i += 3) dy = Math.max(dy, Math.abs(topW.pos[i] - top.pos[i]));
     assert.ok(dy < 0.01, `vitrage déplacé de ${dy}`);
+  });
+
+  test(`${kind} : les pièces basses de l'atelier restent légères et suivent le kit large`, () => {
+    const materials = {
+      front_lip: 'carbon',
+      front_aero: 'carbon',
+      front_canards: 'carbon',
+      front_winglets: 'carbon',
+      skirt_painted: 'paint_plain',
+      skirt_carbon: 'carbon',
+      skirt_blade: 'carbon',
+      diffuser_fins: 'carbon',
+    };
+    for (const [name, material] of Object.entries(materials)) {
+      const part = expandPart(M, name)?.[material];
+      assert.ok(part, `${name} absent ou sans matière ${material}`);
+      assert.ok(part.index.length > 0 && part.index.length / 3 < 1000, `${name} dépasse son budget`);
+      const wide = expandPart(M, name, 0.1)[material];
+      let offset = 0;
+      for (let i = 0; i < part.pos.length; i += 3) {
+        const [x, y, z] = part.pos.subarray(i, i + 3);
+        assert.ok(y > 0.12 && y < 0.55, `${name} à une hauteur de ${y} m`);
+        if (name.startsWith('front')) assert.ok(x > d.fa, `${name} empiète sur l'arche avant`);
+        if (name.startsWith('skirt')) assert.ok(x > d.ra + d.AR && x < d.fa - d.AR, `${name} empiète sur une arche`);
+        if (name.startsWith('diffuser')) assert.ok(x < d.ra - d.AR, `${name} empiète sur l'arche arrière`);
+        assert.equal(wide.pos[i], x);
+        assert.equal(wide.pos[i + 1], y);
+        offset = Math.max(offset, Math.abs(wide.pos[i + 2]) - Math.abs(z));
+      }
+      if (name.startsWith('skirt')) assert.ok(offset > 0.01 && offset < 0.04, `${name} décalée de ${offset} m`);
+    }
+    assert.ok(M.meta.parts.front_aero.size[0] > M.meta.parts.front_lip.size[0]);
+  });
+
+  test(`${kind} : les accessoires de toit et d'habitacle sont exportés avec les bonnes matières`, () => {
+    const materials = {
+      roof_scoop: ['paint_plain', 'trim'],
+      roof_visor: ['trim'],
+      roof_rack: ['belt', 'chrome', 'trim'],
+      cage_cage: ['chrome', 'trim'],
+      seat_stock: ['trim'],
+      seat_bucket: ['seat', 'trim'],
+      seat_harness: ['belt', 'chrome'],
+    };
+    for (const [name, expect] of Object.entries(materials)) {
+      const blocks = expandPart(M, name);
+      assert.ok(blocks, `${name} absent`);
+      assert.deepEqual(Object.keys(blocks).sort(), expect);
+      const tris = Object.values(blocks).reduce((sum, g) => sum + g.index.length / 3, 0);
+      assert.ok(tris > 0 && tris <= 2200, `${name} : ${tris} triangles`);
+      for (const g of Object.values(blocks)) {
+        for (let i = 0; i < g.pos.length; i += 3) {
+          const [x, y, z] = g.pos.subarray(i, i + 3);
+          assert.ok(Math.abs(z) < d.w / 2 - 0.15, `${name} dépasse du toit ou de l’habitacle`);
+          if (name.startsWith('roof_')) {
+            assert.ok(x > d.roofEnd - 0.12 && x < d.ws1 + 0.2 && y > d.roof - 0.09 && y < d.roof + 0.29);
+          } else {
+            assert.ok(x > d.X0 + 0.4 && x < d.ws0 && y >= d.floor - 0.01 && y < d.roof);
+          }
+        }
+      }
+    }
   });
 
   test(`${kind} : ailerons et rétroviseurs de l'atelier présents, légers, à leur place`, () => {

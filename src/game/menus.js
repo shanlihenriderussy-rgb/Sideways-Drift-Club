@@ -7,6 +7,7 @@ import { buildCars, loadTrack } from './scene.js';
 import { announce, ensureAudio } from './score.js';
 import { screenId, show } from './session.js';
 import { canvas } from './stage.js';
+import { fmtSprintTime, sprintMedals, SPRINTS } from '../island/sprint.js';
 import { Economy } from '../progress/economy.js';
 import { TRACKS } from '../sim/track.js';
 import { createShop } from '../ui/shop.js';
@@ -99,6 +100,16 @@ export function openCareer() {
     cell('Runs terminés', st.runs) +
     cell('Total gagné', Economy.fmt(st.earned)) +
     cell('Meilleur gain', Economy.fmt(st.bestPayout));
+  const records = profile.isle?.sprints || {};
+  const timed = SPRINTS.filter((def) => records[def.id]);
+  $('careerSprints').hidden = timed.length === 0;
+  $('careerSprintList').innerHTML = timed
+    .map((def) => {
+      const ms = records[def.id];
+      const medals = sprintMedals(def, ms);
+      return `<li><span class="ck" aria-hidden="true">${medals ? '★' : '–'}</span><span>${def.name} · ${medals}/3 médailles</span><b>${fmtSprintTime(ms)}</b></li>`;
+    })
+    .join('');
   $('chalList').innerHTML = Economy.CHALLENGES.map(
     (c) =>
       `<li class="${profile.done[c.id] ? 'done' : ''}"><span class="ck" aria-hidden="true">${profile.done[c.id] ? '✓' : ''}</span><span>${c.label}<span class="sr">${profile.done[c.id] ? ', réussi' : ''}</span></span><b>${Economy.fmt(c.reward)}</b></li>`,

@@ -3,6 +3,16 @@
 Date : 2026-11-12 · Branche : `claude/keen-fermat-6ff9bz` (refactor en modules ES, multijoueur fluide, carrosseries Blender) (dépôt `shanlihenriderussy-rgb/Sideways-Drift-Club`)
 En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `main`)
 
+## Pièces basses de l'atelier (2026-11-23)
+- Lames avant, canards, jupes et diffuseur exportés de Blender sur les trois caisses. En jeu, ces pièces suivent l'élargissement des ailes avec le kit large.
+- Le maillage de la bande de roulement est orienté vers l'extérieur aux deux niveaux de détail. Les trois rainures du niveau fin tiennent entre les épaules.
+
+## Contre-la-montre, album et atelier (2026-11-23)
+- Trois sprints solo sur l’île. Les portes et les temps intermédiaires sont calculés au pas physique. Les chronos sont dans `profile.isle.sprints` et les fantômes dans `sdc:sprintGhosts`. Les anciennes données de l’île (radars, rivaux, visites, photos, daruma) sont préservées à la lecture du profil.
+- Les quatre belvédères ouvrent un mode photo avec cadrage et sauvegarde des JPEG dans `sdc:isleAlbum`. L’album s’ouvre depuis la carte ou le palmarès.
+- Écope, pare-soleil, galerie, arceau, sièges et harnais exportés de Blender. `build.mjs` compresse les blocs de modèles en DEFLATE au moment de les intégrer au HTML.
+- Nouveau décor portuaire sur la route de Minato. Les conteneurs sont empilés sur un support et les bâtiments restent en retrait de la chaussée.
+
 ## Refonte du 2026-11-12 (à lire d'abord)
 - **Modules ES** : `src/` n'est plus une concaténation de scripts à noms globaux. 53 modules, imports explicites, bundle esbuild depuis `src/main.js`. L'ancien `game.js` (2 746 lignes) est découpé en 22 modules sous `src/game/`.
 - **Deux règles de structure dans `src/game/`** :
@@ -36,7 +46,7 @@ En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `ma
 - **`game` masqué** : ne pas nommer une variable locale `game` dans `src/game/`.
 - **Playwright** : le tactile et la densité de pixels se règlent sur le contexte (`newContext`), pas sur la page.
 - **Vercel** : le site est statique. `vercel.json` désactive l'installation et le build (sinon Vercel lance `npm run build` et cherche un dossier `public` : déploiement en erreur). `index.html` commité fait foi.
-- **Poids** : `index.html` passe de 0,47 à 1,7 Mo (modèles en base64). Piste d'allègement non faite : compresser les `.bin` (deflate, −34 %) et les décompresser au démarrage.
+- **Poids** : les blocs de modèles sont compressés au build. Le jeu les décompresse à la première utilisation de chaque voiture.
 
 ## Non vérifié (hors de portée de l'environnement)
 - Images par seconde et temps de chargement des nouvelles carrosseries sur un Android milieu de gamme (rendu logiciel ici).
@@ -45,8 +55,7 @@ En ligne : https://sideways-drift-club.vercel.app/ (Vercel, déployé depuis `ma
 
 ## Prochaine tranche
 1. Essai réel à deux téléphones : fps avec les carrosseries fines, fluidité des voitures distantes, temps de chargement en 4G.
-2. Si le chargement est trop long : compression des modèles (voir Pièges), ou niveau fin allégé.
-3. Voitures : rétroviseurs, ailerons et lames encore posés en formes simples côté jeu ; les modéliser dans Blender comme la caisse.
+2. Si le rendu chute sur les téléphones de référence, profiler la circulation et les pièces de l’atelier avant d’alléger le niveau fin.
 
 ---
 *Ce qui suit date d'avant la refonte : les décisions de jeu restent valables, les chemins de fichiers sont les anciens (voir la correspondance ci-dessus).*

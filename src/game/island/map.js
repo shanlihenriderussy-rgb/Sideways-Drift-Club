@@ -9,6 +9,7 @@ import { mp } from '../multiplayer.js';
 import { countTimer, resumeGame, show } from '../session.js';
 import { clearTouch } from '../touch.js';
 import { IsleLife } from '../../island/life.js';
+import { fmtSprintTime, sprintMedals } from '../../island/sprint.js';
 import { Economy } from '../../progress/economy.js';
 import { Story } from '../../progress/story.js';
 import { TRACKS } from '../../sim/track.js';
@@ -141,7 +142,7 @@ function renderIsleMap() {
     g.fillStyle = col || '#f2f2ef';
     g.fillText(t, x, y);
   };
-  const side = { hubs: [], rivals: [], acts: [], npcs: [], photos: [] };
+  const side = { hubs: [], rivals: [], acts: [], sprints: [], npcs: [], photos: [] };
   for (const [id, hb] of Object.entries(I.hubs)) {
     const [x, y] = T(hb.x, hb.z),
       open = Story.chapterOpen(profile, Story.zoneIndex(id)),
@@ -170,6 +171,19 @@ function renderIsleMap() {
       name: a.def.name,
       sub: `${a.def.type === 'radar' ? 'radar' : 'zone de glisse'} · ${rec ? `record ${rec.toLocaleString('fr-FR')} ${a.def.type === 'radar' ? 'km/h' : 'pts'}` : 'pas encore tenté'}`,
       stars: n,
+    });
+  }
+  for (const course of L.spots.sprints) {
+    const { def, start } = course;
+    const [x, y] = T(start.x, start.z);
+    const best = bag.sprints[def.id] || 0;
+    dot(x, y, 4.5, '#64e3c1');
+    side.sprints.push({
+      i: mp ? -1 : item({ x, y, name: def.name, set: () => setGps({ name: def.name, ...start, arrive: 14 }) }),
+      name: def.name,
+      sub: mp ? 'Épreuve solo' : best ? `Record ${fmtSprintTime(best)}` : `Or à ${fmtSprintTime(def.medals[2])}`,
+      stars: sprintMedals(def, best),
+      lock: !!mp,
     });
   }
   for (const n of L.spots.npcs) {
@@ -270,21 +284,23 @@ function renderIsleMap() {
   g.restore();
   const sec = (title, list) =>
     list.length
-      ? `<div><h3>${title}</h3><ul>${list.map((o) => `<li class="${o.lock ? 'lock' : ''}"><button ${o.i < 0 ? 'disabled' : `data-i="${o.i}"`}><span>${esc(o.name)}<small>${esc(o.sub || '')}</small></span><em>${o.stars != null ? `${'★'.repeat(o.stars)}<span class="st0">${'☆'.repeat(3 - o.stars)}</span>` : esc(o.em || '')}</em></button></li>`).join('')}</ul></div>`
+      ? `<div><h3>${title}</h3><ul>${list.map((o) => `<li class="${o.lock ? 'lock' : ''}"><button ${o.i < 0 || L.sprint ? 'disabled' : `data-i="${o.i}"`}><span>${esc(o.name)}<small>${esc(o.sub || '')}</small></span><em>${o.stars != null ? `${'★'.repeat(o.stars)}<span class="st0">${'☆'.repeat(3 - o.stars)}</span>` : esc(o.em || '')}</em></button></li>`).join('')}</ul></div>`
       : '';
   $('mapSide').innerHTML =
     (L.gps
-      ? `<div class="gps-on"><span>GPS : <b>${esc(L.gps.name)}</b></span><button class="btn ghost" data-gps-off>Arrêter</button></div>`
+      ? `<div class="gps-on"><span>GPS : <b>${esc(L.gps.name)}</b></span>${L.sprint ? '' : '<button class="btn ghost" data-gps-off>Arrêter</button>'}</div>`
       : '<p class="sub" style="margin:0">Touche un repère pour y régler le GPS.</p>') +
+    sec('Contre-la-montre', side.sprints) +
     sec('Rivaux', side.rivals) +
     sec('Activités', side.acts) +
     sec('Lieux de l’aventure', side.hubs) +
     sec('Habitants', side.npcs) +
     sec('Belvédères', side.photos);
   $('mapLegend').innerHTML =
-    '<span><i class="sq" style="background:#f7d154"></i>lieux</span><span><i style="background:#f7d154"></i>zones</span><span><i style="background:#7b8cff"></i>radars</span><span><i class="sq" style="background:#7b8cff"></i>belvédères</span><span><i style="background:#ffb020"></i>daruma</span><span><i class="ring"></i>rivaux</span><span><i class="tri"></i>toi</span>';
+    '<span><i class="sq" style="background:#f7d154"></i>lieux</span><span><i style="background:#f7d154"></i>zones</span><span><i style="background:#7b8cff"></i>radars</span><span><i style="background:#64e3c1"></i>chronos</span><span><i class="sq" style="background:#7b8cff"></i>belvédères</span><span><i style="background:#ffb020"></i>daruma</span><span><i class="ring"></i>rivaux</span><span><i class="tri"></i>toi</span>';
 }
 function pickMap(i) {
+  if (game.life.sprint) return;
   const it = mapItems[i];
   if (!it) return;
   it.set();

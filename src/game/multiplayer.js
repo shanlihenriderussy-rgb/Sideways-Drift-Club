@@ -146,10 +146,10 @@ export function dropRemoteModel(R) {
   R.tag = null;
   R.shown = false;
 }
-export function remotesDraw(dt) {
+export function remotesDraw(dt, view = camera) {
   const now = performance.now(),
-    cx = camera.position.x,
-    cz = camera.position.z;
+    cx = view.position.x,
+    cz = view.position.z;
   for (const R of mp.remotes.values()) {
     if (!R.model) continue;
     const v = R.interp.sample(now);
@@ -160,7 +160,8 @@ export function remotesDraw(dt) {
     R.model.update(v, dt, v.brake);
     if ((v.x - cx) ** 2 + (v.z - cz) ** 2 < 150 * 150) carFx(v, R.model, dt, 'M' + R.id, 'L');
     if (R.emoteT > 0) R.emoteT -= dt;
-    fitTag(R.tag.sprite, v.x, v.z, cx, cz, 1.7);
+    if (view === camera) fitTag(R.tag.sprite, v.x, v.z, cx, cz, 1.7);
+    else R.tag.sprite.visible = false;
     R.tag.set(
       R.name,
       v.combo > 200 ? `combo ${Math.round(v.combo).toLocaleString('fr-FR')}` : R.kind.toUpperCase(),

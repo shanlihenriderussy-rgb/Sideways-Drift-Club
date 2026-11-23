@@ -18,7 +18,7 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 # emplacements de matériau : l'indice est écrit par sommet dans le fichier exporté
-MATS = ['paint_side', 'paint_top', 'paint_plain', 'glass', 'trim', 'chrome', 'head', 'tail', 'lens', 'amber', 'carbon']
+MATS = ['paint_side', 'paint_top', 'paint_plain', 'glass', 'trim', 'chrome', 'head', 'tail', 'lens', 'amber', 'carbon', 'seat', 'belt']
 MI = {n: i for i, n in enumerate(MATS)}
 
 
@@ -751,6 +751,7 @@ PREVIEW_MATS = {
     'paint_side': ((0.82, 0.83, 0.80, 1), 0.0, 0.32, 1.0), 'paint_top': ((0.82, 0.83, 0.80, 1), 0.0, 0.32, 1.0), 'paint_plain': ((0.82, 0.83, 0.80, 1), 0.0, 0.32, 1.0),
     'glass': ((0.015, 0.02, 0.025, 1), 1.0, 0.04, 0.0), 'trim': ((0.02, 0.02, 0.02, 1), 0.1, 0.6, 0.0), 'chrome': ((0.8, 0.8, 0.82, 1), 1.0, 0.15, 0.0),
     'carbon': ((0.03, 0.03, 0.035, 1), 0.4, 0.3, 0.6), 'head': ((1.0, 0.97, 0.9, 1), 0.2, 0.15, 0.0), 'tail': ((0.55, 0.02, 0.02, 1), 0.2, 0.2, 0.0), 'lens': ((0.6, 0.65, 0.7, 1), 0.9, 0.08, 0.0), 'amber': ((1.0, 0.45, 0.05, 1), 0.2, 0.2, 0.0),
+    'seat': ((0.5, 0.027, 0.039, 1), 0.0, 0.85, 0.0), 'belt': ((0.66, 0.38, 0.048, 1), 0.0, 0.75, 0.0),
 }
 
 

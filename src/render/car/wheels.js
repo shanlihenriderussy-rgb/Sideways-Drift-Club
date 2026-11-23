@@ -63,6 +63,7 @@ export function wheelGeos(style, R, rr, tw, lod, kit) {
     dark = [];
 
   // ---------- pneu : talon, flanc bombé, épaule ronde, bande de roulement à trois rainures ----------
+  const treadHalf = h - 0.05;
   const half = [
     [rr + 0.001, h - 0.014],
     [rr + 0.014, h - 0.002],
@@ -70,16 +71,17 @@ export function wheelGeos(style, R, rr, tw, lod, kit) {
     [R - 0.034, h + 0.001],
     [R - 0.014, h - 0.012],
     [R - 0.004, h - 0.03],
-    [R, h - 0.05],
+    [R, treadHalf],
   ];
   const tread = [];
   if (lod) {
     const gw = 0.007,
       gd = 0.006;
-    for (const c of [0.5 * h, 0, -0.5 * h])
+    for (const c of [0.55 * treadHalf, 0, -0.55 * treadHalf])
       tread.push([R, c + gw + 0.002], [R - gd, c + gw], [R - gd, c - gw], [R, c - gw - 0.002]);
   }
-  const prof = [...half, ...tread, ...half.map(([r, z]) => [r, -z]).reverse()];
+  // La bande de roulement doit aller de z négatif à z positif pour que la surface de révolution soit tournée vers l'extérieur.
+  const prof = [...half, ...tread, ...half.map(([r, z]) => [r, -z]).reverse()].reverse();
   const tire = lathe(prof, seg);
 
   // ---------- fût et fond (on ne voit pas à travers la roue) ----------

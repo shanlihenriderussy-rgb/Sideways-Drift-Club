@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { assertInViewport, money, noErrors, press, revisit, useBrowser, waitPhase } from './helpers.js';
+
+const B = useBrowser();
+const firstPhoto = () => JSON.parse(localStorage.getItem('sdc:isleAlbum'))?.phare;
+
+test('belvédère : prévisualiser, photographier, retoucher puis retrouver le JPEG dans l’album', async () => {
+  const { page, errors } = await B.play({ touch: true });
+  await press(page, '#isleBtn');
+  await waitPhase(page, 'play', 120000);
+  await page.evaluate(() => {
+    const { x, z } = window.__sdcDbg.life().spots.photos[0];
+    Object.assign(window.__sdc.player, { x, z, vx: 0, vz: 0, speed: 0, heading: 1 });
+  });
+  await page.waitForFunction(() => !document.querySelector('#prompt').hidden);
+  const balance = await money(page);
+  await press(page, '#prompt');
+  assert.equal(await page.textContent('#photoTitle'), 'Le phare de Shiohama');
+  await assertInViewport(page, '#photoShutter');
+  await assertInViewport(page, '#photoExit');
+  assert.equal(await money(page), balance);
+  await press(page, '#photoShutter');
+  const initial = await page.evaluate(firstPhoto);
+  assert.match(initial, /^data:image\/jpeg;base64,/);
+  assert.equal(await money(page), balance + 500);
+  await page.$eval('#photoAngle', (el) => (el.value = '40'));
+  await press(page, '#photoShutter');
+  const final = await page.evaluate(firstPhoto);
+  assert.notEqual(final, initial, 'le nouvel angle modifie la capture');
+  assert.equal(await money(page), balance + 500);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await assertInViewport(page, '#photoShutter');
+  await assertInViewport(page, '#photoExit');
+  await page.setViewportSize({ width: 844, height: 390 });
+  await press(page, '#photoExit');
+  await waitPhase(page, 'play');
+  await page.keyboard.press('m');
+  await press(page, '#mapAlbum');
+  assert.match(await page.textContent('#albumProgress'), /1 \/ 4/);
+  assert.equal(await page.getAttribute('#albumItems img', 'src'), final);
+  const distinctColors = await page.$eval('#albumItems img', async (img) => {
+    await img.decode();
+    const tiny = document.createElement('canvas');
+    tiny.width = tiny.height = 12;
+    const ctx = tiny.getContext('2d');
+    ctx.drawImage(img, 0, 0, 12, 12);
+    const data = ctx.getImageData(0, 0, 12, 12).data;
+    return new Set(data).size;
+  });
+  assert.ok(distinctColors > 20, 'la photo doit contenir le rendu du monde');
+  await press(page, '#albumBack');
+  assert.ok(await page.isVisible('#isleMap'));
+  await revisit(page);
+  await press(page, '#careerBtn');
+  await press(page, '#careerAlbum');
+  assert.equal(await page.getAttribute('#albumItems img', 'src'), final);
+  assert.equal(await page.getAttribute('#albumItems a', 'download'), 'sideways-phare.jpg');
+  assert.equal(await money(page), balance + 500);
+  noErrors(errors);
+});

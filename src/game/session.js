@@ -15,6 +15,7 @@ import { bests, isTouch, profile, saveProfile, settings, store, today } from './
 import { lap } from './collide.js';
 import { el, hudCache } from './hud.js';
 import { finishIsle } from './island/render.js';
+import { exitPhoto } from './island/photo.js';
 import { isle, leaveIsle } from './island/world.js';
 import { HEADLINES, claimDaily, refreshWallet, toast } from './menus.js';
 import { showMoments } from './moments.js';
@@ -30,6 +31,7 @@ import { $ } from '../util/dom.js';
 
 export let screenId = null;
 export function show(id) {
+  if (screenId === 'photoMode' && id !== screenId) exitPhoto();
   if (id === 'garage' && screenId !== 'garage') game.snapCam = true;
   screenId = id;
   if (id) $('prompt').hidden = true;

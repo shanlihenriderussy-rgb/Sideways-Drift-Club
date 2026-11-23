@@ -4,6 +4,7 @@ import { Sound } from '../../audio/sound.js';
 import { isTouch, profile, settings } from '../base.js';
 import { actsTick, duelTick, renderIsleGoal } from './events.js';
 import { scanInteract, updateGps } from './interact.js';
+import { clearSprint, sprintRoad, updateSprint } from './sprint.js';
 import { castOf, envOn, isleData } from './world.js';
 import { battleTick, dropRemoteModel, mp, raceTick, refreshMpHud, remoteModel } from '../multiplayer.js';
 import { lookOf } from '../scene.js';
@@ -32,6 +33,7 @@ export function buildLife() {
     me: { x: 0, z: 0, vx: 0, vz: 0 },
     gps: null,
     duel: null,
+    sprint: null,
     zone: null,
     radar: {},
     near: null,
@@ -42,7 +44,7 @@ export function buildLife() {
     bumpT: 0,
     race: null,
     battle: null,
-    stats: { rivals: 0, stars: 0, photos: 0 },
+    stats: { rivals: 0, stars: 0, photos: 0, medals: 0 },
   };
   for (const def of IsleLife.RIVALS) if (IsleLife.rivalOpen(profile, def, Story)) addRival(def);
   if (mp) for (const R of mp.remotes.values()) remoteModel(R);
@@ -53,6 +55,7 @@ export function clearLife() {
   $('gps').hidden = true;
   $('mpHud').hidden = true;
   if (!game.life) return;
+  clearSprint();
   game.life.layer.dispose();
   game.life.spots.dispose();
   for (const r of game.life.rivals) {
@@ -98,6 +101,7 @@ function addRival(def) {
 // contact avec la circulation, les rivaux et les autres joueurs : deux disques par voiture, seul le joueur local est repoussé
 export function lifeCollide(st) {
   const L = game.life,
+    closedRoad = sprintRoad(),
     c = Math.cos(st.heading),
     s = Math.sin(st.heading);
   const P0x = st.x + c * 1.05,
@@ -135,11 +139,13 @@ export function lifeCollide(st) {
     }
   };
   for (const A of L.T.agents) {
+    if (A.e === closedRoad) continue;
     if (Math.abs(A.x - st.x) < 9 && Math.abs(A.z - st.z) < 9)
       hit(A.x, A.z, A.heading, A.kind.len / 2 - A.kind.w / 2, A.kind.w / 2 + 0.05, A.vx || 0, A.vz || 0, A, null);
   }
   for (const r of L.rivals) {
     const A = r.A;
+    if (A.e === closedRoad) continue;
     if (Math.abs(A.x - st.x) < 9 && Math.abs(A.z - st.z) < 9)
       hit(A.x, A.z, A.heading, 1.05, 1.0, A.vx || 0, A.vz || 0, null, r);
   }
@@ -204,10 +210,11 @@ export function lifeTick(dt) {
     if (ev === 'honk' && d2 < 110 * 110)
       Sound.horn(1 - Math.sqrt(d2) / 110, A.kind.id === 'bus' ? 0.72 : A.kind.id === 'kei' ? 1.22 : 1);
   }
-  nearMiss(dt);
+  if (!L.sprint) nearMiss(dt);
   rivalsTick(dt);
   if (L.duel) duelTick(dt);
-  actsTick(dt);
+  if (L.sprint) updateSprint();
+  else actsTick(dt);
   if (L.race) raceTick(dt);
   if (L.battle) battleTick(dt);
   L.scanT -= dt;
@@ -269,7 +276,7 @@ function rivalsTick(dt) {
     if (r.cool > 0) r.cool -= dt;
     if (!mine) {
       // il roule ; s'il te voit de près, il ralentit, se range et t'attend
-      const free = r.cool <= 0 && !L.duel && !L.race && !L.battle;
+      const free = r.cool <= 0 && !L.duel && !L.sprint && !L.race && !L.battle;
       A.k = r.def.skill * (free && d < 110 ? 0.55 : 1);
       A.hold = free && d < 40;
       A.laneT = A.hold ? -4.3 : A.passS != null ? A.laneT : 0;

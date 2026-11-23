@@ -3,6 +3,7 @@
 //   node build.mjs --local  -> test.html  (Three.js depuis vendor/three.min.js), pour les tests hors ligne
 // src/main.js est le point d'entrée : esbuild suit les imports et produit un script unique.
 import fs from 'node:fs';
+import { deflateRawSync } from 'node:zlib';
 import { build } from 'esbuild';
 
 const local = process.argv.includes('--local');
@@ -23,7 +24,18 @@ const bundle = await build({
   target: 'es2020',
   minify: !local,
   legalComments: 'none',
-  loader: { '.bin': 'base64' },
+  banner: { js: '/* fflate\n' + read('./node_modules/fflate/LICENSE').trim() + '\n*/' },
+  plugins: [
+    {
+      name: 'compress-car-models',
+      setup(builder) {
+        builder.onLoad({ filter: /assets[\\/]models[\\/][^\\/]+\.bin$/ }, async ({ path }) => ({
+          contents: deflateRawSync(await fs.promises.readFile(path), { level: 9 }),
+          loader: 'binary',
+        }));
+      },
+    },
+  ],
   write: false,
 });
 const js = bundle.outputFiles[0].text.replace(/<\/script/g, '<\\/script');

@@ -3,7 +3,7 @@
 // Fichier : « SDCM », longueur de l'en-tête (uint32), en-tête JSON, puis pour chaque niveau de détail
 //   sommets  : 12 octets — position 3 × uint16 (dans la boîte min/size), normale 3 × int8, occlusion uint8, matière uint8
 //   indices  : uint16 (ou uint32)
-// Après les niveaux de détail viennent les pièces de l'atelier (ailerons, rétroviseurs), une par nom, même format.
+// Après les niveaux de détail viennent les pièces de l'atelier, une par nom, au même format.
 // Seule la moitié droite (z ≥ 0) est stockée : expand() refait le miroir. Le kit large n'est pas stocké : c'est une
 // déformation calculée ici à partir des lignes de la caisse (les flancs s'écartent autour des passages de roue).
 
@@ -39,7 +39,7 @@ export function decodeModel(buffer) {
     return { verts: n, pos, nor, ao, mat, index, groups: L.groups };
   };
   const lods = meta.lods.map(block);
-  // pièces de l'atelier (ailerons, rétroviseurs) : un bloc par nom
+  // pièces de l'atelier : un bloc par nom
   const parts = {};
   for (const [name, L] of Object.entries(meta.parts || {})) parts[name] = block(L);
   return { meta, lods, parts };
@@ -67,8 +67,9 @@ export function expand(model, lodIndex, kit = 0) {
 }
 
 // Une pièce de l'atelier, par son nom (« wing_gt », « mirror_stock »…) ; null si la voiture ne l'a pas.
-export function expandPart(model, name) {
-  return model.parts[name] ? expandBlock(model.parts[name], null, 0) : null;
+export function expandPart(model, name, kit = 0) {
+  const part = model.parts[name];
+  return part ? expandBlock(part, kit ? bodyLines(model.meta, kit) : null, kit) : null;
 }
 
 function expandBlock(L, lines, kit) {

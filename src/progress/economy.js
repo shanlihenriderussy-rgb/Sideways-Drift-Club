@@ -529,6 +529,25 @@ function newProfile(legacy) {
   return p;
 }
 
+function loadIsle(raw) {
+  const read = (key, validKey, validValue) => {
+    const values = raw[key];
+    if (!values || typeof values !== 'object' || Array.isArray(values)) return {};
+    return Object.fromEntries(Object.entries(values).filter(([id, value]) => validKey(id) && validValue(value)));
+  };
+  const id = (s) => /^[a-z][a-z0-9-]{0,39}$/.test(s);
+  const yes = (v) => v === true;
+  const natural = (v) => Number.isSafeInteger(v) && v >= 0;
+  return {
+    found: read('found', (s) => /^\d+$/.test(s), yes),
+    rivals: read('rivals', id, natural),
+    best: read('best', id, natural),
+    met: read('met', id, yes),
+    photo: read('photo', id, yes),
+    sprints: read('sprints', id, (v) => natural(v) && v > 0 && v <= 120000),
+  };
+}
+
 function loadProfile(raw, legacy) {
   if (!raw || typeof raw !== 'object' || raw.v !== 1) return newProfile(legacy);
   const p = newProfile(null);
@@ -547,14 +566,7 @@ function loadProfile(raw, legacy) {
   if (raw.done && typeof raw.done === 'object') for (const c of CHALLENGES) if (raw.done[c.id]) p.done[c.id] = true;
   // progression de l'aventure : nettoyée par story.js (Story.ensure)
   if (raw.story && typeof raw.story === 'object') p.story = JSON.parse(JSON.stringify(raw.story));
-  if (raw.isle && raw.isle.found && typeof raw.isle.found === 'object')
-    p.isle = {
-      found: Object.fromEntries(
-        Object.keys(raw.isle.found)
-          .filter((k) => raw.isle.found[k] === true && /^\d+$/.test(k))
-          .map((k) => [k, true]),
-      ),
-    };
+  if (raw.isle && typeof raw.isle === 'object' && !Array.isArray(raw.isle)) p.isle = loadIsle(raw.isle);
   if (raw.stats && typeof raw.stats === 'object') {
     for (const k of ['runs', 'earned', 'spent', 'bestPayout'])
       if (Number.isFinite(raw.stats[k])) p.stats[k] = raw.stats[k];

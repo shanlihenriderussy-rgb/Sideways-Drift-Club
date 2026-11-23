@@ -16,8 +16,9 @@ export const store = {
   set(k, v) {
     try {
       localStorage.setItem('sdc:' + k, JSON.stringify(v));
+      return true;
     } catch (e) {
-      /* stockage indisponible */
+      return false;
     }
   },
 };

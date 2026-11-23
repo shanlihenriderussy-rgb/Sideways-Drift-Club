@@ -82,7 +82,7 @@
   <div class="title-block">
     <nav class="menu-btns" aria-label="Menu principal">
       <button class="btn primary" id="playBtn"><span>Rouler<em class="dek">six pistes, une ligne</em></span></button>
-      <button class="btn" id="isleBtn"><span><i class="no">01</i>L’île<em class="dek">monde ouvert, roule où tu veux</em></span></button>
+      <button class="btn" id="isleBtn"><span><i class="no">01</i>L’île<em class="dek">chronos, rivaux et exploration</em></span></button>
       <button class="btn" id="advBtn"><span><i class="no">02</i>Aventure<em class="dek">le Tour de l’Île, six chapitres</em></span></button>
       <button class="btn" id="multiBtn"><span><i class="no">03</i>Multijoueur<em class="dek">l’île à plusieurs, sans compte</em></span></button>
       <button class="btn" id="garageBtn"><span><i class="no">04</i>Atelier<em class="dek">freins, suspensions, livrées</em></span></button>
@@ -139,11 +139,34 @@
 <!-- carte de l'île : lieux, rivaux, activités, habitants ; choisir une destination pour le GPS -->
 <section class="screen dim" id="isleMap" hidden aria-labelledby="mapTitle">
   <div class="card imap">
-    <div class="imap-head"><div><div class="eyebrow"><span>Carte</span><span class="jp">地図</span></div><h2 id="mapTitle">L’île de Sideways</h2></div><button class="btn ghost" data-back><span>Retour à la route</span></button></div>
+    <div class="imap-head"><div><div class="eyebrow"><span>Carte</span><span class="jp">地図</span></div><h2 id="mapTitle">L’île de Sideways</h2></div><div class="photo-map-actions"><button class="btn ghost" id="mapAlbum">Album</button><button class="btn ghost" data-back><span>Retour à la route</span></button></div></div>
     <div class="imap-body">
       <div class="imap-cv"><canvas id="mapCv" width="720" height="500" role="img" aria-label="Carte de l’île : touche un repère pour y régler le GPS"></canvas><div class="imap-legend" id="mapLegend"></div></div>
       <div class="imap-side" id="mapSide"></div>
     </div>
+  </div>
+</section>
+
+<section class="screen photo-mode" id="photoMode" hidden aria-labelledby="photoTitle">
+  <div class="photo-head">
+    <h2 id="photoTitle"></h2>
+    <button class="btn" id="photoExit">Reprendre la route</button>
+  </div>
+  <span class="photo-frame" aria-hidden="true"></span>
+  <div class="photo-controls">
+    <label> Angle <input id="photoAngle" type="range" min="-180" max="180" step="5" value="0"></label>
+    <label> Distance <input id="photoDistance" type="range" min="5" max="18" step="0.5" value="12"></label>
+    <button class="btn primary" id="photoShutter">Prendre la photo</button>
+  </div>
+  <p class="sr" id="photoStatus" aria-live="polite"></p>
+</section>
+
+<section class="screen dim" id="isleAlbum" hidden aria-labelledby="albumTitle">
+  <div class="card photo-album">
+    <h2 id="albumTitle">Album de l’île</h2>
+    <p class="sub" id="albumProgress"></p>
+    <ul class="album-grid" id="albumItems"></ul>
+    <div class="row-end"><button class="btn primary" id="albumBack">Retour</button></div>
   </div>
 </section>
 
@@ -175,6 +198,11 @@
     <div class="eyebrow"><span>Carrière</span><span class="jp">記録</span></div>
     <h2 id="careerTitle">Ton palmarès</h2>
     <div class="res-grid" id="careerStats"></div>
+    <button class="btn ghost" id="careerAlbum">Album de l’île</button>
+    <div id="careerSprints" hidden>
+      <div class="label">Contre-la-montre</div>
+      <ul class="chal-list" id="careerSprintList"></ul>
+    </div>
     <div class="label">Enregistrements · moments forts</div>
     <ul class="rec-list" id="recList"></ul>
     <div class="label">Défis</div>
@@ -230,7 +258,7 @@
       <div class="more"><b>4 · Encaisser</b>Ton combo est encaissé quand tu cesses de glisser. Un choc, un tête-à-queue ou une sortie de piste le fait perdre.</div>
     </div>
     <p class="sub more">Clavier : flèches ou ZQSD/WASD, Espace pour le frein à main, C pour la caméra, R pour te replacer. Manette compatible.</p>
-    <p class="sub more">Sur l’île : approche-toi d’un habitant, d’un rival, d’une porte ou d’un belvédère, puis E (ou touche le bouton qui apparaît). M ouvre la carte et règle le GPS, H klaxonne. En session multijoueur, 1 à 4 envoient un message rapide.</p>
+    <p class="sub more">Sur l’île : approche-toi d’un repère et appuie sur E ou touche le bouton qui apparaît. M ouvre la carte pour régler le GPS vers un chrono, un rival ou un belvédère. H klaxonne. En multijoueur, 1 à 4 envoient un message rapide.</p>
     <div class="row-end"><span class="hint">Jeu conçu et codé avec l'assistance d'une IA (Claude). Logo et visuels créés avec des outils d'IA.</span><span class="help-acts"><button class="btn ghost" id="helpMore" type="button"><span>Tout le détail</span></button><button class="btn primary" data-back><span id="helpGo">Compris</span></button></span></div>
   </div>
 </section>
