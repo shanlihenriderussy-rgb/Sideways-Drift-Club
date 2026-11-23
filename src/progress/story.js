@@ -15,7 +15,7 @@ const CAST = {
   hoshi: { name: 'Hoshi', role: 'Marmay des docks', ini: 'HO', col: '#4be38a' },
   ryo: { name: 'Ryo Kaneshiro', role: 'Kaneshiro Holdings', ini: 'RK', col: '#9aa0aa' },
   zelie: { name: 'Mamie Zélie', role: 'Gardienne du volcan', ini: 'MZ', col: '#ff9a4a' },
-  daruma: { name: 'Daruma', role: 'Juge du Tour de l’Île', ini: '達', col: '#ff4d4f' },
+  daruma: { name: 'Daruma', role: 'Juge masqué du Tour', ini: '達', col: '#ff4d4f' },
   sayo: { name: 'Sayo Ishikawa', role: 'Fondatrice du club · lettre', ini: 'SI', col: '#f1efe9' },
   kai: { name: 'Kai', role: 'Pilote des Kuro Kumo', ini: 'KI', col: '#5b5d66' },
   ume: { name: 'Ume', role: 'Pêcheur de la corniche', ini: 'UM', col: '#2fc7d6' },
@@ -31,32 +31,27 @@ const CHAPTERS = [
     track: 'minato',
     title: 'L’héritage',
     jp: '遺産',
-    pitch: 'Le garage du club va être rasé. Sayo t’a laissé sa HACHI, et un dernier pari.',
+    pitch: 'Le hangar du club sera rasé le 1er décembre. Sayo t’a laissé sa HACHI, et une clause que personne n’a lue.',
     intro: [
       [
         'narr',
-        'Docks de Minato, 23 h. La pluie vient de s’arrêter. Le garage du Sideways Drift Club sent l’huile et le café froid.',
+        'Docks de Minato, 23 h. Le rideau du hangar 4 est à moitié levé. Dessous, de la lumière, et quelqu’un qui insulte un compresseur.',
       ],
-      [
-        'kenji',
-        'Alors c’est toi. Sayo parlait de toi dans toutes ses lettres. Elle t’a laissé sa HACHI… et ses parts du club.',
-      ],
-      [
-        'kenji',
-        'Je ne vais pas te mentir : il reste trois membres, un compresseur qui tousse, et un courrier recommandé.',
-      ],
+      ['kenji', 'C’est fermé. … Attends. C’est les clés de la HACHI, ça. Alors c’est toi.'],
+      ['kenji', 'Sayo m’avait dit que tu viendrais. Elle ne m’avait pas dit que tu mettrais trois mois.'],
       [
         'narr',
-        'Sur l’établi, une lettre à en-tête doré : KANESHIRO HOLDINGS. « Le terminal sera rasé le 1er décembre. »',
+        'Sur l’établi, une lettre recommandée. En-tête doré : KANESHIRO HOLDINGS. Une date entourée au feutre rouge : 1er décembre.',
       ],
       [
         'kenji',
-        'Sauf si le club remporte le Tour de l’Île. Le règlement du port le dit : le champion garde son garage. Sayo l’a fait écrire en 1995.',
+        'Ils rasent le terminal. Le hangar part avec. Il reste une seule sortie, et elle passe par six routes.',
       ],
       [
         'kenji',
-        'Six lieux, six épreuves, et un juge que personne n’a jamais vu sans son masque : Daruma. Montre-moi d’abord que tu sais glisser.',
+        'Le Tour de l’Île. Le club qui le gagne garde son hangar : c’est dans le règlement du port. Sayo a fait ajouter la clause en 1996. Elle ne m’a jamais dit pourquoi.',
       ],
+      ['kenji', 'Avant tout ça, montre-moi que tu sais tenir une glisse.'],
     ],
     missions: [
       {
@@ -65,14 +60,9 @@ const CHAPTERS = [
         mode: 'run',
         goal: { score: 4000 },
         reward: 1500,
-        brief: [
-          [
-            'kenji',
-            'Un tour, rien de plus. Lance la voiture, tiens l’angle, et ne regarde pas le mur : on va toujours là où on regarde.',
-          ],
-        ],
-        win: [['kenji', 'Pas mal. Sayo aussi freinait trop tard, la première fois.']],
-        lose: [['kenji', 'Le mur ne bouge pas : c’est à toi de bouger. On recommence.']],
+        brief: [['kenji', 'Un tour. Tiens l’angle et regarde loin devant. Si tu regardes le mur, tu vas le prendre.']],
+        win: [['kenji', 'Hm. Sayo freinait trop tard, elle aussi. Au début.']],
+        lose: [['kenji', 'Tu as regardé le mur. Je t’ai vu. Recommence.']],
       },
       {
         id: 'ch1m2',
@@ -83,14 +73,14 @@ const CHAPTERS = [
         brief: [
           [
             'kenji',
-            'Les juges regardent les clips. Dehors, le pare-chocs arrière frôle le mur. Dedans, l’avant embrasse le cône. Trois clips.',
+            'Les juges notent les clips. Dehors, l’arrière frôle le mur. Dedans, l’avant passe au ras du cône. J’en veux trois.',
           ],
         ],
         win: [
-          ['hoshi', 'J’ai tout filmé ! Trois clips, monsieur Kenji, trois !'],
-          ['kenji', 'Hoshi traîne au garage depuis ses huit ans. Ne lui donne pas les clés, surtout.'],
+          ['hoshi', 'J’ai tout filmé ! Trois ! Monsieur Kenji, vous avez vu ?'],
+          ['kenji', 'Hoshi. Il vit à moitié ici depuis ses huit ans. Ne lui prête jamais tes clés.'],
         ],
-        lose: [['kenji', 'Plus près. Le mur ne mord pas, il juge.']],
+        lose: [['kenji', 'Plus près. Si tu ne sens pas le mur, les juges non plus.']],
       },
       {
         id: 'ch1m3',
@@ -101,17 +91,24 @@ const CHAPTERS = [
         brief: [
           [
             'kenji',
-            'Dernière leçon. Je prends la voiture du club et je mène. Colle-toi à ma portière et ne me lâche pas.',
+            'Dernier test. Je prends la voiture du club et je mène. Tu colles ma portière. Tu ne la lâches pas.',
           ],
         ],
-        win: [['kenji', '… Bon. Tu as la main de Sayo. Demain, on va voir quelqu’un qui peut faire parler de nous.']],
-        lose: [['kenji', 'Trop loin. Un tandem, c’est une conversation : si tu ne m’entends pas, tu es déjà seul.']],
+        win: [
+          ['kenji', '… Bon.'],
+          ['kenji', 'Tu as les mains de Sayo. Ça ne m’arrange pas beaucoup, mais c’est comme ça.'],
+        ],
+        lose: [['kenji', 'Trop loin. Je t’ai perdu dans le rétro au deuxième virage.']],
       },
     ],
     outro: [
       [
         'kenji',
-        'Le Tour de l’Île se gagne aussi dans les journaux. Il nous faut du public, des sponsors. Direction Shiohama, à l’aube.',
+        'Pour le Tour, il faut des pneus. Donc un sponsor. Donc qu’on parle de nous. Shiohama, demain, à l’aube. Ne sois pas en retard.',
+      ],
+      [
+        'narr',
+        'En fermant, Kenji décroche une photo du mur et la glisse dans un tiroir. Trois pilotes autour d’un compresseur. Un des visages a été découpé.',
       ],
     ],
   },
@@ -120,14 +117,14 @@ const CHAPTERS = [
     track: 'shiohama',
     title: 'La une',
     jp: '一面',
-    pitch: 'Lou Payet, reporter du Journal de la glisse, cherche une histoire. Donne-lui des chiffres.',
+    pitch: 'Lou Payet cherche une une. Toi, un sponsor. Ça peut s’arranger.',
     intro: [
-      ['narr', 'Quai de Shiohama, 6 h. Les mouettes, l’odeur du gasoil, et une voix derrière toi.'],
+      ['narr', 'Quai de Shiohama, 6 h. Le phare s’éteint. Quelqu’un tape à ta vitre avec un stylo.'],
       [
         'lou',
-        'Lou Payet, Journal de la glisse. Le club de Sayo Ishikawa relancé par une recrue au volant de sa HACHI ? C’est ma une de la semaine. Si tu la mérites.',
+        'Lou Payet, Journal de la glisse. La HACHI de Sayo Ishikawa qui ressort du hangar, avec au volant quelqu’un que personne ne connaît ? Il faut que je sache qui tu es.',
       ],
-      ['lou', 'Mes lecteurs veulent du spectacle. Tu fais les chiffres, je fais les mots.'],
+      ['lou', 'Non, ne réponds pas. Roule. Je verrai bien.'],
     ],
     missions: [
       {
@@ -136,9 +133,11 @@ const CHAPTERS = [
         mode: 'run',
         goal: { grade: 'B' },
         reward: 2500,
-        brief: [['lou', 'Une note B des juges, et je t’offre la page trois.']],
-        win: [['lou', '« Le retour du Sideways ». Ça sonne bien, non ?']],
-        lose: [['lou', 'Page douze, entre la météo et les petites annonces. Retente.']],
+        brief: [
+          ['lou', 'Note B et tu passes en page trois. En dessous, tu finis entre la météo et les petites annonces.'],
+        ],
+        win: [['lou', '« La HACHI rallume Shiohama. » Non. Trop joli. Je trouverai mieux.']],
+        lose: [['lou', 'Page douze. Juste sous l’horoscope. Encore un.']],
       },
       {
         id: 'ch2m2',
@@ -146,9 +145,14 @@ const CHAPTERS = [
         mode: 'run',
         goal: { angle: 50, combo: 4000 },
         reward: 2500,
-        brief: [['lou', 'Le photographe veut un cliché de profil. Passe les 50°, et enchaîne un combo de 4 000.']],
-        win: [['lou', 'Cette photo va faire le tour de l’île avant toi.']],
-        lose: [['lou', 'Joli, mais pas assez de travers pour une couverture.']],
+        brief: [
+          [
+            'lou',
+            'Mon photographe veut la voiture de profil, complètement de travers. Plus de 50°, et un combo à 4 000.',
+          ],
+        ],
+        win: [['lou', 'Il a eu sa photo. Il ne dit plus rien. Chez lui, c’est très bon signe.']],
+        lose: [['lou', 'Trop droit. On dirait une photo de parking.']],
       },
       {
         id: 'ch2m3',
@@ -156,35 +160,39 @@ const CHAPTERS = [
         mode: 'run',
         goal: { score: 9000, noWall: true },
         reward: 3500,
-        brief: [['kenji', 'Les sponsors détestent la tôle froissée. 9 000 points, zéro contact avec le mur.']],
+        brief: [['kenji', 'Les sponsors ont horreur de la tôle froissée. 9 000 points. Pas un contact.']],
         win: [
-          ['lou', 'Kaizen Pneus m’a écrit : ils veulent voir ta voiture.'],
+          ['lou', 'Kaizen Pneus a appelé la rédaction. Ils veulent voir la voiture.'],
           [
             'narr',
-            'Dans le même numéro, un entrefilet : sur le col d’Akane, le crew Kuro Kumo « ne laisse passer personne ».',
+            'Page sept du même numéro, un entrefilet : sur le col d’Akane, un crew en noir arrête les voitures qui montent.',
           ],
         ],
-        lose: [['kenji', 'Un sponsor qui voit une portière pliée, c’est un sponsor qui raccroche.']],
+        lose: [['kenji', 'Une portière pliée sur une photo, et le sponsor raccroche.']],
       },
     ],
-    outro: [['lou', 'Un conseil : si tu montes à Akane, ne parle pas du club à Mika. Elle a ses raisons.']],
+    outro: [
+      ['lou', 'Si tu montes à Akane, un conseil : ne dis pas à Mika d’où vient ta voiture.'],
+      ['lou', 'Pourquoi ? Demande-lui. J’aimerais bien voir sa tête.'],
+    ],
   },
   {
     id: 'ch3',
     track: 'akane',
     title: 'Les Nuages noirs',
     jp: '黒雲',
-    pitch: 'Le crew Kuro Kumo règne sur les lacets d’Akane. Sa cheffe, Mika, déteste le club.',
+    pitch: 'Dix voitures noires bloquent le col d’Akane. Leur cheffe reconnaît ta voiture. Elle ne l’aime pas.',
     intro: [
       [
         'narr',
-        'Col d’Akane, au couchant. Une dizaine de voitures noires au sommet, un drapeau brodé d’un nuage : 黒雲.',
+        'Col d’Akane, au couchant. Une dizaine de voitures noires en travers de la route. Sur un drapeau, un nuage brodé : 黒雲.',
       ],
-      ['mika', 'Le Sideways ? Je croyais que le club était mort avec la vieille.'],
-      ['kenji', 'Respecte Sayo, Mika.'],
+      ['mika', 'Une HACHI blanche. Sérieusement ?'],
+      ['mika', 'Je croyais qu’elle était morte avec la vieille.'],
+      ['kenji', 'Elle s’appelait Sayo, Mika.'],
       [
         'mika',
-        'Kenji. Toujours là pour les grands discours. Ici, ça se règle dans les lacets. Trois épreuves. Tu perds, tu redescends à pied.',
+        'Je sais comment elle s’appelait. Trois épreuves. Tu perds, tu laisses la voiture ici et tu redescends à pied.',
       ],
     ],
     missions: [
@@ -194,9 +202,9 @@ const CHAPTERS = [
         mode: 'run',
         goal: { score: 12000 },
         reward: 3000,
-        brief: [['mika', 'Mes pilotes montent le col à 12 000. Fais pareil, on verra après.']],
-        win: [['mika', 'Hm. De la chance.']],
-        lose: [['mika', 'La descente à pied, c’est par là.']],
+        brief: [['mika', 'Mes pilotes montent à 12 000. Fais pareil. Après, on parle.']],
+        win: [['mika', 'De la chance.']],
+        lose: [['mika', 'La descente à pied, c’est à gauche.']],
       },
       {
         id: 'ch3m2',
@@ -204,8 +212,13 @@ const CHAPTERS = [
         mode: 'tandem',
         goal: { grade: 'B' },
         reward: 4000,
-        brief: [['kai', 'Kai, Kuro Kumo. Je mène, tu suis. Si tu me perds dans les lacets, c’est fini pour toi.']],
-        win: [['narr', 'Au dernier lacet, Kai lève la main par la fenêtre. Chez les Kuro Kumo, c’est un salut.']],
+        brief: [['kai', 'Kai. Je mène, tu suis. Tu me perds dans les lacets, tu rentres.']],
+        win: [
+          [
+            'narr',
+            'Au dernier lacet, Kai sort la main par la fenêtre, deux doigts levés. Plus haut, quelqu’un siffle entre ses dents.',
+          ],
+        ],
         lose: [['kai', 'Je ne t’ai même pas vu dans le rétro.']],
       },
       {
@@ -214,19 +227,18 @@ const CHAPTERS = [
         mode: 'run',
         goal: { grade: 'A', angle: 55 },
         reward: 5000,
-        brief: [
-          ['mika', 'Note A, et au moins 55° quelque part. Je veux savoir si tu glisses vraiment, ou si tu pries.'],
-        ],
+        brief: [['mika', 'Note A. Et au moins une fois à 55°. Je veux savoir si tu pilotes ou si tu pries.']],
         win: [
-          ['mika', '… D’accord. Tu peux rouler sur mon col.'],
-          ['mika', 'Mais ne crois pas qu’on soit amis. Mon père paie mes pneus. Mon père, c’est Ryo Kaneshiro.'],
+          ['mika', '… Tu peux monter sur mon col.'],
+          ['mika', 'On n’est pas amis. Mon père paie mes pneus, et mon père veut ton hangar.'],
+          ['mika', 'Il s’appelle Ryo Kaneshiro. Demande à ton mécano s’il s’en souvient.'],
         ],
-        lose: [['mika', 'Tu pries. Ça se voit d’ici.']],
+        lose: [['mika', 'Tu pries. Ça s’entend d’ici.']],
       },
     ],
     outro: [
-      ['kenji', 'Kaneshiro… Je savais qu’on finirait par le croiser.'],
-      ['narr', 'Kenji n’en dit pas plus. Il fixe la route du bord de mer, là où les Kuro Kumo s’entraînent la nuit.'],
+      ['narr', 'Sur la route du retour, Kenji ne dit rien pendant quarante minutes.'],
+      ['kenji', 'La corniche, demain soir. Il y sera. Il y est tous les soirs.'],
     ],
   },
   {
@@ -234,16 +246,23 @@ const CHAPTERS = [
     track: 'kaigan',
     title: 'La corniche',
     jp: '断崖',
-    pitch: 'Ryo Kaneshiro sort de sa limousine. Il a une offre, et une vieille rancune contre le club.',
+    pitch: 'Ryo Kaneshiro t’attend au belvédère avec une offre. Et une vieille histoire qu’il raconte à sa façon.',
     intro: [
-      ['narr', 'Corniche de Kaigan. L’océan cogne la falaise. Une limousine grise attend sur le parking du belvédère.'],
+      [
+        'narr',
+        'Corniche de Kaigan. L’océan tape contre la falaise. Sur le parking du belvédère, une limousine grise, moteur allumé.',
+      ],
       [
         'ryo',
-        'Alors voici l’héritage de Sayo. Vous conduisez bien. Elle aussi. Ça ne l’a pas empêchée de tout perdre.',
+        'Voici donc la recrue. Vous conduisez bien. Sayo aussi. Ça ne l’a pas empêchée de mourir avec des dettes, dans un hangar qui fuit.',
       ],
-      ['ryo', 'Je vous propose un marché : renoncez au Tour, et je rachète vos parts au double. Vous repartez riche.'],
+      [
+        'ryo',
+        'Mon offre : vous renoncez au Tour, je rachète les parts du club au double. Vous repartez riche. Kenji repart tranquille.',
+      ],
       ['kenji', 'Le club n’est pas à vendre.'],
-      ['ryo', 'Tout est à vendre, Kenji. Tu es bien placé pour le savoir.'],
+      ['ryo', 'Tout se vend, Kenji. Toi, par exemple. Et tu ne t’es pas vendu cher.'],
+      ['narr', 'Kenji serre la mâchoire. Il ne répond pas.'],
     ],
     missions: [
       {
@@ -252,9 +271,11 @@ const CHAPTERS = [
         mode: 'run',
         goal: { drift: 45 },
         reward: 3500,
-        brief: [['kenji', 'Oublie-le. La corniche est longue : glisse au moins 45 % du run.']],
-        win: [['kenji', 'Voilà. La route est à toi, pas à lui.']],
-        lose: [['kenji', 'Trop de ligne droite dans ta tête. Mets la voiture de travers et laisse-la y rester.']],
+        brief: [
+          ['kenji', 'Ne l’écoute pas. La corniche est longue : glisse au moins 45 % du run. Lui, c’est mon problème.'],
+        ],
+        win: [['kenji', 'Voilà. Lui, il regarde. Toi, tu roules.']],
+        lose: [['kenji', 'Trop de ligne droite. Mets-la de travers et laisse-la y rester.']],
       },
       {
         id: 'ch4m2',
@@ -263,11 +284,17 @@ const CHAPTERS = [
         goal: { grade: 'B', noWall: true },
         reward: 5000,
         brief: [
-          ['mika', 'Mon père veut que je te batte ici. Moi, je veux juste un vrai tandem. Sans contact, d’accord ?'],
+          [
+            'mika',
+            'Mon père veut que je t’écrase ici, devant lui. Moi, je veux juste un tandem propre. Pas de contact, d’accord ?',
+          ],
         ],
         win: [
-          ['mika', 'Tu sais pourquoi mon père déteste le club ? Ils l’ont chassé en 2006, pour un accident au volcan.'],
-          ['mika', 'Il n’en parle jamais. Kenji non plus, je parie.'],
+          [
+            'mika',
+            'Tu sais pourquoi il déteste ton club ? Ils l’ont viré en 2006. Une voiture au fond du ravin, au volcan.',
+          ],
+          ['mika', 'Lui, il jure qu’il n’était pas au volant. Personne ne l’a cru. Même pas moi.'],
         ],
         lose: [['mika', 'Sans contact, j’ai dit. On la refait.']],
       },
@@ -277,42 +304,45 @@ const CHAPTERS = [
         mode: 'run',
         goal: { score: 22000 },
         reward: 5500,
-        brief: [
-          ['lou', 'Toute l’île a lu le duel ce matin. Un gros score sur la corniche, et les sponsors font la queue.'],
-        ],
+        brief: [['lou', 'Toute l’île a lu le duel ce matin. Un gros score sur la corniche, et Kaizen signe.']],
         win: [
+          ['lou', 'Kaizen signe. Autre chose : quelqu’un a laissé une enveloppe au journal, à ton nom. Sans timbre.'],
           [
-            'lou',
-            'Kaizen Pneus signe. Et quelqu’un a déposé une enveloppe au journal pour toi : un masque de Daruma, et un mot. « Piton Volcan. »',
+            'narr',
+            'Dedans, un petit Daruma en papier. Un œil peint, l’autre vide. Au dos, deux mots au pinceau : « Piton Volcan. »',
           ],
         ],
-        lose: [['lou', 'Les sponsors aiment les chiffres ronds. Plus gros, le chiffre.']],
+        lose: [['lou', 'Kaizen veut un chiffre qui fait peur. Celui-là les fait bâiller.']],
       },
     ],
-    outro: [['kenji', 'Le volcan… Il faut que je te raconte quelque chose avant d’y monter. Pas ce soir.']],
+    outro: [
+      ['kenji', 'Le volcan…'],
+      ['kenji', 'Avant qu’on monte, il faut que je te parle. Pas ce soir. Demain. Peut-être.'],
+    ],
   },
   {
     id: 'ch5',
     track: 'piton',
     title: 'Ce que Kenji cache',
     jp: '秘密',
-    pitch: 'Au pied du cratère, Kenji avoue ce qui s’est passé en 2006. Et Sayo a laissé une lettre.',
+    pitch: 'Kenji n’est pas monté au volcan depuis vingt ans. Cette fois, il n’a plus d’excuse.',
     intro: [
-      ['narr', 'Piton Volcan. La route grimpe vers le cratère entre les cannes et le basalte.'],
+      [
+        'narr',
+        'Piton Volcan. La route grimpe entre les cannes et le basalte. Kenji conduit lentement. Il n’a pas allumé la radio.',
+      ],
       [
         'zelie',
-        'Lé bon, marmay ? Alors c’est toi qui roules avec Kenji. Ça fait vingt ans qu’il n’est pas monté ici, celui-là.',
+        'Lé bon, marmay ? … Kenji ! Vingt ans que je t’ai pas vu sur ma route. T’as vieilli, ou c’est la lumière ?',
       ],
-      ['zelie', 'Mi koné l’histoire. Mais c’est à lui de la raconter.'],
+      ['zelie', 'Mi koné pourquoi tu es là. Mais c’est pas à moi de causer.'],
+      ['kenji', '2006. On roulait ici la nuit. Sayo, Ryo et moi. Ryo avait la plus belle voiture de l’île.'],
       [
         'kenji',
-        'En 2006, on roulait de nuit ici, Sayo, Ryo et moi. J’ai pris la voiture de Ryo sans lui demander. Je l’ai mise dans le ravin.',
+        'Je l’ai prise sans demander. Je voulais juste savoir ce que ça faisait. Troisième virage après les cannes, je l’ai mise au fond du ravin.',
       ],
-      [
-        'kenji',
-        'Le club a cru que c’était lui. Je n’ai rien dit. Sayo l’a exclu. J’avais vingt-cinq ans, et j’avais peur.',
-      ],
-      ['kenji', 'Sayo l’a su des années plus tard. Elle m’a pardonné. Lui ne l’a jamais su.'],
+      ['kenji', 'Le lendemain, tout le monde a cru que c’était lui. J’avais vingt-cinq ans. J’ai laissé faire.'],
+      ['kenji', 'Sayo a compris, des années après. Elle n’a rien dit à personne. Lui ne sait toujours pas.'],
     ],
     missions: [
       {
@@ -321,11 +351,9 @@ const CHAPTERS = [
         mode: 'run',
         goal: { clips: 4, score: 14000 },
         reward: 4500,
-        brief: [
-          ['kenji', 'Le carrousel du cratère ne pardonne rien. Quatre clips, 14 000 points. Fais-le pour nous deux.'],
-        ],
-        win: [['kenji', 'Merci. Je crois que j’avais besoin de voir quelqu’un réussir ici.']],
-        lose: [['zelie', 'Le volcan, il prend son temps. Prends le tien aussi.']],
+        brief: [['kenji', 'Le carrousel du cratère. Quatre clips, 14 000 points. … S’il te plaît.']],
+        win: [['kenji', 'Merci. J’avais besoin de voir quelqu’un passer ici sans finir dans le ravin.']],
+        lose: [['zelie', 'Doucement, marmay. Le volcan a le temps. Toi aussi.']],
       },
       {
         id: 'ch5m2',
@@ -334,11 +362,17 @@ const CHAPTERS = [
         goal: { grade: 'A' },
         reward: 5500,
         brief: [
-          ['narr', 'Dans la boîte à gants de la HACHI, une enveloppe jaunie : « Pour quand tu monteras au volcan. »'],
-          ['sayo', 'Si tu lis ça, Kenji t’a tout dit. Ne le juge pas. Gagne pour lui, et dis la vérité à Ryo.'],
-          ['sayo', 'Le club, ce n’est pas un garage. C’est une parole tenue.'],
+          [
+            'narr',
+            'Dans la boîte à gants de la HACHI, sous la carte grise, une enveloppe jaunie. Dessus : « Pour quand tu monteras au volcan. »',
+          ],
+          ['sayo', 'Si tu lis ça, Kenji a enfin parlé. Ne lui en veux pas trop. Il s’en veut assez pour deux.'],
+          [
+            'sayo',
+            'Il reste une chose à faire. Ryo doit savoir. Moi, je n’ai jamais trouvé le courage. Toi, peut-être.',
+          ],
         ],
-        win: [['zelie', 'Sayo aurait été fière. Allons, descends dire ça à qui de droit.']],
+        win: [['zelie', 'Sayo serait contente. Allez, descends. Et va dire ça à qui de droit.']],
         lose: [['zelie', 'Relis la lettre, marmay. Et remonte.']],
       },
       {
@@ -348,34 +382,44 @@ const CHAPTERS = [
         goal: { grade: 'B', combo: 6000 },
         reward: 6000,
         brief: [
-          ['mika', 'Kenji m’a appelée. Il veut parler à mon père. Avant ça… un dernier tandem autour du cratère ?'],
+          [
+            'mika',
+            'Kenji a appelé mon père. Ils se voient ce soir. Avant… un dernier tandem autour du cratère ? J’ai pas envie d’attendre en bas.',
+          ],
         ],
         win: [
-          ['mika', 'Mon père a écouté Kenji jusqu’au bout. Il n’a rien dit. Puis il a sorti un masque de son manteau.'],
-          ['daruma', 'Rendez-vous au col de Yukimi, à la première neige. Le Tour de l’Île se jouera là-haut.'],
+          ['mika', 'Ils ont parlé une heure sur le parking. Mon père n’a rien dit. Pas un mot.'],
+          ['mika', 'Puis il a sorti un masque de son manteau. Un Daruma. Un seul œil peint.'],
+          ['daruma', 'Col de Yukimi, à la première neige. Le Tour se jouera là-haut.'],
         ],
-        lose: [['mika', 'Encore un tour. Mon père peut attendre, il a attendu vingt ans.']],
+        lose: [['mika', 'Encore un tour. Mon père a attendu vingt ans, il peut attendre dix minutes.']],
       },
     ],
-    outro: [['lou', 'Daruma, c’était Ryo Kaneshiro depuis le début ?! Je tiens la une du siècle.']],
+    outro: [
+      ['lou', 'Ryo Kaneshiro, c’est Daruma ? Depuis le début ?'],
+      ['lou', 'J’ai la une du siècle, et je n’ai pas le droit de l’écrire avant la finale. Je déteste ce métier.'],
+    ],
   },
   {
     id: 'ch6',
     track: 'yukimi',
     title: 'Le Tour de l’Île',
     jp: '島一周',
-    pitch: 'Finale dans la neige contre Mika. Les docks se jouent sur un tandem.',
+    pitch: 'Première neige sur Yukimi. Mika en face. Le hangar au bout.',
     intro: [
       [
         'narr',
-        'Col de Yukimi, première neige. Tout le club est là, les Kuro Kumo aussi, et la moitié de l’île derrière les barrières.',
+        'Col de Yukimi, première neige. Le club est là, les Kuro Kumo aussi. Derrière les barrières, la moitié de l’île tape des pieds pour se réchauffer.',
       ],
-      ['daruma', 'Pendant vingt ans, j’ai jugé ce Tour pour comprendre ce que Sayo voyait dans ce club.'],
       [
         'daruma',
-        'La règle est simple. Bats ma fille dans la neige, et les docks restent au Sideways. Sinon, les bulldozers passent le 1er décembre.',
+        'Vingt ans que je juge ce Tour derrière ce masque. Je voulais comprendre ce que Sayo voyait dans ce club. Et pas en moi.',
       ],
-      ['mika', 'Ne me fais pas de cadeau. Moi, je ne t’en ferai pas.'],
+      [
+        'daruma',
+        'Bats ma fille dans la neige, et le hangar reste au Sideways. Sinon, les bulldozers passent le 1er décembre. Pas d’exception.',
+      ],
+      ['mika', 'Ne me fais pas de cadeau. Je ne t’en ferai pas.'],
     ],
     missions: [
       {
@@ -387,11 +431,11 @@ const CHAPTERS = [
         brief: [
           [
             'kenji',
-            'La neige glisse partout, pas seulement là où tu veux. Doux sur les gaz. Un run propre pour reconnaître le tracé.',
+            'Sur la neige, la voiture glisse partout, pas seulement là où tu veux. Doux sur les gaz. Un run propre pour lire la route.',
           ],
         ],
         win: [['kenji', 'Propre. Garde ce rythme.']],
-        lose: [['kenji', 'Le mur est plus près qu’il n’en a l’air, avec la neige. Encore une fois.']],
+        lose: [['kenji', 'Avec la neige, le mur est plus près qu’il n’en a l’air. Encore.']],
       },
       {
         id: 'ch6m2',
@@ -400,10 +444,18 @@ const CHAPTERS = [
         goal: { grade: 'A', clips: 6 },
         reward: 7000,
         brief: [
-          ['lou', 'Les juges regardent le serpentin à la loupe. Six clips, note A. Toute l’île retient son souffle.'],
+          [
+            'lou',
+            'Les juges regardent le serpentin à la loupe. Six clips, note A. Les tribunes se taisent quand tu y entres.',
+          ],
         ],
-        win: [['lou', 'Les tribunes chantent le nom du club. Je n’avais jamais entendu ça.']],
-        lose: [['lou', 'Le serpentin a mangé plus fort que toi. Retente.']],
+        win: [
+          [
+            'lou',
+            'Les tribunes chantent le nom du club. Vingt ans que je couvre le Tour, je n’avais jamais entendu ça.',
+          ],
+        ],
+        lose: [['lou', 'Le serpentin t’a mangé. Ça arrive aux meilleurs. Retente.']],
       },
       {
         id: 'ch6m3',
@@ -414,25 +466,33 @@ const CHAPTERS = [
         brief: [
           [
             'mika',
-            'Dernier tandem. Je mène. Si tu tiens ma portière jusqu’à la ligne sans toucher un mur, les docks sont à toi.',
+            'Dernier tandem. Je mène. Tu tiens ma portière jusqu’à la ligne sans toucher un mur, et le hangar est à toi.',
           ],
         ],
         win: [
-          ['daruma', 'Le Sideways Drift Club garde ses docks.'],
-          ['ryo', 'Et moi… je retire ma rancune. Kenji, tu me dois une voiture depuis 2006.'],
-          ['kenji', 'Je te la prépare au garage. Si tu reviens rouler avec nous.'],
+          ['daruma', 'Le Sideways Drift Club garde son hangar.'],
+          ['narr', 'Ryo retire son masque. Il sort un pinceau de sa poche et peint le deuxième œil.'],
+          ['ryo', 'Kenji. Tu me dois une voiture depuis 2006.'],
+          ['kenji', 'Je te la prépare. Si tu reviens rouler le dimanche.'],
         ],
         lose: [['mika', 'Pas encore. Remonte au départ, je t’attends.']],
       },
     ],
     outro: [
-      ['lou', 'Journal de la glisse, édition spéciale : « Le Sideways est de retour. »'],
+      [
+        'lou',
+        'Journal de la glisse, édition spéciale. Titre : « Le Sideways est de retour. » Mon rédacteur trouve ça trop simple. Je l’ai gardé.',
+      ],
       [
         'mika',
-        'Kuro Kumo et Sideways, même garage le dimanche. Mon père appelle ça une fusion. Moi, j’appelle ça un club.',
+        'Kuro Kumo et Sideways dans le même hangar le dimanche. Mon père appelle ça une fusion. Moi, j’appelle ça avoir enfin de la place pour se garer.',
       ],
-      ['kenji', 'Sayo avait raison. Le club, c’est une parole tenue. Bienvenue chez toi.'],
-      ['narr', 'Fin du Tour de l’Île. Les six lieux restent ouverts : il reste des souvenirs du club à retrouver.'],
+      ['kenji', 'Une voiture, une clause de 1996, et toi. Sayo savait très bien ce qu’elle faisait.'],
+      ['kenji', 'Bienvenue chez toi.'],
+      [
+        'narr',
+        'Fin du Tour de l’Île. Les six lieux restent ouverts. Sayo a caché d’autres choses sur l’île, et pas seulement des daruma.',
+      ],
     ],
   },
 ];
@@ -444,21 +504,24 @@ const ZONES = {
     archives: [
       [
         '1995 · La fondation',
-        'Sayo Ishikawa loue un hangar du terminal 4 pour 3 000 ¥ par mois. Le panneau « SIDEWAYS » est peint à la main, à l’envers la première fois.',
+        'Une pilote de 24 ans loue le hangar 4 du terminal pour 3 000 ¥ par mois. Elle peint « SIDEWAYS » sur la porte. À l’envers, la première fois.',
       ],
       [
-        '1996 · Le règlement du port',
-        'Sayo obtient une clause unique : le club champion du Tour de l’Île garde son hangar, quoi qu’il arrive.',
+        '1996 · Une clause bizarre',
+        'Le règlement du port gagne un article : le club champion du Tour garde son hangar. Signé S. Ishikawa. Personne ne sait comment elle l’a obtenu.',
       ],
       [
         '1998 · La HACHI',
-        'Une HACHI blanche rachetée à un livreur de tofu. Sayo refuse de la repeindre : « Elle a déjà une histoire. »',
+        'Une HACHI blanche rachetée à une infirmière de nuit qui partait en métropole. Sayo refuse de la repeindre : « Elle a déjà une histoire. »',
       ],
       [
-        '2003 · Trois mousquetaires',
-        'Photo en une : Sayo, Kenji Arakawa et un jeune pilote prometteur, Ryo Kaneshiro, autour du compresseur.',
+        '2003 · Les trois du hangar 4',
+        'Photo en une : Sayo Ishikawa, Kenji Arakawa et Ryo Kaneshiro autour d’un compresseur. Légende : « L’avenir du drift sur l’île. »',
       ],
-      ['2025 · Dernier article', '« Sayo Ishikawa s’éteint. Le club perd sa voix, mais pas sa voiture. »'],
+      [
+        '2025 · Nécrologie',
+        '« Sayo Ishikawa s’est éteinte mardi. Le club perd sa fondatrice. Sa HACHI reste au hangar 4, sous une bâche. »',
+      ],
     ],
     npc: {
       at: 0.42,
@@ -466,8 +529,8 @@ const ZONES = {
       who: 'hoshi',
       reward: 800,
       lines: [
-        ['hoshi', 'Lé bon ? Tu sais que les grues, la nuit, on dirait des girafes ? Sayo disait ça.'],
-        ['hoshi', 'Elle me laissait cirer la HACHI. Si tu gagnes le Tour, tu me laisses la cirer aussi ?'],
+        ['hoshi', 'Lé bon ? La nuit, les grues, on dirait des girafes. C’est Sayo qui disait ça.'],
+        ['hoshi', 'Elle me laissait cirer la HACHI. Si tu gagnes, je pourrai encore ? Je fais pas de traces, promis.'],
       ],
     },
   },
@@ -475,15 +538,21 @@ const ZONES = {
     archives: [
       [
         '1997 · Le premier Tour',
-        'Sept voitures au départ, quarante spectateurs, une glacière. Le Sideways termine deuxième.',
+        'Sept voitures au départ, quarante spectateurs, une glacière. Le Sideways finit deuxième, derrière un livreur de pain.',
       ],
       [
         '2000 · Le phare',
-        'Le gardien du phare de Shiohama allume la lanterne à chaque passage du club. On ne sait pas s’il a le droit.',
+        'Le gardien du phare allume la lanterne chaque fois que le club passe. En plein jour. La mairie lui a écrit trois fois.',
       ],
-      ['2004 · Doublé', 'Le club gagne le Tour deux ans de suite. Lou Payet, stagiaire, signe son premier article.'],
-      ['2006 · L’exclusion', 'Bref communiqué : « Ryo Kaneshiro quitte le Sideways Drift Club. » Aucune explication.'],
-      ['2014 · Kaneshiro Holdings', 'Ryo Kaneshiro rachète la moitié du port. Il refuse toute interview sur le drift.'],
+      ['2004 · Doublé', 'Le Sideways gagne le Tour pour la deuxième année. Article signé L. Payet, stagiaire.'],
+      [
+        '2006 · Départ',
+        'Communiqué de quatre lignes : « Ryo Kaneshiro quitte le Sideways Drift Club. » Le club refuse de commenter.',
+      ],
+      [
+        '2014 · Kaneshiro Holdings',
+        'Ryo Kaneshiro rachète la moitié du port. Interrogé sur le drift, il répond : « Question suivante. »',
+      ],
     ],
     npc: {
       at: 0.42,
@@ -491,8 +560,8 @@ const ZONES = {
       who: 'lou',
       reward: 800,
       lines: [
-        ['lou', 'Tu sais ce qui fait une bonne une ? Un visage, une phrase, et une vérité que personne n’a dite.'],
-        ['lou', 'Pour l’instant, j’ai ton visage. La phrase viendra. La vérité aussi.'],
+        ['lou', 'Pour une bonne une, il faut un visage et une phrase. Le reste, c’est de la mise en page.'],
+        ['lou', 'Ton visage, je l’ai. La phrase, je l’attends encore.'],
       ],
     },
   },
@@ -500,17 +569,23 @@ const ZONES = {
     archives: [
       [
         '1999 · Le col interdit',
-        'La préfecture ferme Akane la nuit. Le club obtient le droit d’y rouler un dimanche par mois.',
+        'La préfecture ferme Akane la nuit. Le club obtient une dérogation : un dimanche par mois. Sayo remercie le préfet avec un gâteau patate.',
       ],
       [
-        '2008 · Naissance de Kuro Kumo',
-        'Un nouveau crew s’installe au sommet. Leur cheffe a quinze ans et s’appelle Mika.',
+        '2008 · Kuro Kumo',
+        'Un nouveau crew s’installe au sommet du col. Leur cheffe a quinze ans. Elle refuse de donner son nom de famille.',
       ],
-      ['2012 · Les lacets', 'Record du col : Mika, en RAIJIN noire, au nez et à la barbe des anciens du Sideways.'],
-      ['2019 · Le torii', 'Les Kuro Kumo repeignent le torii du col. Les habitants les remercient avec des onigiri.'],
+      [
+        '2012 · Le record',
+        'Mika bat le record du col en RAIJIN noire. L’ancien tenait depuis 2002. Il était à Sayo Ishikawa.',
+      ],
+      [
+        '2019 · Le torii',
+        'Les Kuro Kumo repeignent le torii du col. Les habitants leur apportent des onigiri. Personne ne sait qui a payé la peinture.',
+      ],
       [
         '2024 · Défi refusé',
-        'Mika défie le Sideways. Sayo, malade, décline : « Pas cette année. Mais quelqu’un viendra. »',
+        'Mika défie le Sideways. Sayo, déjà malade, répond par lettre : « Pas cette année. Quelqu’un viendra. »',
       ],
     ],
     npc: {
@@ -519,26 +594,32 @@ const ZONES = {
       who: 'kai',
       reward: 800,
       lines: [
-        ['kai', 'Mika fait la dure, mais elle a gardé toutes les coupures de journal sur Sayo.'],
-        ['kai', 'Ne lui dis pas que je t’ai dit ça.'],
+        ['kai', 'Mika joue les dures. Elle garde tous les articles sur Sayo dans une boîte à chaussures.'],
+        ['kai', 'Tu lui répètes ça, je te pousse dans le ravin.'],
       ],
     },
   },
   kaigan: {
     archives: [
-      ['2001 · La corniche', 'Inauguration de la route du bord de mer. Le club y roule avant même les officiels.'],
       [
-        '2005 · La tempête',
-        'Un cyclone emporte une partie de la falaise. Le club aide à dégager la route trois jours durant.',
+        '2001 · La corniche',
+        'Inauguration de la route du bord de mer. Le Sideways la descend en glisse une heure avant le ruban. Amende : 8 000 ¥.',
+      ],
+      [
+        '2005 · Le cyclone',
+        'Un cyclone arrache un pan de falaise. Le club dégage la route pendant trois jours, à la pelle.',
       ],
       [
         '2010 · Nuits de corniche',
-        'Les Kuro Kumo s’entraînent ici chaque nuit de pleine lune. Ume, le pêcheur, compte les passages.',
+        'Les Kuro Kumo s’entraînent ici les soirs de pleine lune. Ume, pêcheur, compte les passages dans un cahier d’écolier.',
       ],
-      ['2016 · Kaizen Pneus', 'Petite marque locale, Kaizen Pneus cherche un club à sponsoriser. Personne ne répond.'],
       [
-        '2023 · Belvédère',
-        'Ryo Kaneshiro achète le parking du belvédère. Il y vient seul, le soir, regarder la route.',
+        '2016 · Kaizen Pneus',
+        'Petite marque locale, Kaizen Pneus cherche un club à sponsoriser. L’annonce reste sans réponse.',
+      ],
+      [
+        '2023 · Le belvédère',
+        'Ryo Kaneshiro rachète le parking du belvédère. Il y vient seul, le soir. Il ne descend jamais de voiture.',
       ],
     ],
     npc: {
@@ -547,8 +628,8 @@ const ZONES = {
       who: 'ume',
       reward: 800,
       lines: [
-        ['ume', 'Le soir, le monsieur à la limousine regarde passer les voitures. Il ne sourit jamais.'],
-        ['ume', 'Sauf une fois. Une HACHI blanche, il y a longtemps.'],
+        ['ume', 'Le monsieur à la limousine, il regarde passer les voitures. Il sourit jamais.'],
+        ['ume', 'Sauf une fois. Une HACHI blanche, y a longtemps. Il a même klaxonné.'],
       ],
     },
   },
@@ -556,21 +637,18 @@ const ZONES = {
     archives: [
       [
         '2002 · Le carrousel',
-        'Le club découvre la boucle du cratère. Sayo l’appelle « le carrousel » : on y tourne sans fin.',
+        'Le club découvre la boucle du cratère. Sayo la baptise « le carrousel » : une fois dedans, on n’a plus envie d’en sortir.',
       ],
       [
         '2006 · La nuit du ravin',
-        'Une voiture au fond du ravin, personne de blessé. Le club ne fait aucun commentaire.',
+        'Une voiture de sport retrouvée au fond du ravin, vide. Pas de blessé, pas de plainte. Le club ne commente pas.',
       ],
-      ['2007 · Silence', 'Kenji Arakawa cesse de piloter. Il ne quittera plus le garage.'],
+      ['2007 · Retraite', 'Kenji Arakawa raccroche son casque à 26 ans. Il ne quittera plus l’établi du hangar 4.'],
       [
-        '2018 · La lettre',
-        'Sayo écrit une lettre qu’elle range dans la boîte à gants de la HACHI. Elle ne l’envoie pas.',
+        '2018 · Une nuit chez Zélie',
+        'Sayo Ishikawa passe une nuit entière à écrire dans la case de Mamie Zélie. Au matin, elle repart sans rien poster.',
       ],
-      [
-        '2025 · Mamie Zélie',
-        'La gardienne du volcan confie au Journal : « Les volcans et les hommes, ça finit toujours par parler. »',
-      ],
+      ['2025 · Mamie Zélie', 'La gardienne du volcan, au Journal : « Ce ravin rend tout. Il prend juste son temps. »'],
     ],
     npc: {
       at: 0.42,
@@ -578,8 +656,8 @@ const ZONES = {
       who: 'zelie',
       reward: 800,
       lines: [
-        ['zelie', 'Allons, marmay. Ou lé fatigué ? Assieds-toi deux minutes.'],
-        ['zelie', 'Le volcan, il gronde, il fume, et puis un jour il se tait. Les gens, c’est pareil.'],
+        ['zelie', 'Allons, marmay, assieds-toi deux minutes. Ou lé fatigué, sa i voi.'],
+        ['zelie', 'Kenji montait ici tous les samedis, avant. Depuis 2006, plus rien. Demande-lui pourquoi.'],
       ],
     },
   },
@@ -587,17 +665,23 @@ const ZONES = {
     archives: [
       [
         '1996 · Le refuge',
-        'Le Tour de l’Île se termine pour la première fois au col de Yukimi. Sora, le gardien du refuge, sert le thé aux pilotes.',
+        'Pour la première fois, le Tour se termine au col de Yukimi. Sora, gardien du refuge, sert le thé aux pilotes. Gratuit pour le dernier.',
       ],
-      ['2003 · Daruma', 'Un juge masqué apparaît. Il note sans un mot. On l’appelle Daruma, d’après son masque.'],
       [
-        '2006 · Le juge reste',
-        'Après l’exclusion de Ryo Kaneshiro, Daruma continue de juger chaque Tour. Personne ne fait le lien.',
+        '2007 · Daruma',
+        'Un juge masqué apparaît au Tour. Il note sans parler et repart avant la remise des prix. On l’appelle Daruma.',
       ],
-      ['2015 · Neige tardive', 'Un Tour couru sous la neige. Seule Sayo termine sans toucher un mur.'],
+      [
+        '2011 · L’œil vide',
+        'Daruma n’a jamais peint le deuxième œil de son masque. Interrogé, il ne répond pas. Il ne répond jamais.',
+      ],
+      [
+        '2015 · Neige tardive',
+        'Tour couru sous la neige. Seule Sayo termine sans toucher un mur. Daruma reste longtemps debout devant sa voiture.',
+      ],
       [
         '2025 · Le dernier Tour ?',
-        'Kaneshiro Holdings annonce la fin du terminal 4. Le Tour de l’Île pourrait ne jamais revenir.',
+        'Kaneshiro Holdings confirme la démolition du terminal 4. Sans club au départ, le Tour pourrait s’arrêter là.',
       ],
     ],
     npc: {
@@ -606,8 +690,8 @@ const ZONES = {
       who: 'sora',
       reward: 800,
       lines: [
-        ['sora', 'Daruma prend toujours son thé sans sucre. Comme quelqu’un qui a quelque chose à se reprocher.'],
-        ['sora', 'Bonne chance pour le Tour. La neige ne choisit personne.'],
+        ['sora', 'Daruma prend son thé sans sucre. Toujours la même table : celle d’où on voit le volcan.'],
+        ['sora', 'Bonne chance. Et méfie-toi de l’ombre sous les pins : c’est là que ça gèle en premier.'],
       ],
     },
   },
