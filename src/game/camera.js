@@ -85,13 +85,13 @@ export function updateCamera(dt, st, attract) {
       _camL.set(st.x + hx * 2.2, gy(st.x + hx * 2.2, st.z + hz * 2.2) + C.look + (portrait ? 0.3 : 0), st.z + hz * 2.2),
       1 - Math.exp(-dt * 10),
     );
-    const fov = (portrait ? 70 : 54) + (settings.reduce ? 0 : Math.min(sp, 40) * 0.26);
+    const fov = settings.fov + (portrait ? 16 : 0) + (settings.reduce ? 0 : Math.min(sp, 40) * 0.26);
     camera.fov += (fov - camera.fov) * Math.min(1, dt * 3);
   }
   camera.position.copy(camPos);
   if (game.shake > 0) {
-    camera.position.x += (Math.random() - 0.5) * game.shake * 0.5;
-    camera.position.y += (Math.random() - 0.5) * game.shake * 0.3;
+    camera.position.x += (Math.random() - 0.5) * game.shake * (settings.reduce ? 0 : settings.shake / 100) * 0.5;
+    camera.position.y += (Math.random() - 0.5) * game.shake * (settings.reduce ? 0 : settings.shake / 100) * 0.3;
     game.shake = Math.max(0, game.shake - dt * 2.5);
   }
   camera.lookAt(camLook);
@@ -109,7 +109,9 @@ export function carFx(st, model, dt, id, colId) {
     const [x, z] = carPoint(st, model.rearX, sz * (model.halfW - 0.08));
     const y = gy(x, z);
     game.skids.mark(id + sz, x, z, intensity, 0.28 + Math.min(Math.abs(st.slip), 0.8) * 0.25, y);
-    const n = intensity * dt * (game.quality.smoke > 900 ? 46 : 26);
+    const n =
+      (intensity * dt * (game.quality.smoke > 1400 ? 64 : game.quality.smoke > 900 ? 46 : 26) * settings.smokeAmount) /
+      100;
     let emit = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
     while (emit-- > 0) {
       const j = () => Math.random() - 0.5;

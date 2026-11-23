@@ -235,7 +235,7 @@ export function readInput() {
   for (const p of pads) {
     if (!p) continue;
     const ax = p.axes[0] || 0;
-    if (Math.abs(ax) > 0.12) steer = clamp(ax * 1.1, -1, 1);
+    if (Math.abs(ax) > settings.stickDeadzone / 100) steer = clamp((ax * settings.stickSensitivity) / 100, -1, 1);
     const bv = (i) => (p.buttons[i] ? p.buttons[i].value || (p.buttons[i].pressed ? 1 : 0) : 0);
     gas = Math.max(gas, bv(7));
     brake = Math.max(brake, bv(6));

@@ -81,7 +81,9 @@ export function fmtTime(s) {
 }
 export function updateHUD(dt) {
   const st = game.player;
-  setNum('hudSpeed', Math.round(st.speed * 3.6));
+  const imperial = settings.speedUnit === 'mph';
+  setNum('hudSpeed', Math.round(st.speed * (imperial ? 2.23694 : 3.6)));
+  setText('hudSpeedUnit', imperial ? 'MPH' : 'KM/H');
   setText('hudGear', st.reversing ? 'R' : String(st.gear));
   const r = clamp((st.rpm - 900) / (RPM_MAX - 900), 0, 1);
   setBar('rpmFill', r);
@@ -140,7 +142,7 @@ export function updateHUD(dt) {
     hudCache.tmShow = 'none';
     el('tandemMeter').style.display = 'none';
   }
-  drawMinimap();
+  if (settings.minimap) drawMinimap();
 }
 
 // ---------- mini-carte ----------

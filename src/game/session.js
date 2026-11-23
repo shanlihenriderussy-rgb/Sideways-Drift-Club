@@ -19,7 +19,7 @@ import { exitPhoto } from './island/photo.js';
 import { isle, leaveIsle } from './island/world.js';
 import { HEADLINES, claimDaily, refreshWallet, toast } from './menus.js';
 import { showMoments } from './moments.js';
-import { loadTrack, resetPlayer, startIndex } from './scene.js';
+import { graphicsPending, loadTrack, resetPlayer, startIndex } from './scene.js';
 import { announce, bank, buildGhost, dropGhost, ensureAudio, ghosts, resetScore, score } from './score.js';
 import { camLook, camPos, gy } from './stage.js';
 import { clearTouch, setTouchVisible } from './touch.js';
@@ -45,7 +45,7 @@ export function show(id) {
 }
 export function startRun() {
   ensureAudio();
-  if (game.track.def.id !== TRACKS[game.trackIdx].id) loadTrack(game.trackIdx);
+  if (graphicsPending() || game.track.def.id !== TRACKS[game.trackIdx].id) loadTrack(game.trackIdx);
   resetScore();
   game.skids.clear();
   game.smoke.clear();

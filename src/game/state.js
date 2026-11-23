@@ -4,7 +4,7 @@
 export const game = {
   // --- qualité d'affichage (stage.js, loop.js)
   qLevel: undefined, // 'low' | 'med' | 'high'
-  quality: undefined, // entrée de QUALITY correspondante
+  quality: undefined, // profil effectif (stage.js)
   dprScale: 1, // résolution dynamique : facteur appliqué au pixel ratio
   fastT: 0, // secondes d'aisance cumulées avant de remonter la résolution
 

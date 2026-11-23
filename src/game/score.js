@@ -18,9 +18,9 @@ export function ensureAudio() {
   Sound.init();
 }
 export function vibrate(ms) {
-  if (settings.vibe && navigator.vibrate) {
+  if (settings.vibe && settings.vibration > 0 && navigator.vibrate) {
     try {
-      navigator.vibrate(ms);
+      navigator.vibrate(Math.round((ms * settings.vibration) / 100));
     } catch (e) {
       /* refusé */
     }

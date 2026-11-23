@@ -1,3 +1,4 @@
+import { defaultSettings, normalizeSettings } from './preferences.js';
 import { Economy } from '../progress/economy.js';
 
 export const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
@@ -22,10 +23,8 @@ export const store = {
     }
   },
 };
-export const settings = Object.assign(
-  { assist: 1, autoGas: false, sound: true, reduce: reduceDefault, vibe: true, quality: 'auto' },
-  store.get('settings', {}),
-);
+export const settings = normalizeSettings(store.get('settings', null), reduceDefault);
+export const resetSettings = () => Object.assign(settings, defaultSettings(reduceDefault));
 // profil de jeu : portefeuille, voitures possédées et leurs pièces (voir economy.js). L'ancienne clé « garage » est migrée.
 export const profile = Economy.loadProfile(store.get('profile', null), store.get('garage', null));
 export const bests = store.get('bests', {});

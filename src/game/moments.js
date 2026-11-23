@@ -1,18 +1,19 @@
 import { game } from './state.js';
 import { Sound } from '../audio/sound.js';
 import { dlg, esc, openAdventure, playMission, trackIndexOf } from './adventure.js';
-import { isTouch, profile, saveSettings, settings, store } from './base.js';
+import { isTouch, profile, settings, store } from './base.js';
 import { carFx, cycleCam, updateCamera } from './camera.js';
 import { closeIsleMap } from './island/map.js';
 import { startSprint } from './island/sprint.js';
 import { enterIsland, isle, isleData } from './island/world.js';
+import { syncSettingsUI } from './options.js';
 import { respawn } from './loop.js';
 import { buildTrackList, openCareer, openShop, pressGroup, toast } from './menus.js';
 import { buildCars, loadTrack } from './scene.js';
 import { announce, ensureAudio, score } from './score.js';
 import { countdownShort, finishRun, pauseGame, resumeGame, show, startRun, toMenu } from './session.js';
-import { QUALITY, _camL, camLook, camPos, camera, gy } from './stage.js';
-import { openLayoutEditor, refreshTouchUI, setTouchVisible } from './touch.js';
+import { _camL, camLook, camPos, camera, gy } from './stage.js';
+import { openLayoutEditor, setTouchVisible } from './touch.js';
 import { Economy } from '../progress/economy.js';
 import { Ghost } from '../sim/ghost.js';
 import { Replay } from '../sim/replay.js';
@@ -237,38 +238,6 @@ export function renderRecs() {
     '<li class="empty"><span>Aucun enregistrement : tes moments forts apparaîtront ici après un run sur piste.</span></li>';
 }
 
-export function syncSettingsUI() {
-  pressGroup($('assistSeg'), 'data-v', settings.assist);
-  pressGroup($('qualSeg'), 'data-v', settings.quality);
-  $('optAutoGas').checked = settings.autoGas;
-  $('optSound').checked = settings.sound;
-  $('optMotion').checked = settings.reduce;
-  $('optVibe').checked = settings.vibe;
-  refreshTouchUI();
-}
-const segBind = (id, key, conv) =>
-  $(id).addEventListener('click', (e) => {
-    const b = e.target.closest('[data-v]');
-    if (!b) return;
-    settings[key] = conv ? conv(b.dataset.v) : b.dataset.v;
-    saveSettings();
-    syncSettingsUI();
-    Sound.ui();
-    if (key === 'quality') {
-      game.qLevel = settings.quality === 'auto' ? (isTouch ? 'med' : 'high') : settings.quality;
-      game.quality = QUALITY[game.qLevel];
-      game.dprScale = 1;
-      loadTrack(game.trackIdx);
-    }
-  });
-const tog = (id, key, after) =>
-  $(id).addEventListener('change', (e) => {
-    settings[key] = e.target.checked;
-    saveSettings();
-    syncSettingsUI();
-    after && after();
-  });
-
 const go = (id) => () => {
   Sound.ui();
   show(id);
@@ -331,15 +300,6 @@ export function init() {
       Sound.ui();
       renderRecs();
     }
-  });
-  segBind('assistSeg', 'assist', Number);
-  segBind('qualSeg', 'quality');
-  tog('optAutoGas', 'autoGas');
-  tog('optMotion', 'reduce');
-  tog('optVibe', 'vibe');
-  tog('optSound', 'sound', () => {
-    if (settings.sound) Sound.init();
-    Sound.setEnabled(settings.sound);
   });
   $('playBtn').addEventListener('click', () => {
     ensureAudio();
