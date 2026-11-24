@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-13T15:30:00Z",
+  "title": "Design System: Sideways Drift Club",
+  "extensions": {
+    "colorMeta": {
+      "emblem-yellow": { "role": "primary", "displayName": "Jaune de l'Emblème", "canonical": "#f7d154", "tonalRamp": ["#2a2206", "#4d3f0c", "#7a6414", "#a98b1f", "#d6b232", "#f7d154", "#fbe391", "#fdf3cf"] },
+      "marshal-blue": { "role": "secondary", "displayName": "Bleu Commissaire", "canonical": "#7b8cff", "tonalRamp": ["#0d1238", "#1a2466", "#2b3a99", "#4253c7", "#5f71ea", "#7b8cff", "#a9b4ff", "#dce1ff"] },
+      "clip-amber": { "role": "tertiary", "displayName": "Ambre de Clip", "canonical": "#ffb020" },
+      "apex-cyan": { "role": "tertiary", "displayName": "Cyan de Corde", "canonical": "#38d6ff" },
+      "tail-red": { "role": "tertiary", "displayName": "Rouge Feu Arrière", "canonical": "#ff4d4f" },
+      "flag-green": { "role": "tertiary", "displayName": "Vert Drapeau", "canonical": "#3ddc84" },
+      "asphalt": { "role": "neutral", "displayName": "Asphalte", "canonical": "#07080a", "tonalRamp": ["#07080a", "#0e1013", "#14171b", "#1b1f24", "#242930", "#6c717a", "#a4a8af", "#f2f2ef"] },
+      "chalk": { "role": "neutral", "displayName": "Craie", "canonical": "#f2f2ef" },
+      "newsprint-ink": { "role": "neutral", "displayName": "Encre Papier", "canonical": "#141414" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Logotype de l'écran titre uniquement." },
+      "headline": { "displayName": "Headline", "purpose": "Titre de carte, suivi d'un double filet." },
+      "title": { "displayName": "Title", "purpose": "Nom d'une option, d'une pièce, d'une piste." },
+      "body": { "displayName": "Body", "purpose": "Chapô et texte courant des cartes." },
+      "label": { "displayName": "Label", "purpose": "Surtitres et libellés en capitales espacées." },
+      "editorial": { "displayName": "Editorial", "purpose": "Voix serif italique : manchette, chapôs du menu, une des résultats." },
+      "kanji": { "displayName": "Kanji", "purpose": "Repères graphiques en japonais, jamais du texte à lire pour jouer." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 0 rgba(255,255,255,.05) inset, 0 30px 80px rgba(0,0,0,.55)", "purpose": "Carte au-dessus du voile." },
+      { "name": "toast", "value": "0 12px 32px rgba(0,0,0,.45)", "purpose": "Notification flottante." },
+      { "name": "primary-halo", "value": "0 8px 24px rgba(247,209,84,.18)", "purpose": "Halo du bouton principal, seul halo coloré." },
+      { "name": "selected-ring", "value": "0 0 0 1px #f7d154 inset", "purpose": "Anneau de l'élément sélectionné." },
+      { "name": "hair-ring", "value": "0 0 0 1px rgba(255,255,255,.15) inset", "purpose": "Contour des éléments du HUD." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(.2, .8, .2, 1)", "purpose": "Courbe unique des entrées et des transformations." },
+      { "name": "state", "value": "150ms", "purpose": "Changement de fond et de bordure." },
+      { "name": "press", "value": "120ms", "purpose": "Retour d'appui scale(.97)." },
+      { "name": "rise", "value": "320ms", "purpose": "Entrée d'une carte." },
+      { "name": "toast", "value": "3200ms", "purpose": "Durée de vie d'un toast." }
+    ],
+    "breakpoints": [
+      { "name": "landscape-low", "value": "(orientation: landscape) and (max-height: 560px)" },
+      { "name": "landscape-tiny", "value": "(max-height: 420px)" },
+      { "name": "portrait-phone", "value": "(orientation: portrait) and (max-width: 700px)" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "L'unique action jaune d'un écran.",
+      "html": "<button class=\"ds-btn-primary\">Départ</button>",
+      "css": ".ds-btn-primary { appearance: none; cursor: pointer; min-height: 54px; padding: 0 28px; border: 1px solid transparent; border-radius: 12px; background: #f7d154; color: #15120a; font: 800 16px Archivo, system-ui, sans-serif; font-stretch: 112%; letter-spacing: .02em; box-shadow: 0 8px 24px rgba(247,209,84,.18); transition: background .15s, transform .12s cubic-bezier(.2,.8,.2,1); } .ds-btn-primary:hover { background: #ffdc6a; } .ds-btn-primary:active { transform: scale(.97); } .ds-btn-primary:focus-visible { outline: 2px solid #f7d154; outline-offset: 3px; }"
+    },
+    {
+      "name": "Bouton",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Action secondaire.",
+      "html": "<button class=\"ds-btn\">Rejouer</button>",
+      "css": ".ds-btn { appearance: none; cursor: pointer; min-height: 50px; padding: 0 20px; border: 1px solid rgba(255,255,255,.15); border-radius: 12px; background: #1b1f24; color: #f2f2ef; font: 700 15px Archivo, system-ui, sans-serif; font-stretch: 112%; letter-spacing: .02em; transition: background .15s, border-color .15s, transform .12s cubic-bezier(.2,.8,.2,1); } .ds-btn:hover { background: #242930; border-color: rgba(255,255,255,.22); } .ds-btn:active { transform: scale(.97); } .ds-btn:focus-visible { outline: 2px solid #f7d154; outline-offset: 3px; }"
+    },
+    {
+      "name": "Bouton discret",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Retour et sorties.",
+      "html": "<button class=\"ds-btn-ghost\">Retour</button>",
+      "css": ".ds-btn-ghost { appearance: none; cursor: pointer; min-height: 50px; padding: 0 20px; border: 1px solid rgba(255,255,255,.15); border-radius: 12px; background: transparent; color: #a4a8af; font: 700 15px Archivo, system-ui, sans-serif; font-stretch: 112%; transition: background .15s, color .15s; } .ds-btn-ghost:hover { color: #f2f2ef; background: rgba(255,255,255,.04); } .ds-btn-ghost:focus-visible { outline: 2px solid #f7d154; outline-offset: 3px; }"
+    },
+    {
+      "name": "Option sélectionnée",
+      "kind": "input",
+      "refersTo": "option",
+      "description": "Choix de mode, de piste ou de voiture.",
+      "html": "<button class=\"ds-opt\" aria-pressed=\"true\"><b>Run noté</b><small>Les juges notent ton passage.</small></button>",
+      "css": ".ds-opt { appearance: none; cursor: pointer; text-align: left; display: grid; gap: 4px; min-height: 64px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: #14171b; color: #f2f2ef; font-family: Archivo, system-ui, sans-serif; transition: border-color .15s, background .15s; } .ds-opt b { font-weight: 750; font-size: 15px; font-stretch: 112%; } .ds-opt small { color: #a4a8af; font-size: 12.5px; line-height: 1.35; } .ds-opt:hover { border-color: rgba(255,255,255,.15); background: #1b1f24; } .ds-opt[aria-pressed=\"true\"] { border-color: #f7d154; background: linear-gradient(180deg, rgba(247,209,84,.12), rgba(247,209,84,.04)); box-shadow: 0 0 0 1px #f7d154 inset; } .ds-opt:focus-visible { outline: 2px solid #f7d154; outline-offset: 3px; }"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Article de l'Atelier avec prix ou état.",
+      "html": "<button class=\"ds-chip\"><b>Nacré</b><small>1 500 ¥</small></button>",
+      "css": ".ds-chip { appearance: none; cursor: pointer; text-align: left; display: grid; min-height: 44px; padding: 6px 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 11px; background: #14171b; color: #f2f2ef; font-family: Archivo, system-ui, sans-serif; transition: border-color .15s, background .15s; } .ds-chip b { font-size: 13px; font-weight: 650; } .ds-chip small { font-size: 11.5px; color: #f7d154; font-variant-numeric: tabular-nums; } .ds-chip:hover { border-color: rgba(123,140,255,.45); } .ds-chip:focus-visible { outline: 2px solid #f7d154; outline-offset: 3px; }"
+    },
+    {
+      "name": "Carte",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Conteneur de chaque écran de menu.",
+      "html": "<div class=\"ds-card\"><span class=\"ds-eyebrow\">Session</span><h2>Choisis ta piste</h2><p>Six tracés, du port au col enneigé.</p></div>",
+      "css": ".ds-card { width: min(360px, 100%); padding: 24px; border: 1px solid rgba(255,255,255,.08); border-radius: 20px; background: linear-gradient(180deg, rgba(22,25,30,.97), rgba(12,14,17,.97)); box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 30px 80px rgba(0,0,0,.55); color: #f2f2ef; font-family: Archivo, system-ui, sans-serif; } .ds-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #f7d154; } .ds-card h2 { margin: 8px 0 6px; font-weight: 800; font-stretch: 116%; font-size: 28px; line-height: 1.05; letter-spacing: -.015em; } .ds-card h2::after { content: \"\"; display: block; height: 3px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,.15); border-bottom: 1px solid rgba(255,255,255,.15); } .ds-card p { margin: 0; color: #a4a8af; font-size: 14.5px; line-height: 1.5; }"
+    },
+    {
+      "name": "Onglets",
+      "kind": "nav",
+      "description": "Rayons de l'Atelier.",
+      "html": "<div class=\"ds-tabs\"><button aria-selected=\"true\">Voiture</button><button>Peinture</button><button>Jantes</button></div>",
+      "css": ".ds-tabs { display: flex; gap: 2px; border-bottom: 1px solid rgba(255,255,255,.08); } .ds-tabs button { position: relative; min-height: 42px; padding: 0 12px; border: 0; background: none; cursor: pointer; color: #6c717a; font: 700 13.5px Archivo, system-ui, sans-serif; font-stretch: 108%; transition: color .15s; } .ds-tabs button::after { content: \"\"; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: #f7d154; transform: scaleX(0); transition: transform .25s cubic-bezier(.2,.8,.2,1); } .ds-tabs button:hover { color: #a4a8af; } .ds-tabs button[aria-selected=\"true\"] { color: #f2f2ef; } .ds-tabs button[aria-selected=\"true\"]::after { transform: none; } .ds-tabs button:focus-visible { outline: 2px solid #f7d154; outline-offset: 3px; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Notification de gain, de défi ou d'achat.",
+      "html": "<div class=\"ds-toast\">Bonus quotidien · +500 ¥</div>",
+      "css": ".ds-toast { display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px 8px 12px; border: 1px solid rgba(255,255,255,.15); border-radius: 999px; background: rgba(20,23,27,.96); color: #f2f2ef; font: 600 13.5px Archivo, system-ui, sans-serif; box-shadow: 0 12px 32px rgba(0,0,0,.45); } .ds-toast::before { content: \"\"; width: 8px; height: 8px; border-radius: 50%; background: #3ddc84; box-shadow: 0 0 10px #3ddc84; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le Paddock de Nuit",
+    "overview": "Une réunion de nuit sur un parking de col. Tout est sombre sauf ce qui compte : le jaune de l'emblème marque l'action, le reste se lit à la craie sur l'asphalte. La scène 3D est le héros ; l'interface se tient en marge, comme les panneaux et les feuilles de temps scotchées au mur du stand.\n\nLa densité est celle d'un outil tenu à deux pouces : cibles larges, peu de texte, chiffres tabulaires. Une seule exception de ton : la feuille de résultats, imprimée sur papier clair comme une une de journal, avec la voix serif en italique. Cette voix éditoriale existe aussi par touches dans la manchette et les chapôs du menu.\n\nLe japonais apparaît en repère graphique (rubriques, signature verticale), jamais comme texte à lire pour jouer.",
+    "keyCharacteristics": [
+      "Fond presque noir, cinq niveaux de surface, aucun gris coloré.",
+      "Un seul jaune pour l'action principale, la sélection, le combo et l'argent.",
+      "Archivo à largeur variable : large pour les titres, normal pour le texte.",
+      "Bordures d'un pixel plutôt qu'ombres.",
+      "Pendant la conduite, le HUD n'a pas de fond : texte et ombre portée seulement."
+    ],
+    "rules": [
+      { "name": "La Règle du Jaune Unique", "body": "Le jaune désigne une seule action principale par écran. Deux boutons jaunes côte à côte, c'est une erreur.", "section": "colors" },
+      { "name": "La Règle des Couleurs de Piste", "body": "Ambre et cyan ne sortent jamais de leur rôle de zones de clip et de corde.", "section": "colors" },
+      { "name": "La Règle des Chiffres Alignés", "body": "Tout nombre qui change à l'écran utilise les chiffres tabulaires.", "section": "typography" },
+      { "name": "La Règle de la Largeur", "body": "L'emphase passe par l'axe de largeur avant de passer par la taille.", "section": "typography" },
+      { "name": "La Règle du HUD Sans Fond", "body": "En course, aucun panneau opaque : texte, ombre et anneau fin seulement.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do garder une seule action jaune par écran.",
+      "Do donner au moins 44px à toute cible tactile et respecter les zones sûres.",
+      "Do laisser l'action principale visible sans défilement, y compris à 844×390.",
+      "Do utiliser les chiffres tabulaires pour scores, temps et montants.",
+      "Do vérifier chaque écran en paysage 844×390 et en portrait 390×844.",
+      "Do tutoyer le joueur."
+    ],
+    "donts": [
+      "Don't poser un panneau opaque sur la piste pendant la conduite.",
+      "Don't utiliser l'ambre ou le cyan hors des zones de clip et de corde.",
+      "Don't ajouter d'ombre colorée autre que le halo du bouton principal.",
+      "Don't couvrir le logotype ou le score avec un toast.",
+      "Don't introduire une quatrième famille de caractères.",
+      "Don't ajouter un effet d'interface (flou, filtre, animation continue) sans vérifier que le jeu reste fluide sur l'appareil cible."
+    ]
+  }
+}
